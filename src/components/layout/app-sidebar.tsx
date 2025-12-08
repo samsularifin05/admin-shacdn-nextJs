@@ -179,33 +179,36 @@ export function AppSidebar() {
         // Close this menu and all its children
         return prev.filter((menuId) => !menuId.startsWith(id));
       } else {
-        // Close all sibling menus (same parent)
-        const siblings = prev.filter((menuId) => {
-          if (!parentId) {
-            // Top level - close other top level menus
-            return menuId.includes("-");
-          } else {
-            // Has parent - keep parent and its ancestors, close siblings
-            return (
-              !menuId.startsWith(parentId + "-") ||
-              menuId === id ||
-              prev.some((p) => menuId.startsWith(p + "-"))
-            );
-          }
-        });
-
-        // Add parent chain if exists
-        const parentChain: string[] = [];
-        if (parentId) {
+        // Opening a menu
+        if (!parentId) {
+          // Top level menu - close ALL other top level menus
+          // Keep only menus that are children of the one we're opening
+          return [id];
+        } else {
+          // Nested menu - close siblings at the same level
+          // Build parent chain
+          const parentChain: string[] = [];
           let current = parentId;
           while (current) {
             parentChain.push(current);
             const lastDash = current.lastIndexOf("-");
             current = lastDash > 0 ? current.substring(0, lastDash) : "";
           }
-        }
 
-        return [...new Set([...siblings, ...parentChain, id])];
+          // Keep parent chain and close siblings
+          const filtered = prev.filter((menuId) => {
+            // Keep if it's in the parent chain
+            if (parentChain.includes(menuId)) return true;
+            // Remove if it's a sibling (same parent, different menu)
+            if (menuId.startsWith(parentId + "-") && !menuId.startsWith(id)) {
+              return false;
+            }
+            // Keep other menus
+            return true;
+          });
+
+          return [...filtered, id];
+        }
       }
     });
   };

@@ -6,6 +6,7 @@ interface SEOProps {
   keywords?: string;
   ogImage?: string;
   canonical?: string;
+  noIndex?: boolean;
 }
 
 export function SEO({
@@ -14,6 +15,7 @@ export function SEO({
   keywords = "admin dashboard, react, typescript, tailwind css, shadcn ui",
   ogImage = "https://yourdomain.com/og-image.png",
   canonical,
+  noIndex = false,
 }: SEOProps) {
   useEffect(() => {
     // Update document title
@@ -63,7 +65,11 @@ export function SEO({
 
       linkElement.href = canonical;
     }
-  }, [title, description, keywords, ogImage, canonical]);
+
+    // Robots
+    const robotsContent = noIndex ? "noindex, nofollow" : "index, follow";
+    updateMetaTag("robots", robotsContent);
+  }, [title, description, keywords, ogImage, canonical, noIndex]);
 
   return null;
 }

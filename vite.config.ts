@@ -16,7 +16,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           // Vendor chunks for better caching
-          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "react-vendor": ["react", "react-dom", "react-router-dom", "zustand"],
           "ui-vendor": [
             "@radix-ui/react-dialog",
             "@radix-ui/react-dropdown-menu",
@@ -24,9 +24,14 @@ export default defineConfig({
             "@radix-ui/react-checkbox",
             "@radix-ui/react-label",
             "@radix-ui/react-slot",
+            "@radix-ui/react-scroll-area",
+            "@radix-ui/react-separator",
+            "@radix-ui/react-avatar",
+            "@radix-ui/react-tooltip",
             "class-variance-authority",
             "clsx",
             "tailwind-merge",
+            "cmdk",
           ],
           "icons-vendor": ["lucide-react"],
           "table-vendor": ["@tanstack/react-table"],

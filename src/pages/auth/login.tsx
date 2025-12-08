@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { FormInput } from "@/components/form";
 import { Loader2 } from "lucide-react";
+import { SEO } from "@/components/seo";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -47,6 +48,10 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <SEO
+        title="Sign In - Shadcn Admin"
+        description="Login to your admin dashboard account."
+      />
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Sign in</CardTitle>

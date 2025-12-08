@@ -34,7 +34,7 @@ export default function NotFoundPage() {
           <Button
             size="lg"
             onClick={() => navigate("/dashboard")}
-            className="w-full sm:w-auto gap-2"
+            className="w-full sm:w-auto gap-2 cursor-pointer"
           >
             <Home className="h-4 w-4" />
             Go to Dashboard
@@ -44,7 +44,7 @@ export default function NotFoundPage() {
             size="lg"
             variant="outline"
             onClick={() => navigate(-1)}
-            className="w-full sm:w-auto gap-2"
+            className="w-full sm:w-auto gap-2 cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" />
             Go Back

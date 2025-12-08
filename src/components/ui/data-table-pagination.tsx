@@ -62,7 +62,7 @@ export function DataTablePagination<TData>({
         </div>
 
         {/* Page info */}
-        <div className="text-sm font-medium whitespace-nowrap">
+        <div className="text-sm font-medium whitespace-nowrap cursor-pointer">
           Page {table.getState().pagination.pageIndex + 1} of{" "}
           {table.getPageCount()}
         </div>
@@ -71,7 +71,7 @@ export function DataTablePagination<TData>({
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            className="hidden h-8 w-8 p-0 lg:flex"
+            className="hidden h-8 w-8 p-0 lg:flex cursor-pointer"
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
             aria-label="Go to first page"
@@ -81,7 +81,7 @@ export function DataTablePagination<TData>({
           </Button>
           <Button
             variant="outline"
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 cursor-pointer"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
             aria-label="Go to previous page"
@@ -91,7 +91,7 @@ export function DataTablePagination<TData>({
           </Button>
           <Button
             variant="outline"
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 p-0 cursor-pointer"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
             aria-label="Go to next page"
@@ -101,7 +101,7 @@ export function DataTablePagination<TData>({
           </Button>
           <Button
             variant="outline"
-            className="hidden h-8 w-8 p-0 lg:flex"
+            className="hidden h-8 w-8 p-0 lg:flex cursor-pointer"
             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
             disabled={!table.getCanNextPage()}
             aria-label="Go to last page"

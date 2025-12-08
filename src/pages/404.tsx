@@ -1,9 +1,9 @@
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { Home, ArrowLeft, Search } from "lucide-react";
 
 export default function NotFoundPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-background via-background to-muted/20 p-4">
@@ -33,7 +33,7 @@ export default function NotFoundPage() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <Button
             size="lg"
-            onClick={() => navigate("/dashboard")}
+            onClick={() => router.push("/dashboard")}
             className="w-full sm:w-auto gap-2 cursor-pointer"
           >
             <Home className="h-4 w-4" />
@@ -43,7 +43,7 @@ export default function NotFoundPage() {
           <Button
             size="lg"
             variant="outline"
-            onClick={() => navigate(-1)}
+            onClick={() => router.back()}
             className="w-full sm:w-auto gap-2 cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" />

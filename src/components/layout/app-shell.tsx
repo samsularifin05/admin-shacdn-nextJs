@@ -1,12 +1,13 @@
 import { AppSidebar } from "./app-sidebar";
 import { Header } from "./header";
-import { Outlet } from "react-router-dom";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { cn } from "@/lib/utils";
-import { Suspense } from "react";
-import { LoadingScreen } from "@/components/loading-screen";
 
-export function AppShell() {
+interface AppShellProps {
+  children: React.ReactNode;
+}
+
+export function AppShell({ children }: AppShellProps) {
   const { isCollapsed } = useSidebarStore();
 
   return (
@@ -24,11 +25,7 @@ export function AppShell() {
       >
         <div className="flex-1 flex flex-col min-h-screen w-full">
           <Header />
-          <main className="flex-1 p-6 overflow-auto mt-15">
-            <Suspense fallback={<LoadingScreen />}>
-              <Outlet />
-            </Suspense>
-          </main>
+          <main className="flex-1 p-6 overflow-auto mt-15">{children}</main>
         </div>
       </div>
     </div>

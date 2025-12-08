@@ -11,6 +11,7 @@ import {
 import { FormInput } from "@/components/form";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { PageLayout } from "@/components/page-layout";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -64,73 +65,80 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your account settings and preferences
-        </p>
+    <PageLayout
+      title="Settings"
+      description="Manage your account settings and preferences"
+    >
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+          <p className="text-muted-foreground">
+            Manage your account settings and preferences
+          </p>
+        </div>
+
+        <Separator />
+
+        <div className="grid gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile</CardTitle>
+              <CardDescription>
+                Update your personal information
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FormProvider {...profileMethods}>
+                <form
+                  onSubmit={profileMethods.handleSubmit(onProfileSubmit)}
+                  className="space-y-4"
+                >
+                  <FormInput name="name" label="Name" placeholder="Your name" />
+                  <FormInput
+                    name="email"
+                    type="email"
+                    label="Email"
+                    placeholder="your@email.com"
+                  />
+                  <Button type="submit">Save Changes</Button>
+                </form>
+              </FormProvider>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Security</CardTitle>
+              <CardDescription>Manage your security settings</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FormProvider {...passwordMethods}>
+                <form
+                  onSubmit={passwordMethods.handleSubmit(onPasswordSubmit)}
+                  className="space-y-4"
+                >
+                  <FormInput
+                    name="currentPassword"
+                    type="password"
+                    label="Current Password"
+                  />
+                  <FormInput
+                    name="newPassword"
+                    type="password"
+                    label="New Password"
+                  />
+                  <FormInput
+                    name="confirmPassword"
+                    type="password"
+                    label="Confirm Password"
+                  />
+                  <Button type="submit">Update Password</Button>
+                </form>
+              </FormProvider>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
-      <Separator />
-
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-            <CardDescription>Update your personal information</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FormProvider {...profileMethods}>
-              <form
-                onSubmit={profileMethods.handleSubmit(onProfileSubmit)}
-                className="space-y-4"
-              >
-                <FormInput name="name" label="Name" placeholder="Your name" />
-                <FormInput
-                  name="email"
-                  type="email"
-                  label="Email"
-                  placeholder="your@email.com"
-                />
-                <Button type="submit">Save Changes</Button>
-              </form>
-            </FormProvider>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Security</CardTitle>
-            <CardDescription>Manage your security settings</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FormProvider {...passwordMethods}>
-              <form
-                onSubmit={passwordMethods.handleSubmit(onPasswordSubmit)}
-                className="space-y-4"
-              >
-                <FormInput
-                  name="currentPassword"
-                  type="password"
-                  label="Current Password"
-                />
-                <FormInput
-                  name="newPassword"
-                  type="password"
-                  label="New Password"
-                />
-                <FormInput
-                  name="confirmPassword"
-                  type="password"
-                  label="Confirm Password"
-                />
-                <Button type="submit">Update Password</Button>
-              </form>
-            </FormProvider>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </PageLayout>
   );
 }

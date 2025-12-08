@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import Head from "next/head";
 
 interface SEOProps {
   title?: string;
@@ -17,59 +17,32 @@ export function SEO({
   canonical,
   noIndex = false,
 }: SEOProps) {
-  useEffect(() => {
-    // Update document title
-    document.title = title;
+  return (
+    <Head>
+      <title>{title}</title>
+      <meta name="description" content={description} />
+      <meta name="keywords" content={keywords} />
+      <meta name="author" content="Shadcn Admin" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta
+        name="robots"
+        content={noIndex ? "noindex, nofollow" : "index, follow"}
+      />
 
-    // Update or create meta tags
-    const updateMetaTag = (name: string, content: string, property = false) => {
-      const attribute = property ? "property" : "name";
-      let element = document.querySelector(
-        `meta[${attribute}="${name}"]`
-      ) as HTMLMetaElement;
+      {/* Open Graph */}
+      <meta property="og:type" content="website" />
+      <meta property="og:title" content={title} />
+      <meta property="og:description" content={description} />
+      <meta property="og:image" content={ogImage} />
 
-      if (!element) {
-        element = document.createElement("meta");
-        element.setAttribute(attribute, name);
-        document.head.appendChild(element);
-      }
+      {/* Twitter */}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={title} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={ogImage} />
 
-      element.content = content;
-    };
-
-    // Standard meta tags
-    updateMetaTag("description", description);
-    updateMetaTag("keywords", keywords);
-
-    // Open Graph
-    updateMetaTag("og:title", title, true);
-    updateMetaTag("og:description", description, true);
-    updateMetaTag("og:image", ogImage, true);
-
-    // Twitter
-    updateMetaTag("twitter:title", title, true);
-    updateMetaTag("twitter:description", description, true);
-    updateMetaTag("twitter:image", ogImage, true);
-
-    // Canonical URL
-    if (canonical) {
-      let linkElement = document.querySelector(
-        'link[rel="canonical"]'
-      ) as HTMLLinkElement;
-
-      if (!linkElement) {
-        linkElement = document.createElement("link");
-        linkElement.rel = "canonical";
-        document.head.appendChild(linkElement);
-      }
-
-      linkElement.href = canonical;
-    }
-
-    // Robots
-    const robotsContent = noIndex ? "noindex, nofollow" : "index, follow";
-    updateMetaTag("robots", robotsContent);
-  }, [title, description, keywords, ogImage, canonical, noIndex]);
-
-  return null;
+      {/* Canonical */}
+      {canonical && <link rel="canonical" href={canonical} />}
+    </Head>
+  );
 }

@@ -1,4 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/router";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { useThemeStore } from "@/stores/theme-store";
@@ -23,7 +24,7 @@ const navTabs = [
 ];
 
 export function Header() {
-  const location = useLocation();
+  const router = useRouter();
   const { toggleCollapse, toggleMobile, isCollapsed } = useSidebarStore();
   const { user, logout } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
@@ -85,11 +86,11 @@ export function Header() {
           {/* Navigation Tabs - Hidden on mobile */}
           <nav className="hidden md:flex items-center gap-1">
             {navTabs.map((tab) => {
-              const isActive = location.pathname === tab.href;
+              const isActive = router.pathname === tab.href;
               return (
                 <Link
                   key={tab.href}
-                  to={tab.href}
+                  href={tab.href}
                   className={cn(
                     "px-3 py-2 text-sm font-medium rounded-md transition-colors",
                     isActive
@@ -130,7 +131,7 @@ export function Header() {
             asChild
             className="hidden sm:flex h-9 w-9"
           >
-            <Link to="/settings" aria-label="Settings">
+            <Link href="/settings" aria-label="Settings">
               <Settings className="h-4 w-4" />
             </Link>
           </Button>
@@ -166,7 +167,7 @@ export function Header() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/settings">Settings</Link>
+                  <Link href="/settings">Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>Log out</DropdownMenuItem>

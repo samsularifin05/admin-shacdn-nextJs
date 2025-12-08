@@ -1,10 +1,11 @@
-import { Link, useLocation } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/router";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronRight, X } from "lucide-react";
 import { useState, useEffect, createContext, useContext } from "react";
-import { navigation, NavItem } from "@/router/menus";
+import { navigation, NavItem } from "@/config/menus";
 
 // Context to manage accordion behavior
 interface MenuContextType {
@@ -33,11 +34,11 @@ function MenuItem({
   parentId,
   itemId,
 }: MenuItemProps) {
-  const location = useLocation();
+  const router = useRouter();
   const { openMenus, toggleMenu } = useContext(MenuContext);
 
   const hasChildren = item.children && item.children.length > 0;
-  const isActive = item.href ? location.pathname === item.href : false;
+  const isActive = item.href ? router.pathname === item.href : false;
   const isExpanded = openMenus.includes(itemId);
 
   // Check if any child is active
@@ -45,7 +46,7 @@ function MenuItem({
     if (!items) return false;
     return items.some(
       (child) =>
-        child.href === location.pathname || hasActiveChild(child.children)
+        child.href === router.pathname || hasActiveChild(child.children)
     );
   };
 
@@ -53,7 +54,8 @@ function MenuItem({
 
   // Removed auto-expand logic to allow menus to close on navigation
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     if (hasChildren) {
       toggleMenu(itemId, parentId);
     }
@@ -65,6 +67,7 @@ function MenuItem({
     return (
       <div>
         <button
+          type="button"
           onClick={handleClick}
           className={cn(
             "flex w-full items-center gap-3 rounded-md py-2 text-sm font-medium transition-colors cursor-pointer",
@@ -73,11 +76,11 @@ function MenuItem({
               : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
             isCollapsed ? "justify-center px-2" : "px-2"
           )}
-          style={!isCollapsed ? { paddingLeft: `${paddingLeft}px` } : undefined}
+          style={{ paddingLeft: !isCollapsed ? `${paddingLeft}px` : undefined }}
           aria-label={`${item.title} menu`}
           aria-expanded={isExpanded}
         >
-          <item.icon className="h-4 w-4 shrink-0" />
+          {item.icon && <item.icon className="h-4 w-4 shrink-0" />}
           {!isCollapsed && (
             <>
               <span className="flex-1 text-left">{item.title}</span>
@@ -100,25 +103,22 @@ function MenuItem({
         {!isCollapsed && (
           <div
             className={cn(
-              "grid transition-all duration-200 ease-in-out",
-              isExpanded
-                ? "grid-rows-[1fr] opacity-100"
-                : "grid-rows-[0fr] opacity-0"
+              "overflow-hidden transition-all duration-200 ease-in-out origin-top",
+              isExpanded ? "scale-y-100 opacity-100" : "scale-y-0 opacity-0 h-0"
             )}
+            style={{ willChange: isExpanded ? "auto" : "transform, opacity" }}
           >
-            <div className="overflow-hidden">
-              <div className="mt-1 space-y-1">
-                {item.children?.map((child, index) => (
-                  <MenuItem
-                    key={child.href || `${child.title}-${index}`}
-                    item={child}
-                    level={level + 1}
-                    isCollapsed={isCollapsed}
-                    parentId={itemId}
-                    itemId={`${itemId}-${index}`}
-                  />
-                ))}
-              </div>
+            <div className="mt-1 space-y-1">
+              {item.children?.map((child, index) => (
+                <MenuItem
+                  key={child.href || `${child.title}-${index}`}
+                  item={child}
+                  level={level + 1}
+                  isCollapsed={isCollapsed}
+                  parentId={itemId}
+                  itemId={`${itemId}-${index}`}
+                />
+              ))}
             </div>
           </div>
         )}
@@ -129,7 +129,7 @@ function MenuItem({
   // Leaf item (no children)
   return (
     <Link
-      to={item.href || "#"}
+      href={item.href || "#"}
       className={cn(
         "flex items-center gap-3 rounded-md py-2 text-sm font-medium transition-colors cursor-pointer",
         isActive
@@ -137,9 +137,9 @@ function MenuItem({
           : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
         isCollapsed ? "justify-center px-2" : "px-2"
       )}
-      style={!isCollapsed ? { paddingLeft: `${paddingLeft}px` } : undefined}
+      style={{ paddingLeft: !isCollapsed ? `${paddingLeft}px` : undefined }}
     >
-      <item.icon className="h-4 w-4 shrink-0" />
+      {item.icon && <item.icon className="h-4 w-4 shrink-0" />}
       {!isCollapsed && (
         <>
           <span className="flex-1">{item.title}</span>
@@ -155,7 +155,7 @@ function MenuItem({
 }
 
 export function AppSidebar() {
-  const location = useLocation();
+  const router = useRouter();
   const { isCollapsed, isMobileOpen, closeMobile } = useSidebarStore();
   const { user } = useAuthStore();
   const [expandedSections, setExpandedSections] = useState<string[]>(["Pages"]);
@@ -210,7 +210,7 @@ export function AppSidebar() {
     });
   };
 
-  // Close mobile sidebar and menus when route changes
+  // Close mobile sidebar and update menus when route changes
   useEffect(() => {
     closeMobile();
 
@@ -223,23 +223,24 @@ export function AppSidebar() {
         const item = items[i];
         const currentId =
           parentIds.length > 0
-            ? `${parentIds.join("-")}-${i}`
+            ? `${parentIds[parentIds.length - 1]}-${i}`
             : `section-${navigation.findIndex((s) =>
                 s.items.includes(item)
               )}-${i}`;
 
-        if (item.href === location.pathname) {
+        if (item.href === router.pathname) {
           // Found the current route, return parent chain
           return parentIds;
         }
 
         if (item.children) {
           const result = isChildRoute(item.children, [...parentIds, currentId]);
-          if (
-            result.length > 0 ||
-            (result.length === 0 &&
-              item.children.some((c) => c.href === location.pathname))
-          ) {
+          if (result.length > 0) {
+            // Found a match in children, return the result which includes currentId
+            return result;
+          }
+          // Also check if any direct child matches (for items without further nesting)
+          if (item.children.some((c) => c.href === router.pathname)) {
             return [...parentIds, currentId];
           }
         }
@@ -256,9 +257,25 @@ export function AppSidebar() {
       }
     });
 
-    // Only keep menus in parent chain
-    setOpenMenus(parentChain);
-  }, [location.pathname, closeMobile]);
+    // Only update if the parent chain is different from current openMenus
+    // This prevents unnecessary closing/reopening when navigating within the same submenu
+    setOpenMenus((prevOpenMenus) => {
+      const prevSet = new Set(prevOpenMenus);
+      const newSet = new Set(parentChain);
+
+      // Check if they're the same
+      if (
+        prevSet.size === newSet.size &&
+        Array.from(prevSet).every((id) => newSet.has(id))
+      ) {
+        // No change needed, keep current state
+        return prevOpenMenus;
+      }
+
+      // Update to new parent chain
+      return parentChain;
+    });
+  }, [router.pathname, closeMobile]);
 
   // Close mobile sidebar on escape key
   useEffect(() => {
@@ -300,7 +317,7 @@ export function AppSidebar() {
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-16 items-center justify-between border-b px-6">
-            <Link to="/dashboard" className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <span className="text-lg font-bold">S</span>
               </div>
@@ -339,6 +356,7 @@ export function AppSidebar() {
                         </span>
                         {section.collapsible && (
                           <button
+                            type="button"
                             onClick={() => toggleSection(section.title)}
                             className="text-muted-foreground hover:text-foreground cursor-pointer"
                           >

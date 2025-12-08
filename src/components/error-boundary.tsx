@@ -1,47 +1,57 @@
-import { useRouteError, isRouteErrorResponse, Link } from "react-router-dom";
+import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Component, ErrorInfo, ReactNode } from "react";
 
-export function RootErrorBoundary() {
-  const error = useRouteError();
+interface Props {
+  children?: ReactNode;
+}
 
-  let errorMessage: string;
-  let errorStatus: number | undefined;
+interface State {
+  hasError: boolean;
+  error?: Error;
+}
 
-  if (isRouteErrorResponse(error)) {
-    errorMessage =
-      error.statusText || error.data?.message || "An error occurred";
-    errorStatus = error.status;
-  } else if (error instanceof Error) {
-    errorMessage = error.message;
-  } else {
-    errorMessage = "An unknown error occurred";
+export class RootErrorBoundary extends Component<Props, State> {
+  public state: State = {
+    hasError: false,
+  };
+
+  public static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
   }
 
-  return (
-    <div className="flex h-screen w-full flex-col items-center justify-center gap-6 bg-background px-4">
-      <div className="flex flex-col items-center gap-4 text-center">
-        <AlertTriangle className="h-16 w-16 text-destructive" />
-        <div className="space-y-2">
-          {errorStatus && (
-            <h1 className="text-4xl font-bold tracking-tight">{errorStatus}</h1>
-          )}
-          <h2 className="text-2xl font-semibold tracking-tight">
-            {errorStatus === 404
-              ? "Page Not Found"
-              : "Oops! Something went wrong"}
-          </h2>
-          <p className="text-muted-foreground max-w-md">{errorMessage}</p>
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
+  }
+
+  public render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex h-screen w-full flex-col items-center justify-center gap-6 bg-background px-4">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <AlertTriangle className="h-16 w-16 text-destructive" />
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold tracking-tight">
+                Oops! Something went wrong
+              </h2>
+              <p className="text-muted-foreground max-w-md">
+                {this.state.error?.message || "An unknown error occurred"}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <Button asChild>
+              <Link href="/">Go Home</Link>
+            </Button>
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              Reload Page
+            </Button>
+          </div>
         </div>
-      </div>
-      <div className="flex gap-4">
-        <Button asChild>
-          <Link to="/">Go Home</Link>
-        </Button>
-        <Button variant="outline" onClick={() => window.location.reload()}>
-          Reload Page
-        </Button>
-      </div>
-    </div>
-  );
+      );
+    }
+
+    return this.props.children;
+  }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/router";
 import { Search } from "lucide-react";
 import {
   CommandDialog,
@@ -11,12 +11,12 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { navigation } from "@/router/menus";
-import type { NavItem } from "@/router/menus";
+import { navigation } from "@/config/menus";
+import type { NavItem } from "@/config/menus";
 
 export function CommandMenu() {
   const [open, setOpen] = React.useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -64,7 +64,7 @@ export function CommandMenu() {
 
   const handleSelect = (href: string) => {
     setOpen(false);
-    navigate(href);
+    router.push(href);
   };
 
   return (

@@ -1,4 +1,5 @@
-import { Navigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { useAuthStore } from "@/stores/auth-store";
 import { LoadingScreen } from "@/components/loading-screen";
 
@@ -8,14 +9,24 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuthStore();
-  const location = useLocation();
+  const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        router.replace({
+          pathname: "/auth/login",
+          query: { from: router.asPath },
+        });
+      } else {
+        setIsAuthorized(true);
+      }
+    }
+  }, [isLoading, isAuthenticated, router]);
+
+  if (isLoading || !isAuthorized) {
     return <LoadingScreen />;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

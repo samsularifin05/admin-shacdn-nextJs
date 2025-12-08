@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, UserPlus } from "lucide-react";
 import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
+import { PageLayout } from "@/components/page-layout";
 
 // Sample data type
 type User = {
@@ -86,69 +87,45 @@ export default function UsersPage() {
   const [isLoading] = useState(false);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-          <p className="text-muted-foreground">
-            Manage your users and their permissions
-          </p>
+    <PageLayout
+      title="Users"
+      description="Manage your users and their permissions"
+    >
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Users</h1>
+            <p className="text-muted-foreground">
+              Manage your users and their permissions
+            </p>
+          </div>
+          <Button>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Add User
+          </Button>
         </div>
-        <Button>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add User
-        </Button>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>All Users</CardTitle>
+            <CardDescription>
+              A list of all users in your account with sorting and pagination
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* Client-side pagination example */}
+            <DataTable
+              columns={columns}
+              data={users}
+              enableSearch
+              searchPlaceholder="Search all columns..."
+              isLoading={isLoading}
+              enableSorting
+              enableColumnVisibility
+            />
+          </CardContent>
+        </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>All Users</CardTitle>
-          <CardDescription>
-            A list of all users in your account with sorting and pagination
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Client-side pagination example */}
-          <DataTable
-            columns={columns}
-            data={users}
-            enableSearch
-            searchPlaceholder="Search all columns..."
-            isLoading={isLoading}
-            enableSorting
-            enableColumnVisibility
-          />
-        </CardContent>
-      </Card>
-
-      {/* Example of server-side pagination (commented out) */}
-      {/* 
-      <Card>
-        <CardHeader>
-          <CardTitle>Server-Side Pagination Example</CardTitle>
-          <CardDescription>
-            Data fetched from API with server-side pagination
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={serverData}
-            pageCount={totalPages}
-            manualPagination
-            onPaginationChange={(updater) => {
-              const newPagination = typeof updater === 'function' 
-                ? updater(pagination) 
-                : updater;
-              setPagination(newPagination);
-              // Fetch data from API with new pagination
-              fetchUsers(newPagination.pageIndex, newPagination.pageSize);
-            }}
-            isLoading={isLoadingServer}
-          />
-        </CardContent>
-      </Card>
-      */}
-    </div>
+    </PageLayout>
   );
 }

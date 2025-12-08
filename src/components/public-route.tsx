@@ -1,18 +1,29 @@
-import { Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useRouter } from "next/router";
 import { useAuthStore } from "@/stores/auth-store";
+import { LoadingScreen } from "@/components/loading-screen";
 
 interface PublicRouteProps {
   children: React.ReactNode;
 }
 
 export function PublicRoute({ children }: PublicRouteProps) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isLoading } = useAuthStore();
+  const router = useRouter();
 
-  // If user is authenticated, redirect to dashboard
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [isLoading, isAuthenticated, router]);
+
+  if (isLoading) {
+    return <LoadingScreen />;
   }
 
-  // Otherwise, render the public page (login, etc)
+  if (isAuthenticated) {
+    return <LoadingScreen />; // Show loading while redirecting
+  }
+
   return <>{children}</>;
 }

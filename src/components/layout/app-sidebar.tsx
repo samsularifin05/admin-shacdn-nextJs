@@ -196,10 +196,42 @@ export function AppSidebar() {
           const filtered = prev.filter((menuId) => {
             // Keep if it's in the parent chain
             if (parentChain.includes(menuId)) return true;
-            // Remove if it's a sibling (same parent, different menu)
-            if (menuId.startsWith(parentId + "-") && !menuId.startsWith(id)) {
+
+            // Check if this is a direct sibling (same parent, same depth)
+            // A sibling has the format: parentId-X where X is a number
+            // We want to close siblings but not descendants of siblings
+            const siblingPattern = new RegExp(
+              `^${parentId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}-\\d+$`
+            );
+            if (siblingPattern.test(menuId) && menuId !== id) {
+              // This is a direct sibling, check if we should close it
+              // Close it and all its descendants
               return false;
             }
+
+            // Check if this is a descendant of a sibling
+            const parts = menuId.split("-");
+            const idParts = id.split("-");
+            const parentParts = parentId.split("-");
+
+            // If menuId has more parts than id and shares the same parent prefix
+            if (parts.length > parentParts.length) {
+              const menuParentPrefix = parts
+                .slice(0, parentParts.length + 1)
+                .join("-");
+              const idParentPrefix = idParts
+                .slice(0, parentParts.length + 1)
+                .join("-");
+
+              // If they have different parents at the same level, close it
+              if (
+                menuParentPrefix !== idParentPrefix &&
+                menuParentPrefix.startsWith(parentId + "-")
+              ) {
+                return false;
+              }
+            }
+
             // Keep other menus
             return true;
           });
@@ -228,19 +260,18 @@ export function AppSidebar() {
                 s.items.includes(item)
               )}-${i}`;
 
+        // Check if this item has the current route
         if (item.href === location.pathname) {
-          // Found the current route, return parent chain
+          // Found the current route, return parent chain (not including current item since it's a leaf)
           return parentIds;
         }
 
+        // Check children recursively
         if (item.children) {
           const result = isChildRoute(item.children, [...parentIds, currentId]);
-          if (
-            result.length > 0 ||
-            (result.length === 0 &&
-              item.children.some((c) => c.href === location.pathname))
-          ) {
-            return [...parentIds, currentId];
+          if (result.length > 0) {
+            // Found in nested children, the result already contains the full chain
+            return result;
           }
         }
       }

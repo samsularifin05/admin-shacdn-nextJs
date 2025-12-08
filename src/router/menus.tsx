@@ -48,7 +48,7 @@ export const navigation: NavSection[] = [
             children: [
               {
                 title: "Admin Roles",
-                href: "/users",
+                href: "/admin-role",
                 icon: Shield,
               },
               { title: "User Roles", href: "/users/roles/user", icon: UserCog },

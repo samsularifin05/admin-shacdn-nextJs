@@ -7,6 +7,7 @@ const DashboardPage = lazy(() => import("@/pages/dashboard"));
 const UsersPage = lazy(() => import("@/pages/users"));
 const SettingsPage = lazy(() => import("@/pages/settings"));
 const NotFoundPage = lazy(() => import("@/pages/not-found"));
+const AdminRole = lazy(() => import("@/pages/adminRole"));
 const AppShell = lazy(() =>
   import("@/components/layout/app-shell").then((module) => ({
     default: module.AppShell,
@@ -34,6 +35,10 @@ export const protectedRoutes: RouteObject = {
     {
       path: "settings",
       element: <SettingsPage />,
+    },
+    {
+      path: "admin-role",
+      element: <AdminRole />,
     },
     {
       path: "*",

@@ -38,15 +38,20 @@ function MenuItem({
   const { openMenus, toggleMenu } = useContext(MenuContext);
 
   const hasChildren = item.children && item.children.length > 0;
-  const isActive = item.href ? router.pathname === item.href : false;
+  const isActive =
+    item.href && router.isReady
+      ? router.pathname === item.href || router.asPath === item.href
+      : false;
   const isExpanded = openMenus.includes(itemId);
 
   // Check if any child is active
   const hasActiveChild = (items: NavItem[] | undefined): boolean => {
-    if (!items) return false;
+    if (!items || !router.isReady) return false;
     return items.some(
       (child) =>
-        child.href === router.pathname || hasActiveChild(child.children)
+        child.href === router.pathname ||
+        child.href === router.asPath ||
+        hasActiveChild(child.children)
     );
   };
 
@@ -99,26 +104,39 @@ function MenuItem({
           )}
         </button>
 
-        {/* Submenu with animation */}
+        {/* Submenu with smooth animation */}
         {!isCollapsed && (
           <div
             className={cn(
-              "overflow-hidden transition-all duration-200 ease-in-out origin-top",
-              isExpanded ? "scale-y-100 opacity-100" : "scale-y-0 opacity-0 h-0"
+              "grid transition-all",
+              isExpanded
+                ? "grid-rows-[1fr] opacity-100 duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                : "grid-rows-[0fr] opacity-0 duration-300 ease-in"
             )}
-            style={{ willChange: isExpanded ? "auto" : "transform, opacity" }}
+            style={{
+              willChange: isExpanded ? "auto" : "grid-template-rows, opacity",
+            }}
           >
-            <div className="mt-1 space-y-1">
-              {item.children?.map((child, index) => (
-                <MenuItem
-                  key={child.href || `${child.title}-${index}`}
-                  item={child}
-                  level={level + 1}
-                  isCollapsed={isCollapsed}
-                  parentId={itemId}
-                  itemId={`${itemId}-${index}`}
-                />
-              ))}
+            <div className="overflow-hidden">
+              <div
+                className={cn(
+                  "pt-1 space-y-1 transition-all",
+                  isExpanded
+                    ? "translate-y-0 opacity-100 duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                    : "-translate-y-2 opacity-0 duration-200 ease-out"
+                )}
+              >
+                {item.children?.map((child, index) => (
+                  <MenuItem
+                    key={child.href || `${child.title}-${index}`}
+                    item={child}
+                    level={level + 1}
+                    isCollapsed={isCollapsed}
+                    parentId={itemId}
+                    itemId={`${itemId}-${index}`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -130,6 +148,8 @@ function MenuItem({
   return (
     <Link
       href={item.href || "#"}
+      scroll={false}
+      prefetch={false}
       className={cn(
         "flex items-center gap-3 rounded-md py-2 text-sm font-medium transition-colors cursor-pointer",
         isActive
@@ -196,10 +216,41 @@ export function AppSidebar() {
           const filtered = prev.filter((menuId) => {
             // Keep if it's in the parent chain
             if (parentChain.includes(menuId)) return true;
-            // Remove if it's a sibling (same parent, different menu)
-            if (menuId.startsWith(parentId + "-") && !menuId.startsWith(id)) {
+
+            // Check if this is a direct sibling (same parent, same depth)
+            // A sibling has the format: parentId-X where X is a number
+            // We want to close siblings but not descendants of siblings
+            const siblingPattern = new RegExp(
+              `^${parentId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}-\\d+$`
+            );
+            if (siblingPattern.test(menuId) && menuId !== id) {
+              // This is a direct sibling, close it and all its descendants
               return false;
             }
+
+            // Check if this is a descendant of a sibling
+            const parts = menuId.split("-");
+            const idParts = id.split("-");
+            const parentParts = parentId.split("-");
+
+            // If menuId has more parts than id and shares the same parent prefix
+            if (parts.length > parentParts.length) {
+              const menuParentPrefix = parts
+                .slice(0, parentParts.length + 1)
+                .join("-");
+              const idParentPrefix = idParts
+                .slice(0, parentParts.length + 1)
+                .join("-");
+
+              // If they have different parents at the same level, close it
+              if (
+                menuParentPrefix !== idParentPrefix &&
+                menuParentPrefix.startsWith(parentId + "-")
+              ) {
+                return false;
+              }
+            }
+
             // Keep other menus
             return true;
           });
@@ -212,6 +263,7 @@ export function AppSidebar() {
 
   // Close mobile sidebar and update menus when route changes
   useEffect(() => {
+    if (!router.isReady) return;
     closeMobile();
 
     // Check if current route is a child of any menu item
@@ -223,12 +275,12 @@ export function AppSidebar() {
         const item = items[i];
         const currentId =
           parentIds.length > 0
-            ? `${parentIds[parentIds.length - 1]}-${i}`
+            ? `${parentIds.join("-")}-${i}`
             : `section-${navigation.findIndex((s) =>
                 s.items.includes(item)
               )}-${i}`;
 
-        if (item.href === router.pathname) {
+        if (item.href === router.pathname || item.href === router.asPath) {
           // Found the current route, return parent chain
           return parentIds;
         }
@@ -240,7 +292,11 @@ export function AppSidebar() {
             return result;
           }
           // Also check if any direct child matches (for items without further nesting)
-          if (item.children.some((c) => c.href === router.pathname)) {
+          if (
+            item.children.some(
+              (c) => c.href === router.pathname || c.href === router.asPath
+            )
+          ) {
             return [...parentIds, currentId];
           }
         }
@@ -260,22 +316,42 @@ export function AppSidebar() {
     // Only update if the parent chain is different from current openMenus
     // This prevents unnecessary closing/reopening when navigating within the same submenu
     setOpenMenus((prevOpenMenus) => {
-      const prevSet = new Set(prevOpenMenus);
-      const newSet = new Set(parentChain);
+      // Check if parent chain is exactly the same (same items, same order)
+      const isSameChain =
+        parentChain.length === prevOpenMenus.length &&
+        parentChain.every((id, index) => prevOpenMenus[index] === id);
 
-      // Check if they're the same
-      if (
-        prevSet.size === newSet.size &&
-        Array.from(prevSet).every((id) => newSet.has(id))
-      ) {
-        // No change needed, keep current state
+      if (isSameChain) {
+        // Exact same parent chain, no update needed
         return prevOpenMenus;
       }
 
-      // Update to new parent chain
-      return parentChain;
+      // Check if all parent chain items are already open (might be in different order or with extras)
+      const allParentsOpen = parentChain.every((id) =>
+        prevOpenMenus.includes(id)
+      );
+
+      if (allParentsOpen) {
+        // All required parents are already open
+        // Check if we have extra menus that should be closed
+        const hasExtras = prevOpenMenus.some((id) => !parentChain.includes(id));
+
+        if (!hasExtras) {
+          // No extras, keep current state (might just be different order)
+          return prevOpenMenus;
+        }
+
+        // We have extras, but let's keep them to avoid flickering
+        // Only close if they're not in the parent chain
+        return prevOpenMenus;
+      }
+
+      // Some parents are missing, need to open them
+      // Merge with existing open menus to keep everything open
+      const merged = Array.from(new Set([...prevOpenMenus, ...parentChain]));
+      return merged;
     });
-  }, [router.pathname, closeMobile]);
+  }, [router.pathname, router.asPath, router.isReady, closeMobile]);
 
   // Close mobile sidebar on escape key
   useEffect(() => {
@@ -317,7 +393,12 @@ export function AppSidebar() {
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-16 items-center justify-between border-b px-6">
-            <Link href="/dashboard" className="flex items-center gap-2">
+            <Link
+              href="/dashboard"
+              scroll={false}
+              prefetch={false}
+              className="flex items-center gap-2"
+            >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <span className="text-lg font-bold">S</span>
               </div>

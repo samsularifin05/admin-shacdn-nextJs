@@ -1,15 +1,41 @@
 import "@/globals.css";
 import "@/stores/theme-store";
 import type { AppProps } from "next/app";
-// Checking main.tsx didn't show Toaster but App.tsx didn't either.
-// Let's check if there is a toaster used in the app.
-// I'll stick to what was in main.tsx/App.tsx.
-// App.tsx imported theme-store.
+import { useRouter } from "next/router";
+import { AppShell } from "@/components/layout/app-shell";
+import { ProtectedRoute } from "@/components/protected-route";
+
+// Public routes that don't need AppShell (sidebar/header)
+const publicRoutes = ["/login", "/signup", "/forgot-password", "/"];
+
+// Error pages that should show AppShell but skip ProtectedRoute
+const errorPages = ["/404", "/_error"];
 
 export default function App({ Component, pageProps }: AppProps) {
+  const router = useRouter();
+  const isPublicRoute = publicRoutes.includes(router.pathname);
+  const isErrorPage = errorPages.includes(router.pathname);
+
+  // For public routes only, render without AppShell
+  if (isPublicRoute) {
+    return <Component {...pageProps} />;
+  }
+
+  // For error pages, render with AppShell but without ProtectedRoute
+  if (isErrorPage) {
+    return (
+      <AppShell>
+        <Component {...pageProps} />
+      </AppShell>
+    );
+  }
+
+  // For protected routes, wrap with ProtectedRoute and AppShell (persistent)
   return (
-    <>
-      <Component {...pageProps} />
-    </>
+    <ProtectedRoute>
+      <AppShell>
+        <Component {...pageProps} />
+      </AppShell>
+    </ProtectedRoute>
   );
 }

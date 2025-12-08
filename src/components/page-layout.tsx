@@ -1,6 +1,4 @@
 import { ReactNode } from "react";
-import { ProtectedRoute } from "@/components/protected-route";
-import { AppShell } from "@/components/layout/app-shell";
 import { SEO } from "@/components/seo";
 
 interface PageLayoutProps {
@@ -19,7 +17,7 @@ export function PageLayout({
   noIndex = true, // Default to noIndex for protected pages
 }: PageLayoutProps) {
   return (
-    <ProtectedRoute>
+    <>
       {title && (
         <SEO
           title={title}
@@ -28,7 +26,7 @@ export function PageLayout({
           noIndex={noIndex}
         />
       )}
-      <AppShell>{children}</AppShell>
-    </ProtectedRoute>
+      {children}
+    </>
   );
 }

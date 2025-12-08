@@ -43,7 +43,7 @@ export default function NotFoundPage() {
           <Button
             size="lg"
             variant="outline"
-            onClick={() => router.back()}
+            onClick={() => router.push("/dashboard")}
             className="w-full sm:w-auto gap-2 cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4" />

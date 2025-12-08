@@ -8,7 +8,7 @@ export function AppShell() {
   const { isCollapsed } = useSidebarStore();
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="min-h-screen w-full overflow-hidden bg-background">
       <AppSidebar />
       <div
         className={cn(
@@ -20,12 +20,12 @@ export function AppShell() {
           "ml-0"
         )}
       >
-        <Header />
-        <main className="flex-1 overflow-y-auto pt-16">
-          <div className="container mx-auto p-4 md:p-6">
+        <div className="flex-1 flex flex-col min-h-screen w-full">
+          <Header />
+          <main className="flex-1 p-6 overflow-auto mt-15">
             <Outlet />
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
     </div>
   );

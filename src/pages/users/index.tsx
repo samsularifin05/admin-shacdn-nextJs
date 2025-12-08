@@ -1,3 +1,5 @@
+import { ColumnDef } from "@tanstack/react-table";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -8,48 +10,83 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, UserPlus } from "lucide-react";
+import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
 
-const users = [
+// Sample data type
+type User = {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  status: "Active" | "Inactive";
+};
+
+// Generate more sample data for pagination demo
+const generateUsers = (count: number): User[] => {
+  const roles = ["Admin", "User", "Editor", "Viewer"];
+  const statuses: ("Active" | "Inactive")[] = ["Active", "Inactive"];
+
+  return Array.from({ length: count }, (_, i) => ({
+    id: i + 1,
+    name: `User ${i + 1}`,
+    email: `user${i + 1}@example.com`,
+    role: roles[Math.floor(Math.random() * roles.length)],
+    status: statuses[Math.floor(Math.random() * statuses.length)],
+  }));
+};
+
+const users = generateUsers(50); // Generate 50 users for pagination demo
+
+// Column definitions
+const columns: ColumnDef<User>[] = [
   {
-    id: 1,
-    name: "John Doe",
-    email: "john@example.com",
-    role: "Admin",
-    status: "Active",
+    accessorKey: "name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
   },
   {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane@example.com",
-    role: "User",
-    status: "Active",
+    accessorKey: "email",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Email" />
+    ),
   },
   {
-    id: 3,
-    name: "Bob Johnson",
-    email: "bob@example.com",
-    role: "User",
-    status: "Inactive",
+    accessorKey: "role",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Role" />
+    ),
   },
   {
-    id: 4,
-    name: "Alice Williams",
-    email: "alice@example.com",
-    role: "Editor",
-    status: "Active",
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.getValue("status") as string;
+      return (
+        <Badge variant={status === "Active" ? "default" : "secondary"}>
+          {status}
+        </Badge>
+      );
+    },
   },
   {
-    id: 5,
-    name: "Charlie Brown",
-    email: "charlie@example.com",
-    role: "User",
-    status: "Active",
+    id: "actions",
+    header: "Actions",
+    cell: () => {
+      return (
+        <Button variant="ghost" size="icon">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      );
+    },
   },
 ];
 
 export default function UsersPage() {
+  const [isLoading] = useState(false);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Users</h1>
@@ -66,62 +103,52 @@ export default function UsersPage() {
       <Card>
         <CardHeader>
           <CardTitle>All Users</CardTitle>
-          <CardDescription>A list of all users in your account</CardDescription>
+          <CardDescription>
+            A list of all users in your account with sorting and pagination
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="relative w-full overflow-auto">
-            <table className="w-full caption-bottom text-sm">
-              <thead className="[&_tr]:border-b">
-                <tr className="border-b transition-colors hover:bg-muted/50">
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Name
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Email
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Role
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Status
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="[&_tr:last-child]:border-0">
-                {users.map((user) => (
-                  <tr
-                    key={user.id}
-                    className="border-b transition-colors hover:bg-muted/50"
-                  >
-                    <td className="p-4 align-middle font-medium">
-                      {user.name}
-                    </td>
-                    <td className="p-4 align-middle">{user.email}</td>
-                    <td className="p-4 align-middle">{user.role}</td>
-                    <td className="p-4 align-middle">
-                      <Badge
-                        variant={
-                          user.status === "Active" ? "default" : "secondary"
-                        }
-                      >
-                        {user.status}
-                      </Badge>
-                    </td>
-                    <td className="p-4 align-middle">
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {/* Client-side pagination example */}
+          <DataTable
+            columns={columns}
+            data={users}
+            enableSearch
+            searchPlaceholder="Search all columns..."
+            isLoading={isLoading}
+            enableSorting
+            enableColumnVisibility
+          />
         </CardContent>
       </Card>
+
+      {/* Example of server-side pagination (commented out) */}
+      {/* 
+      <Card>
+        <CardHeader>
+          <CardTitle>Server-Side Pagination Example</CardTitle>
+          <CardDescription>
+            Data fetched from API with server-side pagination
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={columns}
+            data={serverData}
+            pageCount={totalPages}
+            manualPagination
+            onPaginationChange={(updater) => {
+              const newPagination = typeof updater === 'function' 
+                ? updater(pagination) 
+                : updater;
+              setPagination(newPagination);
+              // Fetch data from API with new pagination
+              fetchUsers(newPagination.pageIndex, newPagination.pageSize);
+            }}
+            isLoading={isLoadingServer}
+          />
+        </CardContent>
+      </Card>
+      */}
     </div>
   );
 }

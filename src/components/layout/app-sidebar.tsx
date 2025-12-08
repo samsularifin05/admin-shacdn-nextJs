@@ -261,14 +261,19 @@ export function AppSidebar() {
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
                 <span className="text-sm font-bold">SA</span>
               </div>
-              {!isCollapsed && (
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold">Shadcn Admin</span>
-                  <span className="text-xs text-muted-foreground">
-                    Vite + ShadcnUI
-                  </span>
-                </div>
-              )}
+              <div
+                className={cn(
+                  "flex flex-col transition-opacity duration-300",
+                  isCollapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
+                )}
+              >
+                <span className="text-sm font-semibold whitespace-nowrap">
+                  Shadcn Admin
+                </span>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  Vite + ShadcnUI
+                </span>
+              </div>
             </div>
             {/* Mobile Close Button */}
             <button

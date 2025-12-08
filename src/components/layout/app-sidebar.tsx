@@ -51,12 +51,7 @@ function MenuItem({
 
   const isChildActive = hasActiveChild(item.children);
 
-  // Auto-expand if child is active
-  useEffect(() => {
-    if (isChildActive && !isExpanded) {
-      toggleMenu(itemId, parentId);
-    }
-  }, [isChildActive, itemId, parentId]);
+  // Removed auto-expand logic to allow menus to close on navigation
 
   const handleClick = () => {
     if (hasChildren) {
@@ -213,9 +208,54 @@ export function AppSidebar() {
     });
   };
 
-  // Close mobile sidebar when route changes
+  // Close mobile sidebar and menus when route changes
   useEffect(() => {
     closeMobile();
+
+    // Check if current route is a child of any menu item
+    const isChildRoute = (
+      items: NavItem[],
+      parentIds: string[] = []
+    ): string[] => {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const currentId =
+          parentIds.length > 0
+            ? `${parentIds.join("-")}-${i}`
+            : `section-${navigation.findIndex((s) =>
+                s.items.includes(item)
+              )}-${i}`;
+
+        if (item.href === location.pathname) {
+          // Found the current route, return parent chain
+          return parentIds;
+        }
+
+        if (item.children) {
+          const result = isChildRoute(item.children, [...parentIds, currentId]);
+          if (
+            result.length > 0 ||
+            (result.length === 0 &&
+              item.children.some((c) => c.href === location.pathname))
+          ) {
+            return [...parentIds, currentId];
+          }
+        }
+      }
+      return [];
+    };
+
+    // Get parent chain for current route
+    const parentChain: string[] = [];
+    navigation.forEach((section) => {
+      const result = isChildRoute(section.items, []);
+      if (result.length > 0) {
+        parentChain.push(...result);
+      }
+    });
+
+    // Only keep menus in parent chain
+    setOpenMenus(parentChain);
   }, [location.pathname, closeMobile]);
 
   // Close mobile sidebar on escape key

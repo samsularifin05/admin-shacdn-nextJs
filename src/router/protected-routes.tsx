@@ -4,6 +4,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import DashboardPage from "@/pages/dashboard";
 import UsersPage from "@/pages/users";
 import SettingsPage from "@/pages/settings";
+import NotFoundPage from "@/pages/not-found";
 
 export const protectedRoutes: RouteObject = {
   path: "/",
@@ -24,6 +25,10 @@ export const protectedRoutes: RouteObject = {
     {
       path: "settings",
       element: <SettingsPage />,
+    },
+    {
+      path: "*",
+      element: <NotFoundPage />,
     },
   ],
 };

@@ -1,5 +1,7 @@
 import { RouteObject, Navigate } from "react-router-dom";
+import { PublicRoute } from "@/components/public-route";
 import LoginPage from "@/pages/auth/login";
+import NotFoundPage from "@/pages/not-found";
 
 export const publicRoutes: RouteObject = {
   path: "/",
@@ -10,7 +12,15 @@ export const publicRoutes: RouteObject = {
     },
     {
       path: "login",
-      element: <LoginPage />,
+      element: (
+        <PublicRoute>
+          <LoginPage />
+        </PublicRoute>
+      ),
+    },
+    {
+      path: "*",
+      element: <NotFoundPage />,
     },
   ],
 };

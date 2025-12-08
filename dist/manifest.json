@@ -1,0 +1,9 @@
+{
+  "name": "Shadcn Admin",
+  "short_name": "Admin",
+  "description": "Modern admin dashboard built with React and TypeScript",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

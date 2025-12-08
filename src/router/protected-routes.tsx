@@ -1,16 +1,25 @@
+import { lazy, Suspense } from "react";
 import { RouteObject } from "react-router-dom";
 import { ProtectedRoute } from "@/components/protected-route";
-import { AppShell } from "@/components/layout/app-shell";
-import DashboardPage from "@/pages/dashboard";
-import UsersPage from "@/pages/users";
-import SettingsPage from "@/pages/settings";
-import NotFoundPage from "@/pages/not-found";
+import { LoadingScreen } from "@/components/loading-screen";
+
+const DashboardPage = lazy(() => import("@/pages/dashboard"));
+const UsersPage = lazy(() => import("@/pages/users"));
+const SettingsPage = lazy(() => import("@/pages/settings"));
+const NotFoundPage = lazy(() => import("@/pages/not-found"));
+const AppShell = lazy(() =>
+  import("@/components/layout/app-shell").then((module) => ({
+    default: module.AppShell,
+  }))
+);
 
 export const protectedRoutes: RouteObject = {
   path: "/",
   element: (
     <ProtectedRoute>
-      <AppShell />
+      <Suspense fallback={<LoadingScreen />}>
+        <AppShell />
+      </Suspense>
     </ProtectedRoute>
   ),
   children: [

@@ -118,6 +118,9 @@ export function DataTable<TData, TValue>({
       <div className="rounded-md border">
         <div className="overflow-x-auto">
           <Table className="min-w-[600px]">
+            <caption className="sr-only">
+              Data table with sorting and pagination
+            </caption>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>

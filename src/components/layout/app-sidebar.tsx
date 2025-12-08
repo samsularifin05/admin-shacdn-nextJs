@@ -74,6 +74,8 @@ function MenuItem({
             isCollapsed ? "justify-center px-2" : "px-2"
           )}
           style={!isCollapsed ? { paddingLeft: `${paddingLeft}px` } : undefined}
+          aria-label={`${item.title} menu`}
+          aria-expanded={isExpanded}
         >
           <item.icon className="h-4 w-4 shrink-0" />
           {!isCollapsed && (
@@ -294,31 +296,28 @@ export function AppSidebar() {
           "lg:translate-x-0"
         )}
       >
+        {/* Sidebar Content */}
         <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className="flex h-16 items-center justify-between border-b px-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <span className="text-sm font-bold">SA</span>
+          <div className="flex h-16 items-center justify-between border-b px-6">
+            <Link to="/dashboard" className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <span className="text-lg font-bold">S</span>
               </div>
-              <div
+              <span
                 className={cn(
-                  "flex flex-col transition-opacity duration-300",
+                  "text-lg font-semibold transition-opacity duration-300",
                   isCollapsed ? "opacity-0 w-0 overflow-hidden" : "opacity-100"
                 )}
               >
-                <span className="text-sm font-semibold whitespace-nowrap">
-                  Shadcn Admin
-                </span>
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  Vite + ShadcnUI
-                </span>
-              </div>
-            </div>
+                Shadcn Admin
+              </span>
+            </Link>
             {/* Mobile Close Button */}
             <button
               onClick={closeMobile}
               className="lg:hidden rounded-md p-2 hover:bg-accent cursor-pointer"
+              aria-label="Close sidebar"
             >
               <X className="h-4 w-4" />
             </button>
@@ -326,7 +325,10 @@ export function AppSidebar() {
 
           {/* Navigation */}
           <MenuContext.Provider value={{ openMenus, toggleMenu }}>
-            <nav className="flex-1 overflow-y-auto p-4">
+            <nav
+              className="flex-1 overflow-y-auto p-4"
+              aria-label="Main navigation"
+            >
               <div className="space-y-6">
                 {navigation.map((section, sectionIndex) => (
                   <div key={section.title}>

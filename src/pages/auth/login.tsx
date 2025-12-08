@@ -66,6 +66,7 @@ export default function LoginPage() {
                 label="Email"
                 placeholder="admin@example.com"
                 disabled={isLoading}
+                autoComplete="email"
               />
 
               <FormInput
@@ -74,6 +75,7 @@ export default function LoginPage() {
                 label="Password"
                 placeholder="••••••••"
                 disabled={isLoading}
+                autoComplete="current-password"
               />
 
               <Button type="submit" className="w-full" disabled={isLoading}>

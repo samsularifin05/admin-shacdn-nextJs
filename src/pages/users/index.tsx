@@ -74,7 +74,7 @@ const columns: ColumnDef<User>[] = [
     header: "Actions",
     cell: () => {
       return (
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" aria-label="Action Table">
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       );

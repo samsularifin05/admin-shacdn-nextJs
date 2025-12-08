@@ -1,10 +1,18 @@
-import { RouteObject, Navigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { RouteObject, Navigate, Outlet } from "react-router-dom";
 import { PublicRoute } from "@/components/public-route";
-import LoginPage from "@/pages/auth/login";
-import NotFoundPage from "@/pages/not-found";
+import { LoadingScreen } from "@/components/loading-screen";
+
+const LoginPage = lazy(() => import("@/pages/auth/login"));
+const NotFoundPage = lazy(() => import("@/pages/not-found"));
 
 export const publicRoutes: RouteObject = {
   path: "/",
+  element: (
+    <Suspense fallback={<LoadingScreen />}>
+      <Outlet />
+    </Suspense>
+  ),
   children: [
     {
       index: true,

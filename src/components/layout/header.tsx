@@ -3,9 +3,9 @@ import { useSidebarStore } from "@/stores/sidebar-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { useThemeStore } from "@/stores/theme-store";
 import { cn } from "@/lib/utils";
-import { Search, Moon, Sun, Settings, Menu, Command } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Moon, Sun, Settings, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CommandMenu } from "@/components/command-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,6 +66,7 @@ export function Header() {
             size="icon"
             onClick={toggleMobile}
             className="h-9 w-9 lg:hidden"
+            aria-label="Open mobile menu"
           >
             <Menu className="h-4 w-4" />
           </Button>
@@ -76,6 +77,7 @@ export function Header() {
             size="icon"
             onClick={toggleCollapse}
             className="hidden lg:flex h-9 w-9"
+            aria-label="Toggle sidebar"
           >
             <Menu className="h-4 w-4" />
           </Button>
@@ -102,19 +104,9 @@ export function Header() {
           </nav>
         </div>
 
-        {/* Center Section - Search (Hidden on small screens) */}
+        {/* Center Section - Command Menu (Hidden on small screens) */}
         <div className="hidden lg:flex flex-1 max-w-md mx-4">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search..."
-              className="w-full pl-9 pr-4 h-9"
-            />
-            <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-              <Command className="h-3 w-3" />K
-            </kbd>
-          </div>
+          <CommandMenu />
         </div>
 
         {/* Right Section */}
@@ -138,7 +130,7 @@ export function Header() {
             asChild
             className="hidden sm:flex h-9 w-9"
           >
-            <Link to="/settings">
+            <Link to="/settings" aria-label="Settings">
               <Settings className="h-4 w-4" />
             </Link>
           </Button>
@@ -147,7 +139,11 @@ export function Header() {
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-9 w-9 rounded-full p-0">
+                <Button
+                  variant="ghost"
+                  className="h-9 w-9 rounded-full p-0"
+                  aria-label="User menu"
+                >
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
                     {user.name
                       .split(" ")

@@ -242,12 +242,16 @@ export function AppSidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-screen border-r bg-background transition-all duration-300",
+          "fixed left-0 top-0 z-50 h-screen border-r bg-background",
           // Desktop - always visible
-          "hidden lg:block",
+          "lg:block",
           isCollapsed ? "lg:w-16" : "lg:w-64",
-          // Mobile - show only when open
-          isMobileOpen && "block w-64 lg:hidden"
+          "lg:transition-[width] lg:duration-300 lg:ease-in-out",
+          // Mobile - slide in/out
+          "w-64 transition-transform duration-300 ease-in-out",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full",
+          // Desktop override - always on screen
+          "lg:translate-x-0"
         )}
       >
         <div className="flex h-full flex-col">

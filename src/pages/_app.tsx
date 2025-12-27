@@ -6,7 +6,13 @@ import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/protected-route";
 
 // Public routes that don't need AppShell (sidebar/header)
-const publicRoutes = ["/login", "/signup", "/forgot-password", "/"];
+const publicRoutes = [
+  "/auth/login",
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/",
+];
 
 // Error pages that should show AppShell but skip ProtectedRoute
 const errorPages = ["/404", "/_error"];

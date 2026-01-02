@@ -23,6 +23,7 @@ interface GeneratorConfig {
   moduleName: string;
   resourceName: string;
   tableName: string;
+  route?: string;
 }
 
 const config = JSON.parse(
@@ -36,6 +37,15 @@ console.log(`🗑️  Deleting module: ${resourceName}...`);
 const moduleDir = path.resolve(process.cwd(), "src/modules", resourceName);
 const apiDir = path.resolve(process.cwd(), "src/pages/api", resourceName);
 
+// Get page directory from route config
+let pageDir: string | null = null;
+if (config.route) {
+  const route = config.route.startsWith("/")
+    ? config.route.slice(1)
+    : config.route;
+  pageDir = path.resolve(process.cwd(), "src/pages", route);
+}
+
 // Helper to remove directory recursively
 const removeDir = (dir: string) => {
   if (fs.existsSync(dir)) {
@@ -48,6 +58,9 @@ const removeDir = (dir: string) => {
 
 removeDir(moduleDir);
 removeDir(apiDir);
+if (pageDir) {
+  removeDir(pageDir);
+}
 
 console.log("\n✅ Module Deleted Successfully!");
 // Remove from schema.prisma

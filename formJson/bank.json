@@ -5,18 +5,20 @@
   "route": "/admin/banks",
   "fields": [
     {
+      "name": "code",
+      "type": "string",
+      "label": "Bank Code",
+      "required": true,
+      "readOnlyOnEdit": true
+    },
+    {
       "name": "name",
       "type": "string",
       "label": "Bank Name",
       "required": true,
       "validation": { "min": 2 }
     },
-    {
-      "name": "code",
-      "type": "string",
-      "label": "Bank Code",
-      "required": true
-    },
+
     {
       "name": "category",
       "type": "select",

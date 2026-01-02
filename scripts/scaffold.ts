@@ -13,6 +13,7 @@ interface Field {
   defaultValue?: any;
   formula?: string;
   readOnly?: boolean;
+  readOnlyOnEdit?: boolean;
   validation?: {
     min?: number;
     max?: number;
@@ -298,6 +299,22 @@ const generateForm = () => {
             disabled={isLoading}
           />`;
       } else {
+        // Determine readonly prop
+        let readOnlyProp = "";
+        if (f.readOnly) {
+          readOnlyProp = "readOnly";
+        } else if (f.readOnlyOnEdit) {
+          readOnlyProp = "readOnly={!!initialData}";
+        }
+
+        // Determine className prop
+        let classNameProp = "";
+        if (f.readOnly) {
+          classNameProp = 'className="bg-muted"';
+        } else if (f.readOnlyOnEdit) {
+          classNameProp = 'className={initialData ? "bg-muted" : ""}';
+        }
+
         input = `
           <FormInput
             name="${f.name}"
@@ -305,8 +322,8 @@ const generateForm = () => {
             placeholder="${f.label}"
             type="${f.type === "number" ? "number" : "text"}"
             disabled={isLoading}
-            ${f.readOnly ? "readOnly" : ""}
-            ${f.readOnly ? 'className="bg-muted"' : ""}
+            ${readOnlyProp}
+            ${classNameProp}
           />`;
       }
       return input;

@@ -29,15 +29,10 @@ model User {
 
 
 
-model tm_banks {
-  id        Int      @id @default(autoincrement())
-  name      String   
-  code      String   
-  category      String   
-  balance      Float   
-  conversionRate      Float   
-  totalValue      Float   
-  isActive      Boolean   
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+
+
+
+
+
+
+

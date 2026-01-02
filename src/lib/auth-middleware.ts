@@ -13,6 +13,7 @@ export async function verifyAuth(
   res: NextApiResponse
 ): Promise<boolean> {
   // 0. Prevent direct browser navigation (Address Bar Access)
+  // REMOVED: This was causing issues with page refreshes if this middleware is used in getServerSideProps
   const fetchMode = req.headers["sec-fetch-mode"];
   if (fetchMode === "navigate") {
     res.redirect(307, "/");

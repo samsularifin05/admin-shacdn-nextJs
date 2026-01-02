@@ -8,11 +8,14 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuthStore();
+  const { isAuthenticated, isLoading, isHydrated } = useAuthStore();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
+    // Wait for hydration to finish before checking auth
+    if (!isHydrated) return;
+
     if (!isLoading) {
       if (!isAuthenticated) {
         router.replace({
@@ -23,9 +26,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         setIsAuthorized(true);
       }
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, router, isHydrated]);
 
-  if (isLoading || !isAuthorized) {
+  if (!isHydrated || isLoading || !isAuthorized) {
     return <LoadingScreen />;
   }
 

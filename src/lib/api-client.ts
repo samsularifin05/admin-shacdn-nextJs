@@ -48,6 +48,7 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
   // 4. Execute Fetch
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
+    credentials: "include", // Ensure cookies are always sent
     headers: mergedHeaders,
   });
 
@@ -62,6 +63,12 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
       field = data.field;
     } catch (e) {
       // Fallback if not JSON
+    }
+
+    if (response.status === 401) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+      }
     }
 
     const error = new Error(errorMessage) as any;

@@ -19,7 +19,17 @@ export default function App({ Component, pageProps }: AppProps) {
   // Avoid hydration mismatch by waiting until mounted
   useEffect(() => {
     setMounted(true);
-  }, []);
+
+    const handleUnauthorized = () => {
+      useAuthStore.getState().logout();
+      router.replace("/auth/login");
+    };
+
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    return () => {
+      window.removeEventListener("auth:unauthorized", handleUnauthorized);
+    };
+  }, [router]);
 
   const isAdminRoute = router.pathname.startsWith("/admin");
   const isErrorPage = errorPages.includes(router.pathname);

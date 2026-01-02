@@ -9,6 +9,7 @@ import { Activity, CreditCard, DollarSign, Users } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 
 export default function DashboardPage() {
+  console.log("Rendering DashboardPage");
   const stats = [
     {
       title: "Total Revenue",

@@ -13,7 +13,7 @@ export function PublicRoute({ children }: PublicRouteProps) {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.replace("/dashboard");
+      router.replace("/admin/dashboard");
     }
   }, [isLoading, isAuthenticated, router]);
 

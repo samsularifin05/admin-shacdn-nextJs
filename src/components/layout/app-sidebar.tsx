@@ -394,7 +394,7 @@ export function AppSidebar() {
           {/* Logo */}
           <div className="flex h-16 items-center justify-between border-b px-6">
             <Link
-              href="/dashboard"
+              href="/admin/dashboard"
               scroll={false}
               prefetch={false}
               className="flex items-center gap-2"

@@ -39,26 +39,34 @@ export const navigation: NavSection[] = [
   {
     title: "General",
     items: [
-      { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { title: "Tasks", href: "/tasks", icon: ListTodo },
-      { title: "Apps", href: "/apps", icon: Package },
-      { title: "Chats", href: "/chats", icon: MessageSquare },
+      { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+      { title: "Tasks", href: "/admin/tasks", icon: ListTodo },
+      { title: "Apps", href: "/admin/apps", icon: Package },
+      { title: "Chats", href: "/admin/chats", icon: MessageSquare },
       {
         title: "Users",
         icon: Users,
         children: [
-          { title: "All Users", href: "/users", icon: Users },
+          { title: "All Users", href: "/admin/users", icon: Users },
           {
             title: "User Roles",
             icon: Lock,
             children: [
               {
                 title: "Admin Roles",
-                href: "/users/roles/admin",
+                href: "/admin/users/roles/admin",
                 icon: Shield,
               },
-              { title: "User Roles", href: "/users/roles/user", icon: UserCog },
-              { title: "Guest Roles", href: "/users/roles/guest", icon: Users },
+              {
+                title: "User Roles",
+                href: "/admin/users/roles/user",
+                icon: UserCog,
+              },
+              {
+                title: "Guest Roles",
+                href: "/admin/users/roles/guest",
+                icon: Users,
+              },
             ],
           },
           {
@@ -67,17 +75,17 @@ export const navigation: NavSection[] = [
             children: [
               {
                 title: "View Permissions",
-                href: "/users/permissions/view",
+                href: "/admin/users/permissions/view",
                 icon: Key,
               },
               {
                 title: "Edit Permissions",
-                href: "/users/permissions/edit",
+                href: "/admin/users/permissions/edit",
                 icon: Key,
               },
               {
                 title: "Delete Permissions",
-                href: "/users/permissions/delete",
+                href: "/admin/users/permissions/delete",
                 icon: Key,
               },
             ],
@@ -92,17 +100,17 @@ export const navigation: NavSection[] = [
     items: [
       {
         title: "Users",
-        href: "/users",
+        href: "/admin/users",
         icon: Users,
       },
       {
         title: "Products",
-        href: "/products",
+        href: "/admin/products",
         icon: ShoppingBag,
       },
       {
         title: "Orders",
-        href: "/orders",
+        href: "/admin/orders",
         icon: FileText,
         badge: "3",
       },
@@ -114,17 +122,17 @@ export const navigation: NavSection[] = [
     items: [
       {
         title: "Mail",
-        href: "/mail",
+        href: "/admin/mail",
         icon: Mail,
       },
       {
         title: "Chat",
-        href: "/chat",
+        href: "/admin/chat",
         icon: MessageSquare,
       },
       {
         title: "Calendar",
-        href: "/calendar",
+        href: "/admin/calendar",
         icon: Calendar,
       },
     ],
@@ -135,27 +143,27 @@ export const navigation: NavSection[] = [
     items: [
       {
         title: "Settings",
-        href: "/settings",
+        href: "/admin/settings",
         icon: Settings,
       },
       {
         title: "Components",
-        href: "/components",
+        href: "/admin/components",
         icon: Layers,
         children: [
           {
             title: "UI Elements",
-            href: "/components/ui",
+            href: "/admin/components/ui",
           },
           {
             title: "Forms",
-            href: "/components/forms",
+            href: "/admin/components/forms",
           },
         ],
       },
       {
         title: "Help",
-        href: "/help",
+        href: "/admin/help",
         icon: HelpCircle,
       },
     ],

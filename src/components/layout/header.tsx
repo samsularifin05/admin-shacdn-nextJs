@@ -17,10 +17,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const navTabs = [
-  { name: "Overview", href: "/dashboard" },
-  { name: "Customers", href: "/customers" },
-  { name: "Products", href: "/products" },
-  { name: "Settings", href: "/settings" },
+  { name: "Overview", href: "/admin/dashboard" },
+  { name: "Customers", href: "/admin/customers" },
+  { name: "Products", href: "/admin/products" },
+  { name: "Settings", href: "/admin/settings" },
 ];
 
 export function Header() {
@@ -131,7 +131,7 @@ export function Header() {
             asChild
             className="hidden sm:flex h-9 w-9"
           >
-            <Link href="/settings" aria-label="Settings">
+            <Link href="/admin/settings" aria-label="Settings">
               <Settings className="h-4 w-4" />
             </Link>
           </Button>
@@ -167,7 +167,7 @@ export function Header() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/settings">Settings</Link>
+                  <Link href="/admin/settings">Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>Log out</DropdownMenuItem>

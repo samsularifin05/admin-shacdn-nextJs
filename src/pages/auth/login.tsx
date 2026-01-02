@@ -38,7 +38,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       await login(data.email, data.password);
-      const from = (router.query.from as string) || "/dashboard";
+      const from = (router.query.from as string) || "/admin/dashboard";
       router.replace(from);
     } catch (error) {
       console.error("Login failed:", error);

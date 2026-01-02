@@ -96,7 +96,7 @@ export const navigation: NavSection[] = [
   },
   {
     title: "Management",
-    collapsible: true,
+    // collapsible: true,
     items: [
       {
         title: "Users",
@@ -118,7 +118,7 @@ export const navigation: NavSection[] = [
   },
   {
     title: "Apps",
-    collapsible: true,
+    // collapsible: true,
     items: [
       {
         title: "Mail",

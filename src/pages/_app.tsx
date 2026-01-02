@@ -7,16 +7,7 @@ import { ProtectedRoute } from "@/components/protected-route";
 import { useAuthStore } from "@/stores/auth-store";
 import { useEffect, useState } from "react";
 
-// Public routes that don't need AppShell (sidebar/header)
-const publicRoutes = [
-  "/auth/login",
-  "/login",
-  "/signup",
-  "/forgot-password",
-  "/",
-];
-
-// Error pages that should be accessible without authentication
+// Error pages that should be handled specially
 const errorPages = ["/404", "/_error"];
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -29,8 +20,9 @@ export default function App({ Component, pageProps }: AppProps) {
     setMounted(true);
   }, []);
 
-  const isPublicRoute = publicRoutes.includes(router.pathname);
+  const isAdminRoute = router.pathname.startsWith("/admin");
   const isErrorPage = errorPages.includes(router.pathname);
+  const isPublicRoute = !isAdminRoute && !isErrorPage;
 
   // While mounting, show nothing to prevent hydration flashing
   if (!mounted) {

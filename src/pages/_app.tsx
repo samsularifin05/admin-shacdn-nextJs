@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { ProtectedRoute } from "@/components/protected-route";
 import { useAuthStore } from "@/stores/auth-store";
 import { useEffect, useState } from "react";
+import { ModalProvider } from "@/components/providers/modal-provider";
 
 // Error pages that should be handled specially
 const errorPages = ["/404", "/_error"];
@@ -31,7 +32,12 @@ export default function App({ Component, pageProps }: AppProps) {
 
   // Force landing page and other public routes to render without any shell
   if (isPublicRoute) {
-    return <Component {...pageProps} />;
+    return (
+      <>
+        <ModalProvider />
+        <Component {...pageProps} />
+      </>
+    );
   }
 
   // For error pages (like 404):
@@ -40,20 +46,31 @@ export default function App({ Component, pageProps }: AppProps) {
   if (isErrorPage) {
     if (isAuthenticated) {
       return (
-        <AppShell>
-          <Component {...pageProps} />
-        </AppShell>
+        <>
+          <ModalProvider />
+          <AppShell>
+            <Component {...pageProps} />
+          </AppShell>
+        </>
       );
     }
-    return <Component {...pageProps} />;
+    return (
+      <>
+        <ModalProvider />
+        <Component {...pageProps} />
+      </>
+    );
   }
 
   // For administrative or any other protected pages
   return (
-    <ProtectedRoute>
-      <AppShell>
-        <Component {...pageProps} />
-      </AppShell>
-    </ProtectedRoute>
+    <>
+      <ModalProvider />
+      <ProtectedRoute>
+        <AppShell>
+          <Component {...pageProps} />
+        </AppShell>
+      </ProtectedRoute>
+    </>
   );
 }

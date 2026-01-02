@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, Loader2 } from "lucide-react";
 import { useModalStore } from "@/stores/modal-store";
-import { User } from "../dto/user.schema";
+import { User } from "../types/user.schema";
 import { userService } from "../services/user.service";
 
 interface UserDeleteProps {

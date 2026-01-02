@@ -4,12 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2, UserPlus, Eye, UserCheck } from "lucide-react";
 import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
-import { User } from "../dto/user.schema";
+import { User } from "../types/user.schema";
 import { userService } from "../services/user.service";
 import { useModalStore } from "@/stores/modal-store";
-import { UserForm } from "../form/user-form";
-import { UserDelete } from "../form/user-delete";
-import { UserDetail } from "../form/user-detail";
+import { UserForm } from "./user-form";
+import { UserDelete } from "./user-delete";
+import { UserDetail } from "./user-detail";
 
 export const UserTable = () => {
   const [users, setUsers] = useState<User[]>([]);

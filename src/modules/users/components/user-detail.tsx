@@ -1,4 +1,4 @@
-import { User } from "../dto/user.schema";
+import { User } from "../types/user.schema";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 

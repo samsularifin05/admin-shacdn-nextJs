@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { FormInput, FormSelect } from "@/components/form";
 import { useModalStore } from "@/stores/modal-store";
-import { UserFormData, userSchema, User } from "../dto/user.schema";
+import { UserFormData, userSchema, User } from "../types/user.schema";
 import { userService } from "../services/user.service";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";

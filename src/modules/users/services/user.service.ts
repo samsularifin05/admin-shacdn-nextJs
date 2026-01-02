@@ -1,4 +1,4 @@
-import { User, UserFormData } from "../dto/user.schema";
+import { User, UserFormData } from "../types/user.schema";
 
 // Simulating API latency
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

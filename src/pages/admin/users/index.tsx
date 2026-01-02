@@ -1,5 +1,5 @@
 import { PageLayout } from "@/components/page-layout";
-import { UserTable } from "@/components/users/table/user-table";
+import { UserTable } from "@/modules/users/components/user-table";
 import { PanelAdmin } from "@/components/ui/panelAdmin";
 
 export default function UsersPage() {

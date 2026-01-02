@@ -45,6 +45,8 @@ interface DataTableProps<TData, TValue> {
   // Search
   enableSearch?: boolean;
   searchPlaceholder?: string;
+  onSearch?: (term: string) => void;
+  manualFiltering?: boolean;
   // Pagination
   pageCount?: number;
   manualPagination?: boolean;
@@ -67,6 +69,8 @@ export function DataTable<TData, TValue>({
   data,
   enableSearch = false,
   searchPlaceholder,
+  onSearch,
+  manualFiltering = false,
   pageCount,
   actions = [],
   manualPagination = false,
@@ -95,6 +99,15 @@ export function DataTable<TData, TValue>({
   const pagination = externalPagination || internalPagination;
   const handlePaginationChange = onPaginationChange || setInternalPagination;
 
+  const handleGlobalFilterChange: OnChangeFn<any> = (updaterOrValue) => {
+    const value =
+      typeof updaterOrValue === "function"
+        ? updaterOrValue(globalFilter)
+        : updaterOrValue;
+    setGlobalFilter(value);
+    onSearch?.(value);
+  };
+
   const table = useReactTable({
     data,
     columns,
@@ -110,8 +123,9 @@ export function DataTable<TData, TValue>({
       : getPaginationRowModel(),
     getSortedRowModel: enableSorting ? getSortedRowModel() : undefined,
     // Filtering
+    manualFiltering,
     onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange: handleGlobalFilterChange,
     getFilteredRowModel: getFilteredRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),

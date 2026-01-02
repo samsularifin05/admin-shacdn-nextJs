@@ -20,11 +20,25 @@ export const UserTable = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
+  // Search State
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
   // Pagination State
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
+
+  // Debounce search and reset pagination
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Refs for preventing double fetching in Strict Mode
   const isFetchingRef = useRef(false);
@@ -38,7 +52,7 @@ export const UserTable = () => {
     const limit = pagination.pageSize;
 
     // Create a unique key for the current request
-    const requestKey = `${page}-${limit}`;
+    const requestKey = `${page}-${limit}-${debouncedSearch}`;
 
     // Prevent double fetching if:
     // 1. Aleady fetching
@@ -50,7 +64,7 @@ export const UserTable = () => {
     setIsLoading(true);
 
     try {
-      const result = await userService.getUsers(page, limit);
+      const result = await userService.getUsers(page, limit, debouncedSearch);
 
       setData(result.users);
       setTotalCount(result.meta.total);
@@ -64,7 +78,7 @@ export const UserTable = () => {
       setIsLoading(false);
       isFetchingRef.current = false;
     }
-  }, [pagination.pageIndex, pagination.pageSize]);
+  }, [pagination.pageIndex, pagination.pageSize, debouncedSearch]);
 
   /**
    * Effect to trigger fetch on pagination change
@@ -184,6 +198,8 @@ export const UserTable = () => {
       data={data}
       enableSearch
       searchPlaceholder="Search users..."
+      onSearch={setSearch}
+      manualFiltering
       isLoading={isLoading}
       actions={tableActions}
       enableSorting

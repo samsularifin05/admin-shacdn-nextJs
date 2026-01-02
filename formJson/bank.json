@@ -1,0 +1,53 @@
+{
+  "moduleName": "Bank",
+  "resourceName": "banks",
+  "tableName": "tm_banks",
+  "route": "/admin/banks",
+  "fields": [
+    {
+      "name": "name",
+      "type": "string",
+      "label": "Bank Name",
+      "required": true,
+      "validation": { "min": 2 }
+    },
+    {
+      "name": "code",
+      "type": "string",
+      "label": "Bank Code",
+      "required": true
+    },
+    {
+      "name": "category",
+      "type": "select",
+      "label": "Category",
+      "options": ["Local", "International"],
+      "required": true
+    },
+    {
+      "name": "balance",
+      "type": "number",
+      "label": "Default Balance",
+      "defaultValue": 0
+    },
+    {
+      "name": "conversionRate",
+      "type": "number",
+      "label": "Conversion Rate",
+      "defaultValue": 1
+    },
+    {
+      "name": "totalValue",
+      "type": "number",
+      "label": "Total Value (Calculated)",
+      "formula": "balance * conversionRate",
+      "readOnly": true
+    },
+    {
+      "name": "isActive",
+      "type": "boolean",
+      "label": "Active Status",
+      "defaultValue": true
+    }
+  ]
+}

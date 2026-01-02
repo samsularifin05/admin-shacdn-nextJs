@@ -13,7 +13,9 @@
     "prisma:studio": "npx prisma studio",
     "db:push": "npx prisma db push",
     "db:reset": "npx prisma migrate reset",
-    "db:seed": "npx prisma db seed"
+    "db:seed": "npx prisma db seed",
+    "generate:module": "npx tsx scripts/scaffold.ts",
+    "delete:module": "npx tsx scripts/delete-module.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

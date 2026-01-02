@@ -8,6 +8,7 @@ interface FormCheckboxProps {
   label?: string;
   description?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export function FormCheckbox({
@@ -15,6 +16,7 @@ export function FormCheckbox({
   label,
   description,
   className,
+  disabled,
 }: FormCheckboxProps) {
   const {
     // register,
@@ -34,6 +36,7 @@ export function FormCheckbox({
           id={name}
           checked={value}
           onCheckedChange={(checked) => setValue(name, checked)}
+          disabled={disabled}
           className={cn(error && "border-destructive")}
         />
         {label && (

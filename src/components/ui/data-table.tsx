@@ -14,8 +14,16 @@ import {
   getFacetedRowModel,
   getFacetedUniqueValues,
 } from "@tanstack/react-table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useState } from "react";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import {
   Table,
@@ -26,8 +34,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DataTablePagination } from "./data-table-pagination";
-import { DataTableToolbar } from "./data-table-toolbar";
+import { DataTableToolbar, type ButtonConfig } from "./data-table-toolbar";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "./button";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -41,9 +51,11 @@ interface DataTableProps<TData, TValue> {
   onPaginationChange?: OnChangeFn<PaginationState>;
   // Loading
   isLoading?: boolean;
+  actions?: ButtonConfig<TData>[];
   // Features
   enableSorting?: boolean;
   enableColumnVisibility?: boolean;
+
   // Styling
   className?: string;
 }
@@ -54,6 +66,7 @@ export function DataTable<TData, TValue>({
   enableSearch = false,
   searchPlaceholder,
   pageCount,
+  actions = [],
   manualPagination = false,
   onPaginationChange,
   isLoading = false,
@@ -70,6 +83,7 @@ export function DataTable<TData, TValue>({
     pageIndex: 0,
     pageSize: 10,
   });
+  const isMobile = useIsMobile();
 
   const table = useReactTable({
     data,
@@ -111,7 +125,11 @@ export function DataTable<TData, TValue>({
     <div className={cn("space-y-2", className)}>
       {/* Toolbar with Search */}
       {enableSearch && (
-        <DataTableToolbar table={table} searchPlaceholder={searchPlaceholder} />
+        <DataTableToolbar
+          table={table}
+          searchPlaceholder={searchPlaceholder}
+          actions={actions}
+        />
       )}
 
       {/* Table with horizontal scroll on mobile */}
@@ -136,6 +154,10 @@ export function DataTable<TData, TValue>({
                       </TableHead>
                     );
                   })}
+                  {actions.some(
+                    (a) =>
+                      (a.group === "action" || !a.isAdd) && a.show !== false
+                  ) && <TableHead className="text-center">Actions</TableHead>}
                 </TableRow>
               ))}
             </TableHeader>
@@ -149,6 +171,14 @@ export function DataTable<TData, TValue>({
                         <div className="h-4 bg-muted animate-pulse rounded" />
                       </TableCell>
                     ))}
+                    {actions.some(
+                      (a) =>
+                        (a.group === "action" || !a.isAdd) && a.show !== false
+                    ) && (
+                      <TableCell className="text-center">
+                        <div className="h-4 bg-muted animate-pulse rounded" />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               ) : table.getRowModel().rows?.length ? (
@@ -165,6 +195,60 @@ export function DataTable<TData, TValue>({
                         )}
                       </TableCell>
                     ))}
+                    {actions.some((a) => !a.isAdd && a.show !== false) && (
+                      <TableCell className="text-center">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 p-0"
+                            >
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-[160px]"
+                          >
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            {actions
+                              .filter(
+                                (a) =>
+                                  (a.group === "action" || !a.isAdd) &&
+                                  a.show !== false
+                              )
+                              .map((action, idx) => {
+                                if (action.isSeparator) {
+                                  return <DropdownMenuSeparator key={idx} />;
+                                }
+                                return (
+                                  <DropdownMenuItem
+                                    key={idx}
+                                    onClick={() =>
+                                      action.onClick?.(row.original as TData)
+                                    }
+                                    className={action.className}
+                                    disabled={
+                                      typeof action.disabled === "function"
+                                        ? action.disabled(row.original as TData)
+                                        : action.disabled
+                                    }
+                                  >
+                                    {action.icon && (
+                                      <span className="mr-2">
+                                        {action.icon}
+                                      </span>
+                                    )}
+                                    {action.label}
+                                  </DropdownMenuItem>
+                                );
+                              })}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               ) : (

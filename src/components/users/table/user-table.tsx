@@ -1,31 +1,17 @@
 import { ColumnDef } from "@tanstack/react-table";
-import {
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
-  forwardRef,
-  useImperativeHandle,
-} from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Pencil, Trash2, UserCheck } from "lucide-react";
+import { Pencil, Trash2, UserPlus, Eye, UserCheck } from "lucide-react";
 import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
 import { User } from "../dto/user.schema";
 import { userService } from "../services/user.service";
 import { useModalStore } from "@/stores/modal-store";
 import { UserForm } from "../form/user-form";
-import { UserDelete } from "../delete/user-delete";
+import { UserDelete } from "../form/user-delete";
+import { UserDetail } from "../form/user-detail";
 
-export const UserTable = forwardRef((props, ref) => {
+export const UserTable = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { onOpen } = useModalStore();
@@ -42,19 +28,23 @@ export const UserTable = forwardRef((props, ref) => {
     }
   }, []);
 
-  // Expose refresh function to parent via ref
-  useImperativeHandle(ref, () => ({
-    refresh: fetchUsers,
-  }));
-
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
 
+  const handleViewUser = (user: User) => {
+    onOpen("view", {
+      title: "User Details",
+      size: "lg", // Menggunakan ukuran LG
+      position: "top", // Posisi di atas
+      content: <UserDetail user={user} />,
+    });
+  };
+
   const handleEditUser = (user: User) => {
     onOpen("form", {
       title: "Edit User",
-      description: `Updating information for ${user.name}`,
+      size: "md", // Menggunakan ukuran MD
       content: <UserForm initialData={user} onSuccess={fetchUsers} />,
     });
   };
@@ -62,11 +52,75 @@ export const UserTable = forwardRef((props, ref) => {
   const handleDeleteUser = (user: User) => {
     onOpen("delete", {
       title: "Delete User",
-      description: "Confirmation Required",
+      size: "sm", // Menggunakan ukuran SM
       content: <UserDelete user={user} onSuccess={fetchUsers} />,
-      // Footer is now handled inside UserDelete component for better encapsulation
     });
   };
+
+  const handleAddUser = () => {
+    onOpen("form", {
+      title: "Add New User",
+      size: "md", // Menggunakan ukuran MD
+      content: <UserForm onSuccess={fetchUsers} />,
+    });
+  };
+
+  const tableActions: ButtonConfig<User>[] = useMemo(
+    () => [
+      {
+        label: "Add User",
+        icon: <UserPlus className="h-4 w-4" />,
+        onClick: () => handleAddUser(),
+        isAdd: true,
+        show: true,
+        group: "toolbar",
+      },
+      {
+        label: "Penjualan",
+        icon: <UserPlus className="h-4 w-4" />,
+        onClick: () => handleAddUser(),
+        isAdd: true,
+        show: true,
+        group: "toolbar",
+        variant: "outline",
+      },
+      {
+        label: "View Details",
+        icon: <Eye className="h-4 w-4" />,
+        onClick: (row?: User) => row && handleViewUser(row),
+        show: true,
+        group: "action",
+      },
+      {
+        label: "Edit User",
+        icon: <Pencil className="h-4 w-4" />,
+        onClick: (row?: User) => row && handleEditUser(row),
+        show: true,
+        group: "action",
+      },
+      {
+        label: "Toggle Status",
+        icon: <UserCheck className="h-4 w-4" />,
+        onClick: (row?: User) => row && alert(`Status toggled for ${row.name}`),
+        show: true,
+        group: "action",
+      },
+      {
+        isSeparator: true,
+        show: true,
+        group: "action",
+      },
+      {
+        label: "Delete",
+        icon: <Trash2 className="h-4 w-4" />,
+        onClick: (row?: User) => row && handleDeleteUser(row),
+        show: true,
+        group: "action",
+        className: "text-destructive focus:text-destructive",
+      },
+    ],
+    [fetchUsers]
+  );
 
   const columns: ColumnDef<User>[] = useMemo(
     () => [
@@ -100,41 +154,6 @@ export const UserTable = forwardRef((props, ref) => {
           );
         },
       },
-      {
-        id: "actions",
-        header: "Actions",
-        cell: ({ row }) => {
-          const user = row.original;
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[160px]">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                  <Pencil className="mr-2 h-4 w-4" /> Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => alert(`Status toggled for ${user.name}`)}
-                >
-                  <UserCheck className="mr-2 h-4 w-4" /> Toggle Status
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => handleDeleteUser(user)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" /> Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          );
-        },
-      },
     ],
     []
   );
@@ -146,10 +165,11 @@ export const UserTable = forwardRef((props, ref) => {
       enableSearch
       searchPlaceholder="Search users..."
       isLoading={isLoading}
+      actions={tableActions}
       enableSorting
       enableColumnVisibility
     />
   );
-});
+};
 
 UserTable.displayName = "UserTable";

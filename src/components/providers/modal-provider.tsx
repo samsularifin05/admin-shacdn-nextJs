@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { useModalStore } from "@/stores/modal-store";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 export function ModalProvider() {
   const { isOpen, onClose, type, data } = useModalStore();
@@ -20,11 +21,36 @@ export function ModalProvider() {
     return null;
   }
 
-  // You can add logic here to render different modal contents based on 'type'
-  // For now, this is a generic implementation
+  const modalSizes = {
+    sm: "sm:max-w-sm",
+    md: "sm:max-w-md",
+    lg: "sm:max-w-lg",
+    xl: "sm:max-w-xl",
+    "2xl": "sm:max-w-2xl",
+    "3xl": "sm:max-w-3xl",
+    "4xl": "sm:max-w-4xl",
+    "5xl": "sm:max-w-5xl",
+    full: "sm:max-w-[95vw]",
+  };
+
+  const modalPositions = {
+    center: "top-[50%] translate-y-[-50%]",
+    top: "top-[10%] translate-y-0",
+  };
+
+  const sizeClass = modalSizes[data.size as keyof typeof modalSizes] || "";
+  const positionKey = (data.position as keyof typeof modalPositions) || "top";
+  const positionClass = modalPositions[positionKey];
+
+  const selectedClassName = cn(
+    sizeClass || data.className || "sm:max-w-[425px]",
+    "left-[50%] translate-x-[-50%]",
+    positionClass
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className={selectedClassName}>
         <DialogHeader>
           <DialogTitle>{data.title || "Modal Title"}</DialogTitle>
           {data.description && (

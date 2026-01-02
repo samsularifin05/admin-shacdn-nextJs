@@ -3,25 +3,18 @@ import { addSignatureHeaders } from "./signature";
 const API_BASE_URL = "";
 
 /**
- * Custom Fetch Wrapper to automatically add Security Signatures
+ * Custom Fetch Wrapper
+ * NOW SECURE: Uses Cookies for authentication.
+ * X-Signature is temporarily disabled for Client-Side requests to keep localStorage clean,
+ * as HTTP-Only cookies provide a stronger and cleaner security layer.
  */
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
-  // 1. Get Token safely
-  let token = "";
-  if (typeof window !== "undefined") {
-    token = localStorage.getItem("token") || "";
-  }
-
-  // 2. Prepare Base Headers
+  // 1. Prepare Base Headers
   const defaultHeaders: Record<string, string> = {
     "Content-Type": "application/json",
   };
 
-  if (token) {
-    defaultHeaders["Authorization"] = `Bearer ${token}`;
-  }
-
-  // 3. Merge headers safely
+  // 2. Merge headers safely
   let inputHeaders: Record<string, string> = {};
   if (options.headers) {
     if (options.headers instanceof Headers) {
@@ -42,26 +35,23 @@ async function apiRequest(endpoint: string, options: RequestInit = {}) {
     ...inputHeaders,
   };
 
-  // 4. Automatically Add Signature (ONLY for local /api/ endpoints)
-  if (endpoint.startsWith("/api/") || endpoint.startsWith("api/")) {
-    console.log(`[API REQUEST] Adding signature to: ${endpoint}`);
-    mergedHeaders = await addSignatureHeaders(token, mergedHeaders);
-  }
+  // NOTE: Auth Token is now handled automatically by the browser via HTTP-Only Cookies.
+  // We don't need to manually inject the Authorization header anymore for browser requests.
 
-  // Debug: Log final headers to console (Browser)
+  // 3. Debug logging
   if (typeof window !== "undefined") {
     console.group(`HTTP ${options.method || "GET"} ${endpoint}`);
     console.log("Headers:", mergedHeaders);
     console.groupEnd();
   }
 
-  // 5. Execute Fetch
+  // 4. Execute Fetch
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: mergedHeaders,
   });
 
-  // 6. Handle Global Response
+  // 5. Handle Global Response
   if (!response.ok) {
     let errorMessage = "Request failed";
     let field = undefined;

@@ -491,8 +491,8 @@ export function AppSidebar() {
                 )}
                 {!isCollapsed && (
                   <button
-                    onClick={() => {
-                      logout();
+                    onClick={async () => {
+                      await logout();
                       router.replace("/auth/login");
                     }}
                     className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-destructive transition-colors cursor-pointer"
@@ -504,8 +504,8 @@ export function AppSidebar() {
               </div>
               {isCollapsed && (
                 <button
-                  onClick={() => {
-                    logout();
+                  onClick={async () => {
+                    await logout();
                     router.replace("/auth/login");
                   }}
                   className="mt-2 flex w-full justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-destructive transition-colors cursor-pointer"

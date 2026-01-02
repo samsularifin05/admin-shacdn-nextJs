@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { userServerLogic } from "@/modules/users/server/user.server";
 import jwt from "jsonwebtoken";
+import { serialize } from "cookie";
 
 const JWT_SECRET = process.env.JWT_SECRET || "r4h4s14_su93r_s3kr3t";
 
@@ -32,9 +33,21 @@ export default async function handler(
       { expiresIn: "1d" }
     );
 
+    // Set cookie
+    res.setHeader(
+      "Set-Cookie",
+      serialize("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24, // 1 day
+      })
+    );
+
     return res.status(200).json({
       message: "Login successful",
-      token,
+      token, // Keep token in response for the auth store and signature headers
       user,
     });
   } catch (error: any) {

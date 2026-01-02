@@ -12,11 +12,10 @@ interface User {
 
 interface AuthState {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   setUser: (user: User | null) => void;
 }
 
@@ -24,7 +23,6 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      token: null,
       isAuthenticated: false,
       isLoading: false,
 
@@ -39,11 +37,11 @@ export const useAuthStore = create<AuthState>()(
 
           const data = await response.json();
 
-          localStorage.setItem("token", data.token);
+          // We no longer store the token in localStorage manually.
+          // The server now sets an HttpOnly cookie.
 
           set({
             user: data.user,
-            token: data.token,
             isAuthenticated: true,
             isLoading: false,
           });
@@ -53,13 +51,18 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      logout: () => {
-        localStorage.removeItem("token");
-        set({
-          user: null,
-          token: null,
-          isAuthenticated: false,
-        });
+      logout: async () => {
+        try {
+          // Tell server to clear the cookie
+          await apiClient.post("/api/auth/logout");
+        } catch (error) {
+          console.error("Failed to logout from server:", error);
+        } finally {
+          set({
+            user: null,
+            isAuthenticated: false,
+          });
+        }
       },
 
       setUser: (user: User | null) => {
@@ -71,9 +74,9 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
+      // Only persist the user profile, NOT the token
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
     }

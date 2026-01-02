@@ -173,7 +173,7 @@ export function Header() {
                 <DropdownMenuItem
                   className="cursor-pointer text-destructive focus:text-destructive"
                   onClick={async () => {
-                    logout();
+                    await logout();
                     router.replace("/auth/login");
                   }}
                 >

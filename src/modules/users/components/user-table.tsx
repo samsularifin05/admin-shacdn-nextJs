@@ -1,68 +1,71 @@
 import { ColumnDef, PaginationState } from "@tanstack/react-table";
-import { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/router";
+import { useMemo, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2, UserPlus, Eye } from "lucide-react";
 import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
 import { User } from "../types/user.schema";
 import { useModalStore } from "@/stores/modal-store";
-import { userService } from "../services/user.service";
 import { UserForm } from "./user-form";
 import { UserDelete } from "./user-delete";
 import { UserDetail } from "./user-detail";
 
-export const UserTable = () => {
-  const [data, setData] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface UserTableProps {
+  initialData?: User[];
+  meta?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
 
-  // Single source of truth for pagination
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  });
-
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-
+export const UserTable = ({ initialData = [], meta }: UserTableProps) => {
+  const router = useRouter();
   const { onOpen } = useModalStore();
 
-  // Ref to prevent double-fetching on mount (StrictMode)
-  const isFetchingRef = useRef(false);
-  const lastFetchRef = useRef<string>("");
+  // Current pagination state from URL (Source of Truth)
+  const pagination = useMemo<PaginationState>(
+    () => ({
+      pageIndex: (meta?.page || 1) - 1,
+      pageSize: meta?.limit || 10,
+    }),
+    [meta?.page, meta?.limit]
+  );
 
-  const fetchUsers = useCallback(async (page: number, limit: number) => {
-    const fetchKey = `${page}-${limit}`;
+  /**
+   * Refresh data by re-pushing the current route
+   * This triggers getServerSideProps again
+   */
+  const refreshData = useCallback(() => {
+    router.replace(router.asPath);
+  }, [router]);
 
-    // Avoid double fetch if same parameters and not a manual refresh
-    if (lastFetchRef.current === fetchKey && isFetchingRef.current) return;
+  /**
+   * Handle pagination change by updating URL query parameters
+   * This triggers SSR on the server
+   */
+  const onPaginationChange = useCallback(
+    (updater: any) => {
+      const nextState =
+        typeof updater === "function" ? updater(pagination) : updater;
 
-    isFetchingRef.current = true;
-    lastFetchRef.current = fetchKey;
-    setIsLoading(true);
+      const query = { ...router.query };
+      query.page = (nextState.pageIndex + 1).toString();
+      query.limit = nextState.pageSize.toString();
 
-    try {
-      console.log(`[UserTable] Fetching: Page ${page}, Limit ${limit}`);
-      const result = await userService.getUsers(page, limit);
-      setData(result.users);
-      setTotalCount(result.meta.total);
-      setTotalPages(result.meta.totalPages);
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
-    } finally {
-      setIsLoading(false);
-      isFetchingRef.current = false;
-    }
-  }, []);
-
-  // Effect triggered on mount and pagination changes
-  useEffect(() => {
-    fetchUsers(pagination.pageIndex + 1, pagination.pageSize);
-  }, [pagination.pageIndex, pagination.pageSize, fetchUsers]);
-
-  const refreshData = () => {
-    lastFetchRef.current = ""; // Reset ref to force refresh
-    fetchUsers(pagination.pageIndex + 1, pagination.pageSize);
-  };
+      router.push(
+        {
+          pathname: router.pathname,
+          query,
+        },
+        undefined,
+        { shallow: false }
+      );
+    },
+    [router, pagination]
+  );
 
   const handleViewUser = (user: User) => {
     onOpen("view", {
@@ -130,7 +133,7 @@ export const UserTable = () => {
         className: "text-destructive focus:text-destructive",
       },
     ],
-    []
+    [refreshData]
   );
 
   const columns: ColumnDef<User>[] = useMemo(
@@ -172,18 +175,18 @@ export const UserTable = () => {
   return (
     <DataTable
       columns={columns}
-      data={data}
+      data={initialData}
       enableSearch
       searchPlaceholder="Search users..."
-      isLoading={isLoading}
+      isLoading={false} // Data is server-side rendered, always ready
       actions={tableActions}
       enableSorting
       enableColumnVisibility
       manualPagination
-      pageCount={totalPages}
-      totalCount={totalCount}
+      pageCount={meta?.totalPages || 0}
+      totalCount={meta?.total || 0}
       pagination={pagination}
-      onPaginationChange={setPagination}
+      onPaginationChange={onPaginationChange}
     />
   );
 };

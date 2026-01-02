@@ -1,131 +1,76 @@
-import { ColumnDef, PaginationState } from "@tanstack/react-table";
-import { useMemo, useCallback, useState, useEffect, useRef } from "react";
+import { ColumnDef } from "@tanstack/react-table";
+import { useMemo, useCallback, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2, UserPlus, Eye } from "lucide-react";
-import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
+import { DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
 import { User } from "../types/user.schema";
 import { useModalStore } from "@/stores/modal-store";
 import { UserForm } from "./user-form";
 import { UserDelete } from "./user-delete";
 import { UserDetail } from "./user-detail";
-import { userService } from "../services/user.service";
+import {
+  ServerDataTable,
+  ServerDataTableRef,
+} from "@/components/ui/server-data-table";
 
 export const UserTable = () => {
   const { onOpen } = useModalStore();
+  const tableRef = useRef<ServerDataTableRef>(null);
 
-  // Local State for Client-Side Fetching
-  const [data, setData] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+  const refreshTable = useCallback(() => {
+    tableRef.current?.refresh();
+  }, []);
 
-  // Search State
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-
-  // Pagination State
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  });
-
-  // Debounce search and reset pagination
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [search]);
-
-  // Refs for preventing double fetching in Strict Mode
-  const isFetchingRef = useRef(false);
-  const lastFetchRef = useRef<string>("");
-
-  /**
-   * Fetch users from API
-   */
-  const fetchUsers = useCallback(async () => {
-    const page = pagination.pageIndex + 1;
-    const limit = pagination.pageSize;
-
-    // Create a unique key for the current request
-    const requestKey = `${page}-${limit}-${debouncedSearch}`;
-
-    // Prevent double fetching if:
-    // 1. Aleady fetching
-    // 2. Same request key as last successful fetch (optional, but good for avoiding redundant calls)
-    if (isFetchingRef.current) return;
-
-    // Mark as fetching
-    isFetchingRef.current = true;
-    setIsLoading(true);
-
-    try {
-      const result = await userService.getUsers(page, limit, debouncedSearch);
-
-      setData(result.users);
-      setTotalCount(result.meta.total);
-      setTotalPages(result.meta.totalPages);
-
-      // Update last fetch ref
-      lastFetchRef.current = requestKey;
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
-    } finally {
-      setIsLoading(false);
-      isFetchingRef.current = false;
-    }
-  }, [pagination.pageIndex, pagination.pageSize, debouncedSearch]);
-
-  /**
-   * Effect to trigger fetch on pagination change
-   */
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  const handleViewUser = (user: User) => {
-    onOpen("view", {
-      title: "User Details",
-      size: "lg",
-      position: "top",
-      content: <UserDetail user={user} />,
-    });
-  };
-
-  const handleEditUser = (user: User) => {
-    onOpen("form", {
-      title: "Edit User",
-      size: "md",
-      content: <UserForm initialData={user} onSuccess={fetchUsers} />,
-    });
-  };
-
-  const handleDeleteUser = (user: User) => {
-    onOpen("delete", {
-      title: "Delete User",
-      size: "sm",
-      content: <UserDelete user={user} onSuccess={fetchUsers} />,
-    });
-  };
-
-  const handleAddUser = () => {
-    onOpen("form", {
-      title: "Add New User",
-      size: "md",
-      content: <UserForm onSuccess={fetchUsers} />,
-    });
-  };
+  const handleAction = useCallback(
+    (type: "create" | "update" | "delete" | "view", user?: User) => {
+      switch (type) {
+        case "create":
+          onOpen("form", {
+            title: "Add New User",
+            size: "md",
+            content: <UserForm onSuccess={refreshTable} />,
+          });
+          break;
+        case "view":
+          if (user) {
+            onOpen("view", {
+              title: "User Details",
+              size: "lg",
+              position: "top",
+              content: <UserDetail user={user} />,
+            });
+          }
+          break;
+        case "update":
+          if (user) {
+            onOpen("form", {
+              title: "Edit User",
+              size: "md",
+              content: <UserForm initialData={user} onSuccess={refreshTable} />,
+            });
+          }
+          break;
+        case "delete":
+          if (user) {
+            onOpen("delete", {
+              title: "Delete User",
+              size: "md",
+              content: <UserDelete user={user} onSuccess={refreshTable} />,
+            });
+          }
+          break;
+      }
+    },
+    [onOpen, refreshTable]
+  );
 
   const tableActions: ButtonConfig<User>[] = useMemo(
     () => [
       {
         label: "Add User",
         icon: <UserPlus className="h-4 w-4" />,
-        onClick: () => handleAddUser(),
+        onClick: () => handleAction("create"),
         isAdd: true,
         show: true,
         group: "toolbar",
@@ -133,27 +78,27 @@ export const UserTable = () => {
       {
         label: "View Details",
         icon: <Eye className="h-4 w-4" />,
-        onClick: (row?: User) => row && handleViewUser(row),
+        onClick: (row?: User) => handleAction("view", row),
         show: true,
         group: "action",
       },
       {
         label: "Edit User",
         icon: <Pencil className="h-4 w-4" />,
-        onClick: (row?: User) => row && handleEditUser(row),
+        onClick: (row?: User) => handleAction("update", row),
         show: true,
         group: "action",
       },
       {
         label: "Delete",
         icon: <Trash2 className="h-4 w-4" />,
-        onClick: (row?: User) => row && handleDeleteUser(row),
+        onClick: (row?: User) => handleAction("delete", row),
         show: true,
         group: "action",
         className: "text-destructive focus:text-destructive",
       },
     ],
-    [fetchUsers]
+    [handleAction]
   );
 
   const columns: ColumnDef<User>[] = useMemo(
@@ -193,22 +138,13 @@ export const UserTable = () => {
   );
 
   return (
-    <DataTable
+    <ServerDataTable
+      ref={tableRef}
+      endpoint="/api/users"
+      dataPath="users"
       columns={columns}
-      data={data}
-      enableSearch
-      searchPlaceholder="Search users..."
-      onSearch={setSearch}
-      manualFiltering
-      isLoading={isLoading}
       actions={tableActions}
-      enableSorting
-      enableColumnVisibility
-      manualPagination
-      pageCount={totalPages}
-      totalCount={totalCount}
-      pagination={pagination}
-      onPaginationChange={setPagination}
+      searchPlaceholder="Search users..."
     />
   );
 };

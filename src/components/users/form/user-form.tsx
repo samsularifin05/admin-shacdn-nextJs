@@ -1,26 +1,22 @@
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { FormInput, FormSelect } from "@/components/form";
 import { useModalStore } from "@/stores/modal-store";
-
-const userSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  role: z.string().min(1, "Role is required"),
-  status: z.enum(["Active", "Inactive"]),
-});
-
-export type UserFormData = z.infer<typeof userSchema>;
+import { UserFormData, userSchema, User } from "../dto/user.schema";
+import { userService } from "../services/user.service";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 interface UserFormProps {
-  initialData?: Partial<UserFormData>;
-  onSubmit: (data: UserFormData) => void;
+  initialData?: User; // Using full User type to get the ID for updates
+  onSuccess?: () => void;
 }
 
-export function UserForm({ initialData, onSubmit }: UserFormProps) {
+export function UserForm({ initialData, onSuccess }: UserFormProps) {
   const { onClose } = useModalStore();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const methods = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
     defaultValues: {
@@ -30,6 +26,26 @@ export function UserForm({ initialData, onSubmit }: UserFormProps) {
       status: initialData?.status || "Active",
     },
   });
+
+  const onSubmit = async (data: UserFormData) => {
+    setIsSubmitting(true);
+    try {
+      if (initialData?.id) {
+        // PUT: Update existing user
+        await userService.updateUser(initialData.id, data);
+      } else {
+        // POST: Create new user
+        await userService.createUser(data);
+      }
+
+      onClose();
+      if (onSuccess) onSuccess();
+    } catch (error) {
+      console.error("Form submission failed:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const roleOptions = [
     { label: "Admin", value: "Admin" },
@@ -50,12 +66,14 @@ export function UserForm({ initialData, onSubmit }: UserFormProps) {
           name="name"
           label="Full Name"
           placeholder="Enter full name"
+          disabled={isSubmitting}
         />
         <FormInput
           name="email"
           label="Email Address"
           placeholder="enter@email.com"
           type="email"
+          disabled={isSubmitting}
         />
         <div className="grid grid-cols-2 gap-4">
           <FormSelect
@@ -63,20 +81,28 @@ export function UserForm({ initialData, onSubmit }: UserFormProps) {
             label="Role"
             placeholder="Select role"
             options={roleOptions}
+            disabled={isSubmitting}
           />
           <FormSelect
             name="status"
             label="Status"
             placeholder="Select status"
             options={statusOptions}
+            disabled={isSubmitting}
           />
         </div>
 
         <div className="flex justify-end gap-3 pt-4">
-          <Button variant="outline" type="button" onClick={onClose}>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
-          <Button type="submit">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {initialData ? "Update User" : "Create User"}
           </Button>
         </div>

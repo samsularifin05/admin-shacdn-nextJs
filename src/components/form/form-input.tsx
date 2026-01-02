@@ -84,6 +84,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
                 ref.current = e;
               }
             }}
+            onFocus={(e) => e.target.select()}
             className={cn(
               error && "border-destructive focus-visible:ring-destructive",
               isPasswordField && "pr-10",

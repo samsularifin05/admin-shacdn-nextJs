@@ -59,7 +59,7 @@ export function ModalProvider() {
         </DialogHeader>
 
         {/* Modal body based on type or passed custom content */}
-        <div className="py-4 text-sm">
+        <div className="py-4 text-sm max-h-[60vh] overflow-y-auto">
           {typeof data.content === "function"
             ? data.content(data)
             : data.content || "Modal Content"}

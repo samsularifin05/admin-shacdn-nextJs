@@ -36,3 +36,31 @@ model User {
 
 
 
+
+
+
+
+
+
+
+model tr_sales {
+  id        Int      @id @default(autoincrement())
+  kodeBarcode      String   
+  namaBarang      String   
+  attributeName      String   ?
+  kadar      Float   
+  hargaSkrg      String   
+  hargaAtribut      String   
+  beratAtribut      Float   
+  berat      Float   
+  hargaJual      Float   
+  hargaPerGram      Float   
+  ongkos      Float   
+  tipeDiskon      String   
+  discountRp      Float   
+  total      Float   
+  keterangan      String   ?
+  size      String   ?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

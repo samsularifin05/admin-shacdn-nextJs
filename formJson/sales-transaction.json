@@ -1,0 +1,113 @@
+{
+  "moduleName": "SalesTransaction",
+  "resourceName": "sales-transactions",
+  "tableName": "tr_sales",
+  "route": "/admin/sales-transactions",
+  "classForm": "grid grid-cols-2 gap-4",
+  "fields": [
+    {
+      "name": "kodeBarcode",
+      "type": "string",
+      "label": "Kode Barcode",
+      "required": true
+    },
+    {
+      "name": "namaBarang",
+      "type": "string",
+      "label": "Nama Barang",
+      "required": true
+    },
+    {
+      "name": "attributeName",
+      "type": "string",
+      "label": "Attribute Name",
+      "required": false
+    },
+    {
+      "name": "kadar",
+      "type": "number",
+      "label": "Kadar (%)",
+      "required": true,
+      "defaultValue": 0
+    },
+    {
+      "name": "hargaSkrg",
+      "type": "rupiah",
+      "label": "Harga Sekarang",
+      "required": true,
+      "defaultValue": 0
+    },
+    {
+      "name": "hargaAtribut",
+      "type": "rupiah",
+      "label": "Harga Atribut",
+      "defaultValue": 0
+    },
+    {
+      "name": "beratAtribut",
+      "type": "number",
+      "label": "Berat Atribut (gram)",
+      "defaultValue": 0
+    },
+    {
+      "name": "berat",
+      "type": "number",
+      "label": "Berat Jual (gram)",
+      "required": true,
+      "defaultValue": 0
+    },
+    {
+      "name": "hargaJual",
+      "type": "number",
+      "label": "Harga Jual (Calculated)",
+      "formula": "(kadar / 100) * hargaSkrg * berat",
+      "readOnly": true,
+      "defaultValue": 0
+    },
+    {
+      "name": "hargaPerGram",
+      "type": "number",
+      "label": "Harga / Gram",
+      "defaultValue": 0
+    },
+    {
+      "name": "ongkos",
+      "type": "number",
+      "label": "Ongkos",
+      "defaultValue": 0
+    },
+    {
+      "name": "tipeDiskon",
+      "type": "select",
+      "label": "Pilih Tipe Diskon",
+      "options": ["Percentage", "Fixed Amount", "None"],
+      "defaultValue": "None"
+    },
+    {
+      "name": "discountRp",
+      "type": "number",
+      "label": "Discount Rp",
+      "defaultValue": 0
+    },
+    {
+      "name": "total",
+      "type": "number",
+      "label": "Total",
+      "formula": "hargaJual + ongkos - discountRp",
+      "readOnly": true,
+      "defaultValue": 0
+    },
+    {
+      "name": "keterangan",
+      "type": "string",
+      "label": "Keterangan",
+      "required": false
+    },
+    {
+      "name": "size",
+      "type": "string",
+      "label": "Size",
+      "required": false
+    }
+  ]
+}

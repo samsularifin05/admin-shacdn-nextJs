@@ -2,7 +2,14 @@ import * as fs from "fs";
 import * as path from "path";
 
 // Types
-type FieldType = "string" | "number" | "boolean" | "select" | "email";
+type FieldType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "select"
+  | "email"
+  | "currency"
+  | "rupiah";
 
 interface Field {
   name: string;
@@ -24,7 +31,8 @@ interface GeneratorConfig {
   moduleName: string;
   resourceName: string;
   tableName: string;
-  route?: string; // New field
+  route?: string;
+  classForm?: string;
   fields: Field[];
 }
 
@@ -64,7 +72,7 @@ console.log(`🚀 Generating module from: formJson/${fileName}...`);
 const config = JSON.parse(
   fs.readFileSync(configPath, "utf-8")
 ) as GeneratorConfig;
-const { moduleName, resourceName, tableName, fields } = config;
+const { moduleName, resourceName, tableName, fields, classForm } = config;
 
 // Paths
 const moduleDir = path.resolve(process.cwd(), "src/modules", resourceName);
@@ -86,7 +94,8 @@ const generateSchema = () => {
   const fieldDefs = fields
     .map((f) => {
       let zType = "z.string()";
-      if (f.type === "number") zType = "z.coerce.number()";
+      if (f.type === "number" || f.type === "currency" || f.type === "rupiah")
+        zType = "z.coerce.number()";
       if (f.type === "boolean") zType = "z.boolean()";
       if (f.type === "select" && f.options)
         zType = `z.enum(${JSON.stringify(f.options)})`;
@@ -104,7 +113,8 @@ const generateSchema = () => {
   const tsTypes = fields
     .map((f) => {
       let t = "string";
-      if (f.type === "number") t = "number";
+      if (f.type === "number" || f.type === "currency" || f.type === "rupiah")
+        t = "number";
       if (f.type === "boolean") t = "boolean";
       if (f.type === "select" && f.options)
         t = f.options.map((o) => `"${o}"`).join(" | ");
@@ -201,7 +211,7 @@ export const ${toCamelCase(moduleName)}Server = {
     ]);
 
     return {
-      ${resourceName}: data,
+      "${resourceName}": data,
       meta: {
         total,
         page,
@@ -298,6 +308,32 @@ const generateForm = () => {
             label="${f.label}"
             disabled={isLoading}
           />`;
+      } else if (f.type === "currency" || f.type === "rupiah") {
+        // Determine readonly prop
+        let readOnlyProp = "";
+        if (f.readOnly) {
+          readOnlyProp = "readOnly";
+        } else if (f.readOnlyOnEdit) {
+          readOnlyProp = "readOnly={!!initialData}";
+        }
+
+        // Determine className prop
+        let classNameProp = "";
+        if (f.readOnly) {
+          classNameProp = 'className="bg-muted"';
+        } else if (f.readOnlyOnEdit) {
+          classNameProp = 'className={initialData ? "bg-muted" : ""}';
+        }
+
+        input = `
+          <FormCurrency
+            name="${f.name}"
+            label="${f.label}"
+            placeholder="${f.label}"
+            disabled={isLoading}
+            ${readOnlyProp}
+            ${classNameProp}
+          />`;
       } else {
         // Determine readonly prop
         let readOnlyProp = "";
@@ -337,7 +373,7 @@ import { ${toCamelCase(
     moduleName
   )}Schema, ${moduleName}FormData, ${moduleName} } from "../types/${resourceName}.schema";
 import { Button } from "@/components/ui/button";
-import { FormInput, FormSelect, FormCheckbox } from "@/components/form";
+import { FormInput, FormSelect, FormCheckbox, FormCurrency } from "@/components/form";
 import { ${toCamelCase(
     moduleName
   )}Service } from "../services/${resourceName}.service";
@@ -396,7 +432,9 @@ export const ${moduleName}Form = ({ initialData, onSuccess }: Props) => {
   return (
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="${classForm || "space-y-4"}">
 ${formFields}
+        </div>
         <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
             <Button type="submit" disabled={isLoading}>
@@ -462,7 +500,7 @@ export const ${moduleName}Table = () => {
         case "create":
           onOpen("form", {
             title: "Add ${moduleName}",
-            size: "md",
+            size: "lg",
             content: <${moduleName}Form onSuccess={refreshTable} />,
           });
           break;
@@ -480,7 +518,7 @@ export const ${moduleName}Table = () => {
           if (row) {
             onOpen("form", {
               title: "Edit ${moduleName}",
-              size: "md",
+              size: "lg",
               content: <${moduleName}Form initialData={row} onSuccess={refreshTable} />,
             });
           }
@@ -489,7 +527,7 @@ export const ${moduleName}Table = () => {
           if (row) {
             onOpen("delete", {
               title: "Delete ${moduleName}",
-              size: "md",
+              size: "lg",
               content: <${moduleName}Delete ${toCamelCase(
     moduleName
   )}={row} onSuccess={refreshTable} />,
@@ -853,13 +891,20 @@ ${fields
 `;
     fs.appendFileSync(prismaSchemaPath, modelDefinition);
     console.log(`\n✅ Added model ${tableName} to prisma/schema.prisma`);
-    console.log("⚠️  Running 'npx prisma db push'...");
+    console.log(
+      "⚠️  Running 'npx prisma db push' and 'npx prisma generate'..."
+    );
     try {
-      require("child_process").execSync("npx prisma db push", {
-        stdio: "inherit",
-      });
+      require("child_process").execSync(
+        "npx prisma db push && npx prisma generate",
+        {
+          stdio: "inherit",
+        }
+      );
     } catch (e) {
-      console.error("❌ Failed to run prisma db push. Please run it manually.");
+      console.error(
+        "❌ Failed to run prisma commands. Please run them manually."
+      );
     }
   } else {
     console.log(

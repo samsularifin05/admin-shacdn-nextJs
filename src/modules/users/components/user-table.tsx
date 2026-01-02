@@ -1,6 +1,5 @@
 import { ColumnDef, PaginationState } from "@tanstack/react-table";
-import { useRouter } from "next/router";
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2, UserPlus, Eye } from "lucide-react";
 import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
@@ -10,62 +9,69 @@ import { useModalStore } from "@/stores/modal-store";
 import { UserForm } from "./user-form";
 import { UserDelete } from "./user-delete";
 import { UserDetail } from "./user-detail";
+import { userService } from "../services/user.service";
 
-interface UserTableProps {
-  initialData?: User[];
-  meta?: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
-export const UserTable = ({ initialData = [], meta }: UserTableProps) => {
-  const router = useRouter();
+export const UserTable = () => {
   const { onOpen } = useModalStore();
 
-  // Current pagination state from URL (Source of Truth)
-  const pagination = useMemo<PaginationState>(
-    () => ({
-      pageIndex: (meta?.page || 1) - 1,
-      pageSize: meta?.limit || 10,
-    }),
-    [meta?.page, meta?.limit]
-  );
+  // Local State for Client-Side Fetching
+  const [data, setData] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // Pagination State
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  // Refs for preventing double fetching in Strict Mode
+  const isFetchingRef = useRef(false);
+  const lastFetchRef = useRef<string>("");
 
   /**
-   * Refresh data by re-pushing the current route
-   * This triggers getServerSideProps again
+   * Fetch users from API
    */
-  const refreshData = useCallback(() => {
-    router.replace(router.asPath);
-  }, [router]);
+  const fetchUsers = useCallback(async () => {
+    const page = pagination.pageIndex + 1;
+    const limit = pagination.pageSize;
+
+    // Create a unique key for the current request
+    const requestKey = `${page}-${limit}`;
+
+    // Prevent double fetching if:
+    // 1. Aleady fetching
+    // 2. Same request key as last successful fetch (optional, but good for avoiding redundant calls)
+    if (isFetchingRef.current) return;
+
+    // Mark as fetching
+    isFetchingRef.current = true;
+    setIsLoading(true);
+
+    try {
+      const result = await userService.getUsers(page, limit);
+
+      setData(result.users);
+      setTotalCount(result.meta.total);
+      setTotalPages(result.meta.totalPages);
+
+      // Update last fetch ref
+      lastFetchRef.current = requestKey;
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    } finally {
+      setIsLoading(false);
+      isFetchingRef.current = false;
+    }
+  }, [pagination.pageIndex, pagination.pageSize]);
 
   /**
-   * Handle pagination change by updating URL query parameters
-   * This triggers SSR on the server
+   * Effect to trigger fetch on pagination change
    */
-  const onPaginationChange = useCallback(
-    (updater: any) => {
-      const nextState =
-        typeof updater === "function" ? updater(pagination) : updater;
-
-      const query = { ...router.query };
-      query.page = (nextState.pageIndex + 1).toString();
-      query.limit = nextState.pageSize.toString();
-
-      router.push(
-        {
-          pathname: router.pathname,
-          query,
-        },
-        undefined,
-        { shallow: false }
-      );
-    },
-    [router, pagination]
-  );
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleViewUser = (user: User) => {
     onOpen("view", {
@@ -80,7 +86,7 @@ export const UserTable = ({ initialData = [], meta }: UserTableProps) => {
     onOpen("form", {
       title: "Edit User",
       size: "md",
-      content: <UserForm initialData={user} onSuccess={refreshData} />,
+      content: <UserForm initialData={user} onSuccess={fetchUsers} />,
     });
   };
 
@@ -88,7 +94,7 @@ export const UserTable = ({ initialData = [], meta }: UserTableProps) => {
     onOpen("delete", {
       title: "Delete User",
       size: "sm",
-      content: <UserDelete user={user} onSuccess={refreshData} />,
+      content: <UserDelete user={user} onSuccess={fetchUsers} />,
     });
   };
 
@@ -96,7 +102,7 @@ export const UserTable = ({ initialData = [], meta }: UserTableProps) => {
     onOpen("form", {
       title: "Add New User",
       size: "md",
-      content: <UserForm onSuccess={refreshData} />,
+      content: <UserForm onSuccess={fetchUsers} />,
     });
   };
 
@@ -133,7 +139,7 @@ export const UserTable = ({ initialData = [], meta }: UserTableProps) => {
         className: "text-destructive focus:text-destructive",
       },
     ],
-    [refreshData]
+    [fetchUsers]
   );
 
   const columns: ColumnDef<User>[] = useMemo(
@@ -175,18 +181,18 @@ export const UserTable = ({ initialData = [], meta }: UserTableProps) => {
   return (
     <DataTable
       columns={columns}
-      data={initialData}
+      data={data}
       enableSearch
       searchPlaceholder="Search users..."
-      isLoading={false} // Data is server-side rendered, always ready
+      isLoading={isLoading}
       actions={tableActions}
       enableSorting
       enableColumnVisibility
       manualPagination
-      pageCount={meta?.totalPages || 0}
-      totalCount={meta?.total || 0}
+      pageCount={totalPages}
+      totalCount={totalCount}
       pagination={pagination}
-      onPaginationChange={onPaginationChange}
+      onPaginationChange={setPagination}
     />
   );
 };

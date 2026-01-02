@@ -24,7 +24,7 @@ export const SalesTransactionTable = () => {
       switch (type) {
         case "create":
           onOpen("form", {
-            title: "Add SalesTransaction",
+            title: "Add Sales Transaction",
             size: "lg",
             content: <SalesTransactionForm onSuccess={refreshTable} />,
           });
@@ -32,7 +32,7 @@ export const SalesTransactionTable = () => {
         case "view":
           if (row) {
             onOpen("view", {
-              title: "SalesTransaction Details",
+              title: "Sales Transaction Details",
               size: "lg",
               position: "top",
               content: <SalesTransactionDetail salesTransaction={row} />,
@@ -42,7 +42,7 @@ export const SalesTransactionTable = () => {
         case "update":
           if (row) {
             onOpen("form", {
-              title: "Edit SalesTransaction",
+              title: "Edit Sales Transaction",
               size: "lg",
               content: <SalesTransactionForm initialData={row} onSuccess={refreshTable} />,
             });
@@ -51,7 +51,7 @@ export const SalesTransactionTable = () => {
         case "delete":
           if (row) {
             onOpen("delete", {
-              title: "Delete SalesTransaction",
+              title: "Delete Sales Transaction",
               size: "lg",
               content: <SalesTransactionDelete salesTransaction={row} onSuccess={refreshTable} />,
             });
@@ -65,7 +65,7 @@ export const SalesTransactionTable = () => {
   const tableActions: ButtonConfig<SalesTransaction>[] = useMemo(
     () => [
       {
-        label: "Add SalesTransaction",
+        label: "Add Sales Transaction",
         icon: <Plus className="h-4 w-4" />,
         onClick: () => handleAction("create"),
         isAdd: true,
@@ -109,6 +109,12 @@ export const SalesTransactionTable = () => {
       {
         accessorKey: "namaBarang",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Nama Barang" />,
+        
+        
+      },
+      {
+        accessorKey: "bankId",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Bank" />,
         
         
       },

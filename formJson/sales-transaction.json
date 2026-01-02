@@ -2,6 +2,7 @@
   "moduleName": "SalesTransaction",
   "resourceName": "sales-transactions",
   "tableName": "tr_sales",
+  "title": "Sales Transaction",
   "route": "/admin/sales-transactions",
   "classForm": "grid grid-cols-2 gap-4",
   "fields": [
@@ -16,6 +17,16 @@
       "type": "string",
       "label": "Nama Barang",
       "required": true
+    },
+    {
+      "name": "bankId",
+      "type": "async-select",
+      "label": "Bank",
+      "endpoint": "/api/banks",
+      "labelField": "name",
+      "valueField": "id",
+      "required": true,
+      "defaultValue": 0
     },
     {
       "name": "attributeName",

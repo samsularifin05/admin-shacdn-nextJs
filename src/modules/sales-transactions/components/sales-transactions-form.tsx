@@ -3,7 +3,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { salesTransactionSchema, SalesTransactionFormData, SalesTransaction } from "../types/sales-transactions.schema";
 import { Button } from "@/components/ui/button";
-import { FormInput, FormSelect, FormCheckbox, FormCurrency } from "@/components/form";
+import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect } from "@/components/form";
 import { salesTransactionService } from "../services/sales-transactions.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2 } from "lucide-react";
@@ -20,6 +20,7 @@ export const SalesTransactionForm = ({ initialData, onSuccess }: Props) => {
     defaultValues: initialData ? {
       kodeBarcode: initialData.kodeBarcode,
       namaBarang: initialData.namaBarang,
+      bankId: initialData.bankId,
       attributeName: initialData.attributeName,
       kadar: initialData.kadar,
       hargaSkrg: initialData.hargaSkrg,
@@ -37,6 +38,7 @@ export const SalesTransactionForm = ({ initialData, onSuccess }: Props) => {
     } : {
       kodeBarcode: "",
       namaBarang: "",
+      bankId: 0,
       attributeName: "",
       kadar: 0,
       hargaSkrg: 0,
@@ -119,6 +121,16 @@ export const SalesTransactionForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             
+          />
+
+          <FormAsyncSelect
+            name="bankId"
+            label="Bank"
+            placeholder="Select Bank"
+            endpoint="/api/banks"
+            labelField="name"
+            valueField="id"
+            disabled={isLoading}
           />
 
           <FormInput

@@ -2,6 +2,7 @@
   "moduleName": "Bank",
   "resourceName": "banks",
   "tableName": "tm_banks",
+  "title": "Bank",
   "route": "/admin/banks",
   "fields": [
     {

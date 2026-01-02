@@ -3,6 +3,7 @@ import { z } from "zod";
 export const salesTransactionSchema = z.object({
   kodeBarcode: z.string(),
   namaBarang: z.string(),
+  bankId: z.coerce.number(),
   attributeName: z.string().optional(),
   kadar: z.coerce.number(),
   hargaSkrg: z.coerce.number(),
@@ -25,6 +26,7 @@ export type SalesTransaction = {
   id: number;
   kodeBarcode: string;
   namaBarang: string;
+  bankId: number;
   attributeName?: string | null | undefined;
   kadar: number;
   hargaSkrg: number;

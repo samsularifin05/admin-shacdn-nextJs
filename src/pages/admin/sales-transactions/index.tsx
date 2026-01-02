@@ -5,12 +5,12 @@ import { PanelAdmin } from "@/components/ui/panelAdmin";
 export default function SalesTransactionPage() {
   return (
     <PageLayout
-      title="SalesTransactions"
-      description="Manage your salestransactions"
+      title="Sales Transactions"
+      description="Manage your sales transactions"
     >
       <PanelAdmin
-        title="All SalesTransactions"
-        description="List of all salestransactions"
+        title="All Sales Transactions"
+        description="List of all sales transactions"
       >
         <SalesTransactionTable />
       </PanelAdmin>

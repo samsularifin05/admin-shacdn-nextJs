@@ -9,7 +9,8 @@ type FieldType =
   | "select"
   | "email"
   | "currency"
-  | "rupiah";
+  | "rupiah"
+  | "async-select";
 
 interface Field {
   name: string;
@@ -17,6 +18,9 @@ interface Field {
   label: string;
   required?: boolean;
   options?: string[];
+  endpoint?: string;
+  labelField?: string;
+  valueField?: string;
   defaultValue?: any;
   formula?: string;
   readOnly?: boolean;
@@ -31,6 +35,7 @@ interface GeneratorConfig {
   moduleName: string;
   resourceName: string;
   tableName: string;
+  title: string;
   route?: string;
   classForm?: string;
   fields: Field[];
@@ -72,7 +77,8 @@ console.log(`🚀 Generating module from: formJson/${fileName}...`);
 const config = JSON.parse(
   fs.readFileSync(configPath, "utf-8")
 ) as GeneratorConfig;
-const { moduleName, resourceName, tableName, fields, classForm } = config;
+const { moduleName, resourceName, tableName, fields, classForm, title } =
+  config;
 
 // Paths
 const moduleDir = path.resolve(process.cwd(), "src/modules", resourceName);
@@ -94,7 +100,12 @@ const generateSchema = () => {
   const fieldDefs = fields
     .map((f) => {
       let zType = "z.string()";
-      if (f.type === "number" || f.type === "currency" || f.type === "rupiah")
+      if (
+        f.type === "number" ||
+        f.type === "currency" ||
+        f.type === "rupiah" ||
+        f.type === "async-select"
+      )
         zType = "z.coerce.number()";
       if (f.type === "boolean") zType = "z.boolean()";
       if (f.type === "select" && f.options)
@@ -113,7 +124,12 @@ const generateSchema = () => {
   const tsTypes = fields
     .map((f) => {
       let t = "string";
-      if (f.type === "number" || f.type === "currency" || f.type === "rupiah")
+      if (
+        f.type === "number" ||
+        f.type === "currency" ||
+        f.type === "rupiah" ||
+        f.type === "async-select"
+      )
         t = "number";
       if (f.type === "boolean") t = "boolean";
       if (f.type === "select" && f.options)
@@ -301,6 +317,17 @@ const generateForm = () => {
             ]}
             disabled={isLoading}
           />`;
+      } else if (f.type === "async-select") {
+        input = `
+          <FormAsyncSelect
+            name="${f.name}"
+            label="${f.label}"
+            placeholder="Select ${f.label}"
+            endpoint="${f.endpoint || ""}"
+            ${f.labelField ? `labelField="${f.labelField}"` : ""}
+            ${f.valueField ? `valueField="${f.valueField}"` : ""}
+            disabled={isLoading}
+          />`;
       } else if (f.type === "boolean") {
         input = `
           <FormCheckbox
@@ -373,7 +400,7 @@ import { ${toCamelCase(
     moduleName
   )}Schema, ${moduleName}FormData, ${moduleName} } from "../types/${resourceName}.schema";
 import { Button } from "@/components/ui/button";
-import { FormInput, FormSelect, FormCheckbox, FormCurrency } from "@/components/form";
+import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect } from "@/components/form";
 import { ${toCamelCase(
     moduleName
   )}Service } from "../services/${resourceName}.service";
@@ -499,7 +526,7 @@ export const ${moduleName}Table = () => {
       switch (type) {
         case "create":
           onOpen("form", {
-            title: "Add ${moduleName}",
+            title: "Add ${title}",
             size: "lg",
             content: <${moduleName}Form onSuccess={refreshTable} />,
           });
@@ -507,7 +534,7 @@ export const ${moduleName}Table = () => {
         case "view":
           if (row) {
             onOpen("view", {
-              title: "${moduleName} Details",
+              title: "${title} Details",
               size: "lg",
               position: "top",
               content: <${moduleName}Detail ${toCamelCase(moduleName)}={row} />,
@@ -517,7 +544,7 @@ export const ${moduleName}Table = () => {
         case "update":
           if (row) {
             onOpen("form", {
-              title: "Edit ${moduleName}",
+              title: "Edit ${title}",
               size: "lg",
               content: <${moduleName}Form initialData={row} onSuccess={refreshTable} />,
             });
@@ -526,7 +553,7 @@ export const ${moduleName}Table = () => {
         case "delete":
           if (row) {
             onOpen("delete", {
-              title: "Delete ${moduleName}",
+              title: "Delete ${title}",
               size: "lg",
               content: <${moduleName}Delete ${toCamelCase(
     moduleName
@@ -542,7 +569,7 @@ export const ${moduleName}Table = () => {
   const tableActions: ButtonConfig<${moduleName}>[] = useMemo(
     () => [
       {
-        label: "Add ${moduleName}",
+        label: "Add ${title}",
         icon: <Plus className="h-4 w-4" />,
         onClick: () => handleAction("create"),
         isAdd: true,
@@ -673,12 +700,12 @@ import { PanelAdmin } from "@/components/ui/panelAdmin";
 export default function ${toPascalCase(moduleName)}Page() {
   return (
     <PageLayout
-      title="${moduleName}s"
-      description="Manage your ${moduleName.toLowerCase()}s"
+      title="${title}s"
+      description="Manage your ${title.toLowerCase()}s"
     >
       <PanelAdmin
-        title="All ${moduleName}s"
-        description="List of all ${moduleName.toLowerCase()}s"
+        title="All ${title}s"
+        description="List of all ${title.toLowerCase()}s"
       >
         <${moduleName}Table />
       </PanelAdmin>
@@ -877,7 +904,10 @@ ${fields
   .map(
     (f) =>
       `  ${f.name}      ${
-        f.type === "number"
+        f.type === "number" ||
+        f.type === "currency" ||
+        f.type === "rupiah" ||
+        f.type === "async-select"
           ? "Float"
           : f.type === "boolean"
           ? "Boolean"

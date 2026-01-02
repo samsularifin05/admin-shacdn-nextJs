@@ -40,8 +40,12 @@ export default function LoginPage() {
       await login(data.email, data.password);
       const from = (router.query.from as string) || "/admin/dashboard";
       router.replace(from);
-    } catch (error) {
-      console.error("Login failed:", error);
+    } catch (error: any) {
+      const field = error.field === "email" ? "email" : "password";
+      methods.setError(field, {
+        type: "manual",
+        message: error.message || "Invalid credentials",
+      });
     }
   };
 

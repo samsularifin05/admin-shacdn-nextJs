@@ -17,19 +17,39 @@ import {
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
+  totalCount?: number;
 }
 
 export function DataTablePagination<TData>({
   table,
+  totalCount,
 }: DataTablePaginationProps<TData>) {
+  const pagination = table.getState().pagination;
+  const isManual = table.options.manualPagination;
+
+  // Calculate display values
+  const totalRows =
+    isManual && typeof totalCount === "number"
+      ? totalCount
+      : table.getFilteredRowModel().rows.length;
+
+  const startRow = pagination.pageIndex * pagination.pageSize + 1;
+  const endRow = Math.min(startRow + pagination.pageSize - 1, totalRows);
+
   return (
     <div className="flex flex-col gap-4 px-2 py-4 sm:flex-row sm:items-center sm:justify-between">
       {/* Selected rows info - hidden on mobile */}
-      <div className="hidden text-sm text-muted-foreground sm:block">
-        {table.getFilteredSelectedRowModel().rows.length > 0 && (
+      <div className="text-sm text-muted-foreground">
+        {table.getFilteredSelectedRowModel().rows.length > 0 ? (
           <span>
-            {table.getFilteredSelectedRowModel().rows.length} of{" "}
-            {table.getFilteredRowModel().rows.length} row(s) selected.
+            {table.getFilteredSelectedRowModel().rows.length} of {totalRows}{" "}
+            row(s) selected.
+          </span>
+        ) : (
+          <span>
+            Showing <span className="font-medium">{startRow}</span> to{" "}
+            <span className="font-medium">{endRow}</span> of{" "}
+            <span className="font-medium">{totalRows}</span> results
           </span>
         )}
       </div>

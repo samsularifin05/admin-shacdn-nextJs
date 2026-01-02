@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
-import { ArrowUpDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 
 import {
   Table,
@@ -48,7 +48,9 @@ interface DataTableProps<TData, TValue> {
   // Pagination
   pageCount?: number;
   manualPagination?: boolean;
+  pagination?: PaginationState; // Added to support external state
   onPaginationChange?: OnChangeFn<PaginationState>;
+  totalCount?: number; // Added to support showing total rows in manual pagination
   // Loading
   isLoading?: boolean;
   actions?: ButtonConfig<TData>[];
@@ -68,7 +70,9 @@ export function DataTable<TData, TValue>({
   pageCount,
   actions = [],
   manualPagination = false,
+  pagination: externalPagination, // Renamed for clarity
   onPaginationChange,
+  totalCount,
   isLoading = false,
   enableSorting = true,
   enableColumnVisibility = false,
@@ -79,11 +83,17 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  });
-  const isMobile = useIsMobile();
+
+  // Only use internal state if external is not provided
+  const [internalPagination, setInternalPagination] = useState<PaginationState>(
+    {
+      pageIndex: 0,
+      pageSize: 10,
+    }
+  );
+
+  const pagination = externalPagination || internalPagination;
+  const handlePaginationChange = onPaginationChange || setInternalPagination;
 
   const table = useReactTable({
     data,
@@ -91,7 +101,7 @@ export function DataTable<TData, TValue>({
     // Pagination
     pageCount: pageCount,
     manualPagination,
-    onPaginationChange: onPaginationChange || setPagination,
+    onPaginationChange: handlePaginationChange,
     // Sorting
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
@@ -268,13 +278,12 @@ export function DataTable<TData, TValue>({
 
       {/* Pagination */}
       {!isLoading && table.getRowModel().rows?.length > 0 && (
-        <DataTablePagination table={table} />
+        <DataTablePagination table={table} totalCount={totalCount} />
       )}
     </div>
   );
 }
 
-// Helper component for sortable column headers
 export function DataTableColumnHeader({
   column,
   title,

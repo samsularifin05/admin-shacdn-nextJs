@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronRight, X } from "lucide-react";
+import { ChevronDown, ChevronRight, X, LogOut } from "lucide-react";
 import { useState, useEffect, createContext, useContext } from "react";
 import { navigation, NavItem } from "@/config/menus";
 
@@ -177,7 +177,7 @@ function MenuItem({
 export function AppSidebar() {
   const router = useRouter();
   const { isCollapsed, isMobileOpen, closeMobile } = useSidebarStore();
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const [expandedSections, setExpandedSections] = useState<string[]>(["Pages"]);
   const [openMenus, setOpenMenus] = useState<string[]>([]);
 
@@ -489,7 +489,31 @@ export function AppSidebar() {
                     </p>
                   </div>
                 )}
+                {!isCollapsed && (
+                  <button
+                    onClick={() => {
+                      logout();
+                      router.replace("/auth/login");
+                    }}
+                    className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-destructive transition-colors cursor-pointer"
+                    title="Log out"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </button>
+                )}
               </div>
+              {isCollapsed && (
+                <button
+                  onClick={() => {
+                    logout();
+                    router.replace("/auth/login");
+                  }}
+                  className="mt-2 flex w-full justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-destructive transition-colors cursor-pointer"
+                  title="Log out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              )}
             </div>
           )}
         </div>

@@ -1,15 +1,18 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { apiClient } from "@/lib/api-client";
 
 interface User {
-  id: string;
+  id: string | number;
   name: string;
   email: string;
   avatar?: string;
+  role?: string;
 }
 
 interface AuthState {
   user: User | null;
+  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -21,33 +24,40 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
+      token: null,
       isAuthenticated: false,
       isLoading: false,
 
       login: async (email: string, password: string) => {
         set({ isLoading: true });
-        console.log(email, password);
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        // Mock user data
-        const mockUser: User = {
-          id: "1",
-          name: "Admin User",
-          email: email,
-          avatar: "https://github.com/shadcn.png",
-        };
+        try {
+          const response = await apiClient.post("/api/auth/login", {
+            email,
+            password,
+          });
 
-        set({
-          user: mockUser,
-          isAuthenticated: true,
-          isLoading: false,
-        });
+          const data = await response.json();
+
+          localStorage.setItem("token", data.token);
+
+          set({
+            user: data.user,
+            token: data.token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } catch (error: any) {
+          set({ isLoading: false });
+          throw error;
+        }
       },
 
       logout: () => {
+        localStorage.removeItem("token");
         set({
           user: null,
+          token: null,
           isAuthenticated: false,
         });
       },
@@ -63,6 +73,7 @@ export const useAuthStore = create<AuthState>()(
       name: "auth-storage",
       partialize: (state) => ({
         user: state.user,
+        token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
     }

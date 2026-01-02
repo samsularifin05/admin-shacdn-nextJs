@@ -1,42 +1,74 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { ColumnDef, PaginationState } from "@tanstack/react-table";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, UserPlus, Eye, UserCheck } from "lucide-react";
+import { Pencil, Trash2, UserPlus, Eye } from "lucide-react";
 import { DataTable, DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
 import { User } from "../types/user.schema";
-import { userService } from "../services/user.service";
 import { useModalStore } from "@/stores/modal-store";
+import { userService } from "../services/user.service";
 import { UserForm } from "./user-form";
 import { UserDelete } from "./user-delete";
 import { UserDetail } from "./user-detail";
 
 export const UserTable = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [data, setData] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Single source of truth for pagination
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
   const { onOpen } = useModalStore();
 
-  const fetchUsers = useCallback(async () => {
+  // Ref to prevent double-fetching on mount (StrictMode)
+  const isFetchingRef = useRef(false);
+  const lastFetchRef = useRef<string>("");
+
+  const fetchUsers = useCallback(async (page: number, limit: number) => {
+    const fetchKey = `${page}-${limit}`;
+
+    // Avoid double fetch if same parameters and not a manual refresh
+    if (lastFetchRef.current === fetchKey && isFetchingRef.current) return;
+
+    isFetchingRef.current = true;
+    lastFetchRef.current = fetchKey;
     setIsLoading(true);
+
     try {
-      const data = await userService.getUsers();
-      setUsers(data);
+      console.log(`[UserTable] Fetching: Page ${page}, Limit ${limit}`);
+      const result = await userService.getUsers(page, limit);
+      setData(result.users);
+      setTotalCount(result.meta.total);
+      setTotalPages(result.meta.totalPages);
     } catch (error) {
-      console.error("Failed to fetch users", error);
+      console.error("Failed to fetch users:", error);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   }, []);
 
+  // Effect triggered on mount and pagination changes
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    fetchUsers(pagination.pageIndex + 1, pagination.pageSize);
+  }, [pagination.pageIndex, pagination.pageSize, fetchUsers]);
+
+  const refreshData = () => {
+    lastFetchRef.current = ""; // Reset ref to force refresh
+    fetchUsers(pagination.pageIndex + 1, pagination.pageSize);
+  };
 
   const handleViewUser = (user: User) => {
     onOpen("view", {
       title: "User Details",
-      size: "lg", // Menggunakan ukuran LG
-      position: "top", // Posisi di atas
+      size: "lg",
+      position: "top",
       content: <UserDetail user={user} />,
     });
   };
@@ -44,24 +76,24 @@ export const UserTable = () => {
   const handleEditUser = (user: User) => {
     onOpen("form", {
       title: "Edit User",
-      size: "md", // Menggunakan ukuran MD
-      content: <UserForm initialData={user} onSuccess={fetchUsers} />,
+      size: "md",
+      content: <UserForm initialData={user} onSuccess={refreshData} />,
     });
   };
 
   const handleDeleteUser = (user: User) => {
     onOpen("delete", {
       title: "Delete User",
-      size: "sm", // Menggunakan ukuran SM
-      content: <UserDelete user={user} onSuccess={fetchUsers} />,
+      size: "sm",
+      content: <UserDelete user={user} onSuccess={refreshData} />,
     });
   };
 
   const handleAddUser = () => {
     onOpen("form", {
       title: "Add New User",
-      size: "md", // Menggunakan ukuran MD
-      content: <UserForm onSuccess={fetchUsers} />,
+      size: "md",
+      content: <UserForm onSuccess={refreshData} />,
     });
   };
 
@@ -74,15 +106,6 @@ export const UserTable = () => {
         isAdd: true,
         show: true,
         group: "toolbar",
-      },
-      {
-        label: "Penjualan",
-        icon: <UserPlus className="h-4 w-4" />,
-        onClick: () => handleAddUser(),
-        isAdd: true,
-        show: true,
-        group: "toolbar",
-        variant: "outline",
       },
       {
         label: "View Details",
@@ -99,18 +122,6 @@ export const UserTable = () => {
         group: "action",
       },
       {
-        label: "Toggle Status",
-        icon: <UserCheck className="h-4 w-4" />,
-        onClick: (row?: User) => row && alert(`Status toggled for ${row.name}`),
-        show: true,
-        group: "action",
-      },
-      {
-        isSeparator: true,
-        show: true,
-        group: "action",
-      },
-      {
         label: "Delete",
         icon: <Trash2 className="h-4 w-4" />,
         onClick: (row?: User) => row && handleDeleteUser(row),
@@ -119,7 +130,7 @@ export const UserTable = () => {
         className: "text-destructive focus:text-destructive",
       },
     ],
-    [fetchUsers]
+    []
   );
 
   const columns: ColumnDef<User>[] = useMemo(
@@ -161,13 +172,18 @@ export const UserTable = () => {
   return (
     <DataTable
       columns={columns}
-      data={users}
+      data={data}
       enableSearch
       searchPlaceholder="Search users..."
       isLoading={isLoading}
       actions={tableActions}
       enableSorting
       enableColumnVisibility
+      manualPagination
+      pageCount={totalPages}
+      totalCount={totalCount}
+      pagination={pagination}
+      onPaginationChange={setPagination}
     />
   );
 };

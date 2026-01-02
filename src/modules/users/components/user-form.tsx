@@ -22,6 +22,7 @@ export function UserForm({ initialData, onSuccess }: UserFormProps) {
     defaultValues: {
       name: initialData?.name || "",
       email: initialData?.email || "",
+      password: initialData ? "******" : "", // Dummy password for edit mode
       role: initialData?.role || "User",
       status: initialData?.status || "Active",
     },
@@ -73,6 +74,13 @@ export function UserForm({ initialData, onSuccess }: UserFormProps) {
           label="Email Address"
           placeholder="enter@email.com"
           type="email"
+          disabled={isSubmitting}
+        />
+        <FormInput
+          name="password"
+          label="Password"
+          placeholder={initialData ? "Leave empty to keep current" : "••••••••"}
+          type="password"
           disabled={isSubmitting}
         />
         <div className="grid grid-cols-2 gap-4">

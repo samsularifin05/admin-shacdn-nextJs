@@ -3,7 +3,7 @@ import { z } from "zod";
 export const bankSchema = z.object({
   code: z.string().min(1, 'Required').transform(v => v?.toUpperCase()),
   name: z.string().min(1, 'Required').transform(v => v?.toUpperCase()),
-  category: z.enum(["Local","International"]).min(1, 'Required'),
+  category: z.enum(["Local","International"]),
   balance: z.coerce.number().optional(),
   conversionRate: z.coerce.number().optional(),
   totalValue: z.coerce.number().optional(),

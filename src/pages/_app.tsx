@@ -7,6 +7,7 @@ import { ProtectedRoute } from "@/components/protected-route";
 import { useAuthStore } from "@/stores/auth-store";
 import { useEffect, useState } from "react";
 import { ModalProvider } from "@/components/providers/modal-provider";
+import { Toaster } from "sonner";
 
 // Error pages that should be handled specially
 const errorPages = ["/404", "/_error"];
@@ -44,6 +45,7 @@ export default function App({ Component, pageProps }: AppProps) {
   if (isPublicRoute) {
     return (
       <>
+        <Toaster position="top-right" richColors />
         <ModalProvider />
         <Component {...pageProps} />
       </>
@@ -57,6 +59,7 @@ export default function App({ Component, pageProps }: AppProps) {
     if (isAuthenticated) {
       return (
         <>
+          <Toaster position="top-right" richColors />
           <ModalProvider />
           <AppShell>
             <Component {...pageProps} />
@@ -75,6 +78,7 @@ export default function App({ Component, pageProps }: AppProps) {
   // For administrative or any other protected pages
   return (
     <>
+      <Toaster position="top-right" richColors />
       <ModalProvider />
       <ProtectedRoute>
         <AppShell>

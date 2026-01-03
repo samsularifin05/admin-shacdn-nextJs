@@ -7,6 +7,7 @@ import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, For
 import { salesTransactionService } from "../services/sales-transactions.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   initialData?: SalesTransaction;
@@ -44,13 +45,16 @@ export const SalesTransactionForm = ({ initialData, onSuccess }: Props) => {
     try {
       if (initialData) {
         await salesTransactionService.update(initialData.id, data);
+        toast.success("Sales Transaction updated successfully");
       } else {
         await salesTransactionService.create(data);
+        toast.success("Sales Transaction created successfully");
       }
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error(error);
+      toast.error("An error occurred. Please try again.");
     }
   };
 

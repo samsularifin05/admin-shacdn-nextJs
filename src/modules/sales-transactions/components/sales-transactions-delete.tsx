@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, Loader2 } from "lucide-react";
 import { useModalStore } from "@/stores/modal-store";
+import { toast } from "sonner";
 import { SalesTransaction } from "../types/sales-transactions.schema";
 import { salesTransactionService } from "../services/sales-transactions.service";
 
@@ -18,10 +19,12 @@ export function SalesTransactionDelete({ salesTransaction: row, onSuccess }: Sal
     setIsDeleting(true);
     try {
       await salesTransactionService.delete(row.id);
+      toast.success("Sales Transaction deleted successfully");
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Delete failed:", error);
+      toast.error("Failed to delete Sales Transaction. Please try again.");
     } finally {
       setIsDeleting(false);
     }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, Loader2 } from "lucide-react";
 import { useModalStore } from "@/stores/modal-store";
+import { toast } from "sonner";
 import { Kategori } from "../types/kategoris.schema";
 import { kategoriService } from "../services/kategoris.service";
 
@@ -18,10 +19,12 @@ export function KategoriDelete({ kategori: row, onSuccess }: KategoriDeleteProps
     setIsDeleting(true);
     try {
       await kategoriService.delete(row.id);
+      toast.success("Kategori deleted successfully");
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Delete failed:", error);
+      toast.error("Failed to delete Kategori. Please try again.");
     } finally {
       setIsDeleting(false);
     }

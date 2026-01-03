@@ -7,6 +7,7 @@ import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, For
 import { bakiService } from "../services/bakis.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   initialData?: Baki;
@@ -40,13 +41,16 @@ export const BakiForm = ({ initialData, onSuccess }: Props) => {
     try {
       if (initialData) {
         await bakiService.update(initialData.id, data);
+        toast.success("Baki updated successfully");
       } else {
         await bakiService.create(data);
+        toast.success("Baki created successfully");
       }
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error(error);
+      toast.error("An error occurred. Please try again.");
     }
   };
 

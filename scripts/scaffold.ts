@@ -206,7 +206,16 @@ const generateSchema = () => {
           zodType += ".optional()";
         }
       } else {
-        zodType += ".min(1, 'Required')";
+        // Only add .min(1) for string-based types
+        if (
+          f.type === "string" ||
+          f.type === "text" ||
+          f.type === "email" ||
+          (f.type === "async-select" &&
+            !(f.relatedTable && (!f.valueField || f.valueField === "id")))
+        ) {
+          zodType += ".min(1, 'Required')";
+        }
       }
 
       // Add text transformation (uppercase default)
@@ -782,6 +791,7 @@ import { ${toCamelCase(
   )}Service } from "../services/${resourceName}.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   initialData?: ${moduleName};
@@ -824,13 +834,16 @@ export const ${moduleName}Form = ({ initialData, onSuccess }: Props) => {
     try {
       if (initialData) {
         await ${toCamelCase(moduleName)}Service.update(initialData.id, data);
+        toast.success("${title} updated successfully");
       } else {
         await ${toCamelCase(moduleName)}Service.create(data);
+        toast.success("${title} created successfully");
       }
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error(error);
+      toast.error("An error occurred. Please try again.");
     }
   };
 
@@ -1169,6 +1182,7 @@ const generateDelete = () => {
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, Loader2 } from "lucide-react";
 import { useModalStore } from "@/stores/modal-store";
+import { toast } from "sonner";
 import { ${moduleName} } from "../types/${resourceName}.schema";
 import { ${toCamelCase(
     moduleName
@@ -1189,10 +1203,12 @@ export function ${moduleName}Delete({ ${toCamelCase(
     setIsDeleting(true);
     try {
       await ${toCamelCase(moduleName)}Service.delete(row.id);
+      toast.success("${title} deleted successfully");
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Delete failed:", error);
+      toast.error("Failed to delete ${title}. Please try again.");
     } finally {
       setIsDeleting(false);
     }
@@ -1464,16 +1480,77 @@ try {
   console.error("❌ Failed to run prisma commands. Please run them manually.");
 }
 
-// Try to trigger Next.js hot reload by touching prisma.ts
-const prismaLibPath = path.resolve(process.cwd(), "src/lib/prisma.ts");
-if (fs.existsSync(prismaLibPath)) {
-  console.log("\n🔄 Mencoba trigger hot-reload Next.js...");
-  try {
-    const now = new Date();
-    fs.utimesSync(prismaLibPath, now, now);
-    console.log("✓ File prisma.ts di-touch. Dev server mungkin auto-reload.");
-  } catch (e) {
-    // Silently fail
+// 13. Menu Update
+const menusPath = path.resolve(process.cwd(), "src/config/menus.ts");
+if (fs.existsSync(menusPath)) {
+  let menusContent = fs.readFileSync(menusPath, "utf-8");
+  const href = config.route;
+
+  if (href && !menusContent.includes(`href: "${href}"`)) {
+    console.log(`\n📂 Updating sidebar menu for: ${resourceName}...`);
+    const menuTitle = config.title;
+    const isTransaction =
+      resourceName.toLowerCase().includes("transaction") ||
+      resourceName.toLowerCase().includes("sale");
+    const groupName = isTransaction ? "Transactions" : "Master Data";
+    const iconName = isTransaction ? "ShoppingBag" : "Package";
+
+    // Build the menu item string
+    const newItem = `      {
+        title: "${menuTitle}",
+        href: "${href}",
+        icon: ${iconName},
+      },`;
+
+    // Find the group/section by title
+    const groupRegex = new RegExp(
+      `(title: "${groupName}",[\\s\\S]*?items: \\[)([\\s\\S]*?)(\\])`,
+      "g"
+    );
+
+    if (groupRegex.test(menusContent)) {
+      // Append to existing group
+      menusContent = menusContent.replace(
+        groupRegex,
+        (match, prefix, items, suffix) => {
+          const trimmedItems = items.trim();
+          const separator = trimmedItems.endsWith(",") ? "\n" : ",\n";
+          return `${prefix}${items}${separator}${newItem}\n      ${suffix}`;
+        }
+      );
+    } else {
+      // Create new group and append to navigation array before the last ];
+      const lastBracketIndex = menusContent.lastIndexOf("];");
+      if (lastBracketIndex !== -1) {
+        const newGroup = `  {
+    title: "${groupName}",
+    items: [
+${newItem}
+    ],
+  },\n`;
+        menusContent =
+          menusContent.slice(0, lastBracketIndex) +
+          newGroup +
+          menusContent.slice(lastBracketIndex);
+      }
+    }
+
+    // Ensure icon is imported
+    if (
+      !menusContent.includes(`${iconName},`) &&
+      !menusContent.includes(`${iconName} }`)
+    ) {
+      menusContent = menusContent.replace(
+        /import \{([\s\S]*?)\} from "lucide-react"/,
+        (match, imports) => {
+          const trimmed = imports.trim();
+          return `import {\n  ${trimmed},\n  ${iconName}\n} from "lucide-react"`;
+        }
+      );
+    }
+
+    fs.writeFileSync(menusPath, menusContent);
+    console.log(`✅ Updated src/config/menus.ts with ${menuTitle}`);
   }
 }
 

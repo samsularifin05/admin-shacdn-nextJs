@@ -7,6 +7,7 @@ import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, For
 import { jenisService } from "../services/jenis.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   initialData?: Jenis;
@@ -36,13 +37,16 @@ export const JenisForm = ({ initialData, onSuccess }: Props) => {
     try {
       if (initialData) {
         await jenisService.update(initialData.id, data);
+        toast.success("Jenis updated successfully");
       } else {
         await jenisService.create(data);
+        toast.success("Jenis created successfully");
       }
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error(error);
+      toast.error("An error occurred. Please try again.");
     }
   };
 

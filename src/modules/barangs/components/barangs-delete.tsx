@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, Loader2 } from "lucide-react";
 import { useModalStore } from "@/stores/modal-store";
+import { toast } from "sonner";
 import { Barang } from "../types/barangs.schema";
 import { barangService } from "../services/barangs.service";
 
@@ -18,10 +19,12 @@ export function BarangDelete({ barang: row, onSuccess }: BarangDeleteProps) {
     setIsDeleting(true);
     try {
       await barangService.delete(row.id);
+      toast.success("Barang deleted successfully");
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Delete failed:", error);
+      toast.error("Failed to delete Barang. Please try again.");
     } finally {
       setIsDeleting(false);
     }

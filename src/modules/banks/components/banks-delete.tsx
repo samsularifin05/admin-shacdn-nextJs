@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, Loader2 } from "lucide-react";
 import { useModalStore } from "@/stores/modal-store";
+import { toast } from "sonner";
 import { Bank } from "../types/banks.schema";
 import { bankService } from "../services/banks.service";
 
@@ -18,10 +19,12 @@ export function BankDelete({ bank: row, onSuccess }: BankDeleteProps) {
     setIsDeleting(true);
     try {
       await bankService.delete(row.id);
+      toast.success("Bank deleted successfully");
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Delete failed:", error);
+      toast.error("Failed to delete Bank. Please try again.");
     } finally {
       setIsDeleting(false);
     }

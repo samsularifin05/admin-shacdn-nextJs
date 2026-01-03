@@ -7,6 +7,7 @@ import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, For
 import { kategoriService } from "../services/kategoris.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   initialData?: Kategori;
@@ -42,13 +43,16 @@ export const KategoriForm = ({ initialData, onSuccess }: Props) => {
     try {
       if (initialData) {
         await kategoriService.update(initialData.id, data);
+        toast.success("Kategori updated successfully");
       } else {
         await kategoriService.create(data);
+        toast.success("Kategori created successfully");
       }
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error(error);
+      toast.error("An error occurred. Please try again.");
     }
   };
 

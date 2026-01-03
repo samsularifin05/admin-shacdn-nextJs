@@ -49,15 +49,16 @@ model tr_sales {
 }
 
 model tm_baki {
-  id           Int         @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
   kodeGudang   String
   kodeBaki     String
   namaBaki     String
   beratBaki    Float
   beratBandrol Float
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  tmBarangs    tm_barang[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tmBarangs tm_barang[]
 }
 
 model tm_banks {

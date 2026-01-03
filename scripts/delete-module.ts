@@ -80,6 +80,26 @@ if (fs.existsSync(seederPath)) {
   // Ideally we should remove it from seed.ts.
 }
 
+// Remove from src/config/menus.ts
+const menusPath = path.resolve(process.cwd(), "src/config/menus.ts");
+if (fs.existsSync(menusPath)) {
+  let menusContent = fs.readFileSync(menusPath, "utf-8");
+  const href = config.route;
+  if (href) {
+    // Regex to match the menu item block containing the href
+    const menuRegex = new RegExp(
+      `\\{\\s*title:\\s*"[^"]*",\\s*href:\\s*"${href}",[\\s\\S]*?\\},`,
+      "g"
+    );
+
+    if (menuRegex.test(menusContent)) {
+      menusContent = menusContent.replace(menuRegex, "");
+      fs.writeFileSync(menusPath, menusContent);
+      console.log(`🗑️  Removed menu entry for ${href} from menus.ts`);
+    }
+  }
+}
+
 console.log("\n✅ Module Deleted Successfully!");
 
 // Remove from schema.prisma

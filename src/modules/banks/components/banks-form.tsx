@@ -7,6 +7,7 @@ import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, For
 import { bankService } from "../services/banks.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   initialData?: Bank;
@@ -58,13 +59,16 @@ export const BankForm = ({ initialData, onSuccess }: Props) => {
     try {
       if (initialData) {
         await bankService.update(initialData.id, data);
+        toast.success("Bank updated successfully");
       } else {
         await bankService.create(data);
+        toast.success("Bank created successfully");
       }
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error(error);
+      toast.error("An error occurred. Please try again.");
     }
   };
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, Loader2 } from "lucide-react";
 import { useModalStore } from "@/stores/modal-store";
+import { toast } from "sonner";
 import { Baki } from "../types/bakis.schema";
 import { bakiService } from "../services/bakis.service";
 
@@ -18,10 +19,12 @@ export function BakiDelete({ baki: row, onSuccess }: BakiDeleteProps) {
     setIsDeleting(true);
     try {
       await bakiService.delete(row.id);
+      toast.success("Baki deleted successfully");
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Delete failed:", error);
+      toast.error("Failed to delete Baki. Please try again.");
     } finally {
       setIsDeleting(false);
     }

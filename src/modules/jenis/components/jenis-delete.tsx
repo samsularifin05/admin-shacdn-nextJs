@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, Loader2 } from "lucide-react";
 import { useModalStore } from "@/stores/modal-store";
+import { toast } from "sonner";
 import { Jenis } from "../types/jenis.schema";
 import { jenisService } from "../services/jenis.service";
 
@@ -18,10 +19,12 @@ export function JenisDelete({ jenis: row, onSuccess }: JenisDeleteProps) {
     setIsDeleting(true);
     try {
       await jenisService.delete(row.id);
+      toast.success("Jenis deleted successfully");
       onClose();
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Delete failed:", error);
+      toast.error("Failed to delete Jenis. Please try again.");
     } finally {
       setIsDeleting(false);
     }

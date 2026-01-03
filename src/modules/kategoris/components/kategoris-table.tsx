@@ -23,6 +23,7 @@ export const KategoriTable = () => {
   const handleAction = useCallback(
     (type: "create" | "update" | "delete" | "view", row?: Kategori) => {
       switch (type) {
+        
         case "create":
           onOpen("form", {
             title: "Add Kategori",
@@ -95,6 +96,7 @@ export const KategoriTable = () => {
         group: "action",
         className: "text-destructive focus:text-destructive",
       },
+      
     ],
     [handleAction]
   );

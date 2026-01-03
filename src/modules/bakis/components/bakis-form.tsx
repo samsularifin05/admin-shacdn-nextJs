@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { bakiSchema, BakiFormData, Baki } from "../types/bakis.schema";
@@ -37,15 +37,23 @@ export const BakiForm = ({ initialData, onSuccess }: Props) => {
 
   
 
+  
+
   const onSubmit = async (data: BakiFormData) => {
     try {
+      let result;
       if (initialData) {
-        await bakiService.update(initialData.id, data);
+        result = await bakiService.update(initialData.id, data);
         toast.success("Baki updated successfully");
       } else {
-        await bakiService.create(data);
+        result = await bakiService.create(data);
         toast.success("Baki created successfully");
       }
+
+      if (result) {
+        
+      }
+
       onSuccess?.();
       onClose();
     } catch (error) {
@@ -105,6 +113,7 @@ export const BakiForm = ({ initialData, onSuccess }: Props) => {
             
           />
         </div>
+        
         <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
             <Button type="submit" disabled={isLoading}>

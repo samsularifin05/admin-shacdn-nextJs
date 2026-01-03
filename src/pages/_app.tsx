@@ -33,6 +33,7 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [router]);
 
   const isAdminRoute = router.pathname.startsWith("/admin");
+  const isPrintRoute = router.asPath.includes("/admin/print/");
   const isErrorPage = errorPages.includes(router.pathname);
   const isPublicRoute = !isAdminRoute && !isErrorPage;
 
@@ -72,6 +73,15 @@ export default function App({ Component, pageProps }: AppProps) {
         <ModalProvider />
         <Component {...pageProps} />
       </>
+    );
+  }
+
+  // For print routes, render without AppShell
+  if (isPrintRoute) {
+    return (
+      <ProtectedRoute>
+        <Component {...pageProps} />
+      </ProtectedRoute>
     );
   }
 

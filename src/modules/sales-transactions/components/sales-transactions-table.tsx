@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useCallback, useRef } from "react";
-import { Pencil, Trash2, Plus, Eye } from "lucide-react";
+import { Pencil, Trash2, Plus, Eye, Printer } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
 import { formatRupiah } from "@/lib/utils";
@@ -21,8 +21,24 @@ export const SalesTransactionTable = () => {
   }, []);
 
   const handleAction = useCallback(
-    (type: "create" | "update" | "delete" | "view", row?: SalesTransaction) => {
+    (type: "create" | "update" | "delete" | "view" | "reprint", row?: SalesTransaction) => {
       switch (type) {
+        case "reprint":
+          if (row) {
+            const printUrl = `/admin/print/sales-transactions/${row.id}`;
+            const iframe = document.createElement("iframe");
+            iframe.style.display = "none";
+            iframe.src = printUrl;
+            document.body.appendChild(iframe);
+            
+            // Cleanup iframe after some time
+            setTimeout(() => {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+            }, 5000);
+          }
+          break;
         case "create":
           onOpen("form", {
             title: "Add Sales Transaction",
@@ -94,6 +110,13 @@ export const SalesTransactionTable = () => {
         show: true,
         group: "action",
         className: "text-destructive focus:text-destructive",
+      },
+      {
+        label: "Print Receipt",
+        icon: <Printer className="h-4 w-4" />,
+        onClick: (row?: SalesTransaction) => handleAction("reprint", row),
+        show: true,
+        group: "action",
       },
     ],
     [handleAction]

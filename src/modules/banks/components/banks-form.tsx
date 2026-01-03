@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { bankSchema, BankFormData, Bank } from "../types/banks.schema";
@@ -40,6 +40,8 @@ export const BankForm = ({ initialData, onSuccess }: Props) => {
   const { watch, setValue, handleSubmit, formState: { isSubmitting: isLoading } } = form;
 
   
+
+  
   // Auto-Calculation
   const values = watch();
   
@@ -57,13 +59,19 @@ export const BankForm = ({ initialData, onSuccess }: Props) => {
 
   const onSubmit = async (data: BankFormData) => {
     try {
+      let result;
       if (initialData) {
-        await bankService.update(initialData.id, data);
+        result = await bankService.update(initialData.id, data);
         toast.success("Bank updated successfully");
       } else {
-        await bankService.create(data);
+        result = await bankService.create(data);
         toast.success("Bank created successfully");
       }
+
+      if (result) {
+        
+      }
+
       onSuccess?.();
       onClose();
     } catch (error) {
@@ -139,6 +147,7 @@ export const BankForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
           />
         </div>
+        
         <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
             <Button type="submit" disabled={isLoading}>

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { barangSchema, BarangFormData, Barang } from "../types/barangs.schema";
@@ -63,15 +63,23 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
 
   
 
+  
+
   const onSubmit = async (data: BarangFormData) => {
     try {
+      let result;
       if (initialData) {
-        await barangService.update(initialData.id, data);
+        result = await barangService.update(initialData.id, data);
         toast.success("Barang updated successfully");
       } else {
-        await barangService.create(data);
+        result = await barangService.create(data);
         toast.success("Barang created successfully");
       }
+
+      if (result) {
+        
+      }
+
       onSuccess?.();
       onClose();
     } catch (error) {
@@ -239,6 +247,7 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
             
           />
         </div>
+        
         <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
             <Button type="submit" disabled={isLoading}>

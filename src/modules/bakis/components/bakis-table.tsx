@@ -23,6 +23,7 @@ export const BakiTable = () => {
   const handleAction = useCallback(
     (type: "create" | "update" | "delete" | "view", row?: Baki) => {
       switch (type) {
+        
         case "create":
           onOpen("form", {
             title: "Add Baki",
@@ -95,6 +96,7 @@ export const BakiTable = () => {
         group: "action",
         className: "text-destructive focus:text-destructive",
       },
+      
     ],
     [handleAction]
   );

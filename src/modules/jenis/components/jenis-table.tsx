@@ -23,6 +23,7 @@ export const JenisTable = () => {
   const handleAction = useCallback(
     (type: "create" | "update" | "delete" | "view", row?: Jenis) => {
       switch (type) {
+        
         case "create":
           onOpen("form", {
             title: "Add Jenis",
@@ -95,6 +96,7 @@ export const JenisTable = () => {
         group: "action",
         className: "text-destructive focus:text-destructive",
       },
+      
     ],
     [handleAction]
   );

@@ -4,15 +4,16 @@ Dokumentasi ini menjelaskan cara membuat file konfigurasi `.json` di dalam folde
 
 ## Struktur Utama JSON
 
-| Properti       | Tipe     | Deskripsi                                             | Contoh                       |
-| :------------- | :------- | :---------------------------------------------------- | :--------------------------- |
-| `moduleName`   | `string` | Nama modul dalam format PascalCase.                   | `"SalesTransaction"`         |
-| `resourceName` | `string` | Nama resource (plural, lowercase) untuk folder & API. | `"sales-transactions"`       |
-| `tableName`    | `string` | Nama tabel database (Prisma).                         | `"tm_sales_transaction"`     |
-| `title`        | `string` | Judul modul untuk UI.                                 | `"Sales Transaction"`        |
-| `route`        | `string` | Path URL halaman admin.                               | `"/admin/sales-transaction"` |
-| `classForm`    | `string` | (Opsional) CSS class untuk layout form.               | `"grid grid-cols-2 gap-4"`   |
-| `fields`       | `array`  | Daftar field dalam modul.                             | `[...]`                      |
+| Properti       | Tipe      | Deskripsi                                                 | Contoh                       |
+| :------------- | :-------- | :-------------------------------------------------------- | :--------------------------- |
+| `moduleName`   | `string`  | Nama modul dalam format PascalCase.                       | `"SalesTransaction"`         |
+| `resourceName` | `string`  | Nama resource (plural, lowercase) untuk folder & API.     | `"sales-transactions"`       |
+| `tableName`    | `string`  | Nama tabel database (Prisma).                             | `"tm_sales_transaction"`     |
+| `title`        | `string`  | Judul modul untuk UI.                                     | `"Sales Transaction"`        |
+| `route`        | `string`  | Path URL halaman admin.                                   | `"/admin/sales-transaction"` |
+| `classForm`    | `string`  | (Opsional) CSS class untuk layout form.                   | `"grid grid-cols-2 gap-4"`   |
+| `printable`    | `boolean` | (Opsional) Aktifkan fitur cetak struk otomatis & reprint. | `true`                       |
+| `fields`       | `array`   | Daftar field dalam modul.                                 | `[...]`                      |
 
 ---
 

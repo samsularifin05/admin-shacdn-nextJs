@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { kategoriSchema, KategoriFormData, Kategori } from "../types/kategoris.schema";
@@ -39,15 +39,23 @@ export const KategoriForm = ({ initialData, onSuccess }: Props) => {
 
   
 
+  
+
   const onSubmit = async (data: KategoriFormData) => {
     try {
+      let result;
       if (initialData) {
-        await kategoriService.update(initialData.id, data);
+        result = await kategoriService.update(initialData.id, data);
         toast.success("Kategori updated successfully");
       } else {
-        await kategoriService.create(data);
+        result = await kategoriService.create(data);
         toast.success("Kategori created successfully");
       }
+
+      if (result) {
+        
+      }
+
       onSuccess?.();
       onClose();
     } catch (error) {
@@ -117,6 +125,7 @@ export const KategoriForm = ({ initialData, onSuccess }: Props) => {
             
           />
         </div>
+        
         <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
             <Button type="submit" disabled={isLoading}>

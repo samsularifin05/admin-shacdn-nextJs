@@ -23,6 +23,7 @@ export const BarangTable = () => {
   const handleAction = useCallback(
     (type: "create" | "update" | "delete" | "view", row?: Barang) => {
       switch (type) {
+        
         case "create":
           onOpen("form", {
             title: "Add Barang",
@@ -95,6 +96,7 @@ export const BarangTable = () => {
         group: "action",
         className: "text-destructive focus:text-destructive",
       },
+      
     ],
     [handleAction]
   );

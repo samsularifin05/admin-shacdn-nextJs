@@ -4,6 +4,7 @@
   "tableName": "tm_sales_transaction",
   "title": "Sales Transaction",
   "route": "/admin/sales-transaction",
+  "printable": true,
   "classForm": "grid grid-cols-1 md:grid-cols-2 gap-4",
   "fields": [
     {

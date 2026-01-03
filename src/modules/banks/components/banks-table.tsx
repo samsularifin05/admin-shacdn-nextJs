@@ -23,6 +23,7 @@ export const BankTable = () => {
   const handleAction = useCallback(
     (type: "create" | "update" | "delete" | "view", row?: Bank) => {
       switch (type) {
+        
         case "create":
           onOpen("form", {
             title: "Add Bank",
@@ -95,6 +96,7 @@ export const BankTable = () => {
         group: "action",
         className: "text-destructive focus:text-destructive",
       },
+      
     ],
     [handleAction]
   );

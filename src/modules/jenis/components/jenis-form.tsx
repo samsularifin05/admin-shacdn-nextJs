@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { jenisSchema, JenisFormData, Jenis } from "../types/jenis.schema";
@@ -33,15 +33,23 @@ export const JenisForm = ({ initialData, onSuccess }: Props) => {
 
   
 
+  
+
   const onSubmit = async (data: JenisFormData) => {
     try {
+      let result;
       if (initialData) {
-        await jenisService.update(initialData.id, data);
+        result = await jenisService.update(initialData.id, data);
         toast.success("Jenis updated successfully");
       } else {
-        await jenisService.create(data);
+        result = await jenisService.create(data);
         toast.success("Jenis created successfully");
       }
+
+      if (result) {
+        
+      }
+
       onSuccess?.();
       onClose();
     } catch (error) {
@@ -86,6 +94,7 @@ export const JenisForm = ({ initialData, onSuccess }: Props) => {
             
           />
         </div>
+        
         <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
             <Button type="submit" disabled={isLoading}>

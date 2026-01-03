@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { salesTransactionSchema, SalesTransactionFormData, SalesTransaction } from "../types/sales-transactions.schema";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram } from "@/components/form";
 import { salesTransactionService } from "../services/sales-transactions.service";
 import { useModalStore } from "@/stores/modal-store";
-import { Loader2 } from "lucide-react";
+import { Loader2, Printer } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
@@ -39,17 +39,37 @@ export const SalesTransactionForm = ({ initialData, onSuccess }: Props) => {
 
   const { watch, setValue, handleSubmit, formState: { isSubmitting: isLoading } } = form;
 
+  const [shouldPrint, setShouldPrint] = useState(true);
+
   
 
   const onSubmit = async (data: SalesTransactionFormData) => {
     try {
+      let result;
       if (initialData) {
-        await salesTransactionService.update(initialData.id, data);
+        result = await salesTransactionService.update(initialData.id, data);
         toast.success("Sales Transaction updated successfully");
       } else {
-        await salesTransactionService.create(data);
+        result = await salesTransactionService.create(data);
         toast.success("Sales Transaction created successfully");
       }
+
+      if (shouldPrint && result) {
+        // Trigger print via hidden iframe
+        const printUrl = `/admin/print/sales-transactions/${result.id}`;
+        const iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        iframe.src = printUrl;
+        document.body.appendChild(iframe);
+        
+        // Cleanup iframe after some time
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+        }, 5000);
+      }
+
       onSuccess?.();
       onClose();
     } catch (error) {
@@ -119,6 +139,19 @@ export const SalesTransactionForm = ({ initialData, onSuccess }: Props) => {
             
             
           />
+        </div>
+        <div className="flex items-center space-x-2 py-2 border-t border-dashed">
+          <input 
+            type="checkbox" 
+            id="shouldPrint" 
+            checked={shouldPrint} 
+            onChange={(e) => setShouldPrint(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+          />
+          <label htmlFor="shouldPrint" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2">
+            <Printer className="h-4 w-4" />
+            Print Receipt after saving
+          </label>
         </div>
         <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>

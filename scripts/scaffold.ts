@@ -50,6 +50,7 @@ interface GeneratorConfig {
   route?: string;
   classForm?: string;
   fields: Field[];
+  printable?: boolean;
 }
 
 // Helpers
@@ -778,7 +779,7 @@ const generateForm = () => {
     })
     .join("\n");
 
-  return `import { useEffect } from "react";
+  return `import { useEffect, useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ${toCamelCase(
@@ -790,7 +791,7 @@ import { ${toCamelCase(
     moduleName
   )}Service } from "../services/${resourceName}.service";
 import { useModalStore } from "@/stores/modal-store";
-import { Loader2 } from "lucide-react";
+import { Loader2${config.printable ? ", Printer" : ""} } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
@@ -828,17 +829,47 @@ export const ${moduleName}Form = ({ initialData, onSuccess }: Props) => {
 
   const { watch, setValue, handleSubmit, formState: { isSubmitting: isLoading } } = form;
 
+  ${
+    config.printable
+      ? `const [shouldPrint, setShouldPrint] = useState(true);`
+      : ""
+  }
+
   ${calculationHook}
 
   const onSubmit = async (data: ${moduleName}FormData) => {
     try {
+      let result;
       if (initialData) {
-        await ${toCamelCase(moduleName)}Service.update(initialData.id, data);
+        result = await ${toCamelCase(
+          moduleName
+        )}Service.update(initialData.id, data);
         toast.success("${title} updated successfully");
       } else {
-        await ${toCamelCase(moduleName)}Service.create(data);
+        result = await ${toCamelCase(moduleName)}Service.create(data);
         toast.success("${title} created successfully");
       }
+
+      if (${config.printable ? "shouldPrint && " : ""}result) {
+        ${
+          config.printable
+            ? `// Trigger print via hidden iframe
+        const printUrl = \`/admin/print/${resourceName}/\${result.id}\`;
+        const iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        iframe.src = printUrl;
+        document.body.appendChild(iframe);
+        
+        // Cleanup iframe after some time
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+        }, 5000);`
+            : ""
+        }
+      }
+
       onSuccess?.();
       onClose();
     } catch (error) {
@@ -853,6 +884,23 @@ export const ${moduleName}Form = ({ initialData, onSuccess }: Props) => {
         <div className="${classForm || "space-y-4"}">
 ${formFields}
         </div>
+        ${
+          config.printable
+            ? `<div className="flex items-center space-x-2 py-2 border-t border-dashed">
+          <input 
+            type="checkbox" 
+            id="shouldPrint" 
+            checked={shouldPrint} 
+            onChange={(e) => setShouldPrint(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+          />
+          <label htmlFor="shouldPrint" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2">
+            <Printer className="h-4 w-4" />
+            Print Receipt after saving
+          </label>
+        </div>`
+            : ""
+        }
         <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
             <Button type="submit" disabled={isLoading}>
@@ -900,7 +948,9 @@ const generateTable = () => {
 
   return `import { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useCallback, useRef } from "react";
-import { Pencil, Trash2, Plus, Eye } from "lucide-react";
+import { Pencil, Trash2, Plus, Eye${
+    config.printable ? ", Printer" : ""
+  } } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
 import { formatRupiah } from "@/lib/utils";
@@ -923,8 +973,30 @@ export const ${moduleName}Table = () => {
   }, []);
 
   const handleAction = useCallback(
-    (type: "create" | "update" | "delete" | "view", row?: ${moduleName}) => {
+    (type: "create" | "update" | "delete" | "view"${
+      config.printable ? ' | "reprint"' : ""
+    }, row?: ${moduleName}) => {
       switch (type) {
+        ${
+          config.printable
+            ? `case "reprint":
+          if (row) {
+            const printUrl = \`/admin/print/${resourceName}/\${row.id}\`;
+            const iframe = document.createElement("iframe");
+            iframe.style.display = "none";
+            iframe.src = printUrl;
+            document.body.appendChild(iframe);
+            
+            // Cleanup iframe after some time
+            setTimeout(() => {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+            }, 5000);
+          }
+          break;`
+            : ""
+        }
         case "create":
           onOpen("form", {
             title: "Add ${title}",
@@ -999,6 +1071,17 @@ export const ${moduleName}Table = () => {
         group: "action",
         className: "text-destructive focus:text-destructive",
       },
+      ${
+        config.printable
+          ? `{
+        label: "Print Receipt",
+        icon: <Printer className="h-4 w-4" />,
+        onClick: (row?: ${moduleName}) => handleAction("reprint", row),
+        show: true,
+        group: "action",
+      },`
+          : ""
+      }
     ],
     [handleAction]
   );

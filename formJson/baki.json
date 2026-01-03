@@ -1,0 +1,29 @@
+{
+  "moduleName": "Baki",
+  "resourceName": "bakis",
+  "tableName": "tm_baki",
+  "title": "Baki",
+  "route": "/admin/baki",
+  "fields": [
+    { "name": "kodeGudang", "label": "Kode Gudang", "type": "text" },
+    {
+      "name": "kodeBaki",
+      "label": "Kode Baki",
+      "type": "text",
+      "required": true
+    },
+    { "name": "namaBaki", "label": "Nama Baki", "type": "text" },
+    {
+      "name": "beratBaki",
+      "label": "Berat Baki",
+      "type": "number",
+      "defaultValue": 0
+    },
+    {
+      "name": "beratBandrol",
+      "label": "Berat Bandrol",
+      "type": "number",
+      "defaultValue": 0
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "moduleName": "Jenis",
+  "resourceName": "jenis",
+  "tableName": "tm_jenis",
+  "title": "Jenis",
+  "route": "/admin/jenis",
+  "fields": [
+    {
+      "name": "kodeJenis",
+      "label": "Kode Jenis",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "namaJenis",
+      "label": "Nama Jenis",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "kodeGroup",
+      "label": "Kode Group",
+      "type": "async-select",
+      "endpoint": "/api/kategoris",
+      "labelField": "kodeGroup",
+      "valueField": "id"
+    }
+  ]
+}

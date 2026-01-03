@@ -1,0 +1,117 @@
+{
+  "moduleName": "Barang",
+  "resourceName": "barangs",
+  "tableName": "tm_barang",
+  "title": "Barang",
+  "route": "/admin/barang",
+  "classForm": "grid grid-cols-1 md:grid-cols-3 gap-4",
+  "fields": [
+    {
+      "name": "kategori",
+      "label": "Kategori",
+      "type": "async-select",
+      "endpoint": "/api/kategoris",
+      "labelField": "kodeGroup",
+      "valueField": "id"
+    },
+    {
+      "name": "jenis",
+      "label": "Jenis",
+      "type": "async-select",
+      "endpoint": "/api/jenis",
+      "labelField": "kodeJenis",
+      "valueField": "id"
+    },
+    {
+      "name": "kodeBaki",
+      "label": "Kode Baki",
+      "type": "async-select",
+      "endpoint": "/api/bakis",
+      "labelField": "kodeBaki",
+      "valueField": "id"
+    },
+    {
+      "name": "barangSepuhan",
+      "label": "Barang Sepuhan",
+      "type": "select",
+      "options": ["TIDAK", "YA"],
+      "defaultValue": "TIDAK"
+    },
+    {
+      "name": "stockSepuh",
+      "label": "Stock Sepuh",
+      "type": "number",
+      "readOnly": true,
+      "defaultValue": 0
+    },
+    {
+      "name": "beratSepuh",
+      "label": "Berat Sepuh",
+      "type": "number",
+      "readOnly": true,
+      "defaultValue": 0
+    },
+    {
+      "name": "kodeIntern",
+      "label": "Kode Intern",
+      "type": "text"
+    },
+    {
+      "name": "markis",
+      "label": "Markis",
+      "type": "select",
+      "options": ["TIDAK", "YA"],
+      "defaultValue": "TIDAK"
+    },
+    {
+      "name": "namaBarang",
+      "label": "Nama Barang",
+      "type": "text"
+    },
+    {
+      "name": "beratAsli",
+      "label": "Berat Asli",
+      "type": "number",
+      "defaultValue": 0
+    },
+    {
+      "name": "berat",
+      "label": "Berat",
+      "type": "number",
+      "defaultValue": 0
+    },
+    {
+      "name": "kadarCetak",
+      "label": "Kadar Cetak",
+      "type": "text"
+    },
+    {
+      "name": "attributeName",
+      "label": "Attribute Name",
+      "type": "text"
+    },
+    {
+      "name": "beratAtribut",
+      "label": "Berat Atribut",
+      "type": "number",
+      "defaultValue": 0
+    },
+    {
+      "name": "hargaAtribut",
+      "label": "Harga Atribut",
+      "type": "rupiah",
+      "defaultValue": 0
+    },
+    {
+      "name": "beratPlastik",
+      "label": "Berat Plastik",
+      "type": "number",
+      "defaultValue": 0
+    },
+    {
+      "name": "size",
+      "label": "Size",
+      "type": "text"
+    }
+  ]
+}

@@ -968,4 +968,30 @@ ${fields
   );
 }
 
+// Try to trigger Next.js hot reload by touching prisma.ts
+const prismaLibPath = path.resolve(process.cwd(), "src/lib/prisma.ts");
+if (fs.existsSync(prismaLibPath)) {
+  console.log("\n🔄 Mencoba trigger hot-reload Next.js...");
+  try {
+    const now = new Date();
+    fs.utimesSync(prismaLibPath, now, now);
+    console.log("✓ File prisma.ts di-touch. Dev server mungkin auto-reload.");
+  } catch (e) {
+    // Silently fail
+  }
+}
+
 console.log("\n✅ Module Generated Successfully!");
+
+// Add warning about restarting dev server
+console.log("\n" + "=".repeat(70));
+console.log(
+  "⚠️  PENTING: Restart dev server Anda untuk load Prisma models baru!"
+);
+console.log(
+  "   Matikan server dengan Ctrl+C, lalu jalankan 'npm run dev' lagi."
+);
+console.log(
+  "   Error 'Cannot read properties of undefined' akan muncul jika tidak restart."
+);
+console.log("=".repeat(70) + "\n");

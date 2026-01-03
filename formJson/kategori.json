@@ -1,0 +1,25 @@
+{
+  "moduleName": "Kategori",
+  "resourceName": "kategoris",
+  "tableName": "tm_kategori",
+  "title": "Kategori",
+  "route": "/admin/kategori",
+  "fields": [
+    {
+      "name": "kodeGroup",
+      "label": "Kode Group",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "namaGroup",
+      "label": "Nama Group",
+      "type": "text",
+      "required": true
+    },
+    { "name": "jenisGroup", "label": "Jenis Group", "type": "text" },
+    { "name": "harga", "label": "Harga", "type": "rupiah" },
+    { "name": "hargaModal", "label": "Harga Modal", "type": "rupiah" },
+    { "name": "kodeWarnaNota", "label": "Kode Warna Nota", "type": "text" }
+  ]
+}

@@ -35,6 +35,10 @@ interface Field {
     max?: number;
   };
   uppercase?: boolean; // If true (default), transform to uppercase. If false, lowercase/as-is.
+  dependency?: {
+    field: string;
+    queryParam: string;
+  };
 }
 
 interface GeneratorConfig {
@@ -466,7 +470,7 @@ ${autoCodeFields
 import { ${moduleName}FormData } from "../types/${resourceName}.schema";
 
 export const ${toCamelCase(moduleName)}Server = {
-  async getPaginated(page: number, limit: number, search?: string) {
+  async getPaginated(page: number, limit: number, search?: string, filters?: Record<string, any>) {
     const skip = (page - 1) * limit;
     
     const where: any = {};
@@ -474,6 +478,14 @@ export const ${toCamelCase(moduleName)}Server = {
       where.OR = [
         { ${searchField.name}: { contains: search, mode: "insensitive" } },
       ];
+    }
+    if (filters) {
+      Object.entries(filters).forEach(([key, val]) => {
+        if (val !== undefined && val !== null && val !== "") {
+          if (!isNaN(Number(val))) where[key] = Number(val);
+          else where[key] = val;
+        }
+      });
     }
 
     const [data, total] = await Promise.all([
@@ -597,6 +609,10 @@ const generateForm = () => {
       }
 
       if (f.type === "async-select") {
+        const depProps = f.dependency
+          ? `paramName="${f.dependency.queryParam}" paramValue={watch("${f.dependency.field}")}`
+          : "";
+
         return `          <FormAsyncSelect
             name="${f.name}"
             label="${f.label}"
@@ -605,6 +621,7 @@ const generateForm = () => {
             labelField="${f.labelField || "name"}"
             valueField="${f.valueField || "id"}"
             disabled={isLoading}
+            ${depProps}
           />`;
       }
 
@@ -908,12 +925,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     switch (req.method) {
       case "GET":
-        const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || 10;
-        const search = (req.query.search as string) || undefined;
+        const { page: _page, limit: _limit, search: _search, ...filters } = req.query;
+        const page = Number(_page) || 1;
+        const limit = Number(_limit) || 10;
+        const search = (_search as string) || undefined;
         const result = await ${toCamelCase(
           moduleName
-        )}Server.getPaginated(page, limit, search);
+        )}Server.getPaginated(page, limit, search, filters);
         return res.status(200).json(result);
 
       case "POST":

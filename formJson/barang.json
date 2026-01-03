@@ -26,7 +26,11 @@
       "type": "async-select",
       "endpoint": "/api/jenis",
       "labelField": "kodeJenis",
-      "valueField": "id"
+      "valueField": "id",
+      "dependency": {
+        "field": "kategori",
+        "queryParam": "kodeGroup"
+      }
     },
     {
       "name": "kodeBaki",

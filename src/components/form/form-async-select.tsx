@@ -14,6 +14,8 @@ interface FormAsyncSelectProps {
   valueField?: string;
   className?: string;
   disabled?: boolean;
+  paramName?: string;
+  paramValue?: string | number | null;
 }
 
 // Helper to manage internal state for display vs form value for ID
@@ -26,14 +28,26 @@ export const FormAsyncSelect = ({
   valueField = "id",
   className,
   disabled,
+  paramName,
+  paramValue,
 }: FormAsyncSelectProps) => {
   const {
     control,
     formState: { errors },
     watch,
+    setValue,
   } = useFormContext();
 
   const value = watch(name);
+
+  // If dependency changes, reset child value if it's no longer valid?
+  // For now, let's just assume we want to clear it or let user re-select.
+  // Using paramValue as key will force re-mount and cache clear, but won't clear form value automatically.
+  React.useEffect(() => {
+    if (paramName && (paramValue === undefined || paramValue === null)) {
+      // If dependent parent is empty, maybe disable or clear?
+    }
+  }, [paramValue, paramName]);
 
   const error = errors[name];
   const errorMessage = error?.message as string | undefined;
@@ -90,6 +104,11 @@ export const FormAsyncSelect = ({
       });
       if (search) query.append("search", search);
 
+      // Filter by dependency if present
+      if (paramName && paramValue) {
+        query.append(paramName, String(paramValue));
+      }
+
       const res = await apiClient.get(`${endpoint}?${query.toString()}`);
       const json = await res.json();
 
@@ -131,6 +150,7 @@ export const FormAsyncSelect = ({
         render={({ field: { value, onChange, ref } }) => {
           return (
             <AsyncPaginate
+              key={paramValue ? String(paramValue) : "no-dep"}
               selectRef={ref}
               // Prefer local selectedOption (with label), fallback to constructing object from value (shows ID)
               value={

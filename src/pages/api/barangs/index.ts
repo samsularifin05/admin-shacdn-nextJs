@@ -5,10 +5,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     switch (req.method) {
       case "GET":
-        const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || 10;
-        const search = (req.query.search as string) || undefined;
-        const result = await barangServer.getPaginated(page, limit, search);
+        const { page: _page, limit: _limit, search: _search, ...filters } = req.query;
+        const page = Number(_page) || 1;
+        const limit = Number(_limit) || 10;
+        const search = (_search as string) || undefined;
+        const result = await barangServer.getPaginated(page, limit, search, filters);
         return res.status(200).json(result);
 
       case "POST":

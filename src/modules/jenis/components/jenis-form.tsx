@@ -3,7 +3,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { jenisSchema, JenisFormData, Jenis } from "../types/jenis.schema";
 import { Button } from "@/components/ui/button";
-import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect } from "@/components/form";
+import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram } from "@/components/form";
 import { jenisService } from "../services/jenis.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2 } from "lucide-react";
@@ -57,7 +57,7 @@ export const JenisForm = ({ initialData, onSuccess }: Props) => {
             placeholder="Enter kode jenis"
             disabled={isLoading}
             
-            
+            className="uppercase"
           />
           <FormInput
             name="namaJenis"
@@ -66,7 +66,7 @@ export const JenisForm = ({ initialData, onSuccess }: Props) => {
             placeholder="Enter nama jenis"
             disabled={isLoading}
             
-            
+            className="uppercase"
           />
           <FormAsyncSelect
             name="kodeGroup"
@@ -76,6 +76,7 @@ export const JenisForm = ({ initialData, onSuccess }: Props) => {
             labelField="kodeGroup"
             valueField="id"
             disabled={isLoading}
+            
           />
         </div>
         <div className="flex justify-end gap-2 pt-4">

@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const jenisSchema = z.object({
-  kodeJenis: z.string().min(1, 'Required'),
-  namaJenis: z.string().min(1, 'Required'),
+  kodeJenis: z.string().min(1, 'Required').transform(v => v?.toUpperCase()),
+  namaJenis: z.string().min(1, 'Required').transform(v => v?.toUpperCase()),
   kodeGroup: z.coerce.number().optional().nullable(),
 });
 

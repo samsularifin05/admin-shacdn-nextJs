@@ -89,6 +89,7 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
             labelField="kodeGroup"
             valueField="id"
             disabled={isLoading}
+            
           />
           <FormAsyncSelect
             name="jenis"
@@ -98,6 +99,7 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
             labelField="kodeJenis"
             valueField="id"
             disabled={isLoading}
+            paramName="kodeGroup" paramValue={watch("kategori")}
           />
           <FormAsyncSelect
             name="kodeBaki"
@@ -107,6 +109,7 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
             labelField="kodeBaki"
             valueField="id"
             disabled={isLoading}
+            
           />
           <FormSelect
             name="barangSepuhan"

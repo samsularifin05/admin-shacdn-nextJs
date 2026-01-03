@@ -3,7 +3,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { kategoriSchema, KategoriFormData, Kategori } from "../types/kategoris.schema";
 import { Button } from "@/components/ui/button";
-import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect } from "@/components/form";
+import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram } from "@/components/form";
 import { kategoriService } from "../services/kategoris.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2 } from "lucide-react";
@@ -63,7 +63,7 @@ export const KategoriForm = ({ initialData, onSuccess }: Props) => {
             placeholder="Enter kode group"
             disabled={isLoading}
             
-            
+            className="uppercase"
           />
           <FormInput
             name="namaGroup"
@@ -72,7 +72,7 @@ export const KategoriForm = ({ initialData, onSuccess }: Props) => {
             placeholder="Enter nama group"
             disabled={isLoading}
             
-            
+            className="uppercase"
           />
           <FormInput
             name="jenisGroup"
@@ -81,7 +81,7 @@ export const KategoriForm = ({ initialData, onSuccess }: Props) => {
             placeholder="Enter jenis group"
             disabled={isLoading}
             
-            
+            className="uppercase"
           />
           <FormCurrency
             name="harga"
@@ -106,7 +106,7 @@ export const KategoriForm = ({ initialData, onSuccess }: Props) => {
             placeholder="Enter kode warna nota"
             disabled={isLoading}
             
-            
+            className="uppercase"
           />
         </div>
         <div className="flex justify-end gap-2 pt-4">

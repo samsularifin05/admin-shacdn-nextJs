@@ -1,12 +1,12 @@
 import { z } from "zod";
 
 export const kategoriSchema = z.object({
-  kodeGroup: z.string().min(1, 'Required'),
-  namaGroup: z.string().min(1, 'Required'),
-  jenisGroup: z.string().optional(),
+  kodeGroup: z.string().min(1, 'Required').transform(v => v?.toUpperCase()),
+  namaGroup: z.string().min(1, 'Required').transform(v => v?.toUpperCase()),
+  jenisGroup: z.string().optional().transform(v => v?.toUpperCase()),
   harga: z.coerce.number().optional(),
   hargaModal: z.coerce.number().optional(),
-  kodeWarnaNota: z.string().optional(),
+  kodeWarnaNota: z.string().optional().transform(v => v?.toUpperCase()),
 });
 
 export type KategoriFormData = z.infer<typeof kategoriSchema>;

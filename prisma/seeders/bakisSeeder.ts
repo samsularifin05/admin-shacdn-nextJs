@@ -1,6 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 
 export async function seedBaki(prisma: PrismaClient) {
+  // Check if data already exists
+  const count = await prisma.tm_baki.count();
+  if (count > 0) {
+    console.log("⏭️ Baki already seeded. Skipping...");
+    return;
+  }
+
   console.log("🌱 Seeding Baki...");
 
   const data = {
@@ -11,13 +18,8 @@ export async function seedBaki(prisma: PrismaClient) {
   "beratBandrol": 1000
 };
 
-  await prisma.tm_baki.upsert({
-    where: { id: 1 },
-    update: data,
-    create: {
-      id: 1,
-      ...data
-    },
+  await prisma.tm_baki.create({
+    data,
   });
 
   console.log("✅ Baki seeded!");

@@ -3,7 +3,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { bakiSchema, BakiFormData, Baki } from "../types/bakis.schema";
 import { Button } from "@/components/ui/button";
-import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect } from "@/components/form";
+import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram } from "@/components/form";
 import { bakiService } from "../services/bakis.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2 } from "lucide-react";
@@ -61,7 +61,7 @@ export const BakiForm = ({ initialData, onSuccess }: Props) => {
             placeholder="Enter kode gudang"
             disabled={isLoading}
             
-            
+            className="uppercase"
           />
           <FormInput
             name="kodeBaki"
@@ -70,7 +70,7 @@ export const BakiForm = ({ initialData, onSuccess }: Props) => {
             placeholder="Enter kode baki"
             disabled={isLoading}
             
-            
+            className="uppercase"
           />
           <FormInput
             name="namaBaki"
@@ -79,7 +79,7 @@ export const BakiForm = ({ initialData, onSuccess }: Props) => {
             placeholder="Enter nama baki"
             disabled={isLoading}
             
-            
+            className="uppercase"
           />
           <FormInput
             name="beratBaki"

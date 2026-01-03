@@ -3,7 +3,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { bankSchema, BankFormData, Bank } from "../types/banks.schema";
 import { Button } from "@/components/ui/button";
-import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect } from "@/components/form";
+import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram } from "@/components/form";
 import { bankService } from "../services/banks.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2 } from "lucide-react";
@@ -72,68 +72,58 @@ export const BankForm = ({ initialData, onSuccess }: Props) => {
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-4">
-
           <FormInput
             name="code"
             label="Bank Code"
-            placeholder="Bank Code"
             type="text"
+            placeholder="Enter bank code"
             disabled={isLoading}
-            readOnly={!!initialData}
-            className={initialData ? "bg-muted" : ""}
+            
+            className="uppercase"
           />
-
           <FormInput
             name="name"
             label="Bank Name"
-            placeholder="Bank Name"
             type="text"
+            placeholder="Enter bank name"
             disabled={isLoading}
             
-            
+            className="uppercase"
           />
-
           <FormSelect
             name="category"
             label="Category"
-            placeholder="Select Category"
-            options={[
-              { label: "Local", value: "Local" },
-              { label: "International", value: "International" }
-            ]}
+            placeholder="Select category"
+            options={["Local", "International"].map(opt => ({ label: opt, value: opt }))}
             disabled={isLoading}
           />
-
           <FormInput
             name="balance"
             label="Default Balance"
-            placeholder="Default Balance"
             type="number"
+            placeholder="Enter default balance"
             disabled={isLoading}
             
             
           />
-
           <FormInput
             name="conversionRate"
             label="Conversion Rate"
-            placeholder="Conversion Rate"
             type="number"
+            placeholder="Enter conversion rate"
             disabled={isLoading}
             
             
           />
-
           <FormInput
             name="totalValue"
             label="Total Value (Calculated)"
-            placeholder="Total Value (Calculated)"
             type="number"
+            placeholder="Enter total value (calculated)"
             disabled={isLoading}
             readOnly
             className="bg-muted"
           />
-
           <FormCheckbox
             name="isActive"
             label="Active Status"

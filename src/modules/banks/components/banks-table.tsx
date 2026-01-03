@@ -127,21 +127,21 @@ export const BankTable = () => {
         header: ({ column }) => <DataTableColumnHeader column={column} title="Default Balance" />,
         
         
-        cell: ({ row }) => <div>{row.getValue("balance")}</div>,
+        
       },
       {
         accessorKey: "conversionRate",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Conversion Rate" />,
         
         
-        cell: ({ row }) => <div>{row.getValue("conversionRate")}</div>,
+        
       },
       {
         accessorKey: "totalValue",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Total Value (Calculated)" />,
         
         
-        cell: ({ row }) => <div>{row.getValue("totalValue")}</div>,
+        
       },
       {
         accessorKey: "isActive",

@@ -9,7 +9,8 @@
       "name": "kodeGroup",
       "label": "Kode Group",
       "type": "text",
-      "required": true
+      "required": true,
+      "readOnlyOnEdit": true
     },
     {
       "name": "namaGroup",

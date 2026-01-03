@@ -2,15 +2,22 @@ import { prisma } from "@/lib/prisma";
 import { BankFormData } from "../types/banks.schema";
 
 export const bankServer = {
-  async getPaginated(page: number, limit: number, search?: string) {
+  async getPaginated(page: number, limit: number, search?: string, filters?: Record<string, any>) {
     const skip = (page - 1) * limit;
     
     const where: any = {};
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        // Add other search fields if needed
+        { code: { contains: search, mode: "insensitive" } },
       ];
+    }
+    if (filters) {
+      Object.entries(filters).forEach(([key, val]) => {
+        if (val !== undefined && val !== null && val !== "") {
+          if (!isNaN(Number(val))) where[key] = Number(val);
+          else where[key] = val;
+        }
+      });
     }
 
     const [data, total] = await Promise.all([
@@ -33,8 +40,6 @@ export const bankServer = {
       },
     };
   },
-
-
 
   async getById(id: number) {
     return prisma.tm_banks.findUnique({

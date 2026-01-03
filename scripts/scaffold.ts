@@ -1257,6 +1257,9 @@ export function ${moduleName}Delete({ ${toCamelCase(
 // 11. Seeder Generator
 const generateSeeder = () => {
   const sampleData: Record<string, any> = {};
+  const relFetchers: string[] = [];
+  const placeholders: Record<string, string> = {};
+
   fields.forEach((f) => {
     if (f.autoCode) {
       let code = f.autoCode;
@@ -1299,14 +1302,29 @@ const generateSeeder = () => {
     } else if (f.type === "select" && f.options) {
       sampleData[f.name] = f.options[0];
     } else if (f.type === "async-select") {
-      if (f.valueField && f.valueField !== "id") {
-        sampleData[f.name] = "SAMPLE-CODE";
+      const isIdValue = !f.valueField || f.valueField === "id";
+      if (isIdValue && f.relatedTable) {
+        const varName = `first${toPascalCase(f.name)}`;
+        relFetchers.push(
+          `  const ${varName} = await prisma.${toCamelCase(
+            f.relatedTable
+          )}.findFirst();`
+        );
+        placeholders[f.name] = `${varName}?.id || 1`;
+        sampleData[f.name] = `__PLACEHOLDER_${f.name}__`;
+      } else if (isIdValue) {
+        sampleData[f.name] = 1;
       } else {
-        sampleData[f.name] = 1; // Assuming ID 1 exists
+        sampleData[f.name] = "SAMPLE-CODE";
       }
     } else if (f.type === "email") {
       sampleData[f.name] = "sample@example.com";
     }
+  });
+
+  let dataStr = JSON.stringify(sampleData, null, 2);
+  Object.entries(placeholders).forEach(([fieldName, replacer]) => {
+    dataStr = dataStr.replace(`"__PLACEHOLDER_${fieldName}__"`, replacer);
   });
 
   return `import { PrismaClient } from "@prisma/client";
@@ -1321,7 +1339,9 @@ export async function seed${toPascalCase(moduleName)}(prisma: PrismaClient) {
 
   console.log("🌱 Seeding ${moduleName}...");
 
-  const data = ${JSON.stringify(sampleData, null, 2)};
+${relFetchers.join("\n")}
+
+  const data = ${dataStr};
 
   await prisma.${toCamelCase(tableName)}.create({
     data,

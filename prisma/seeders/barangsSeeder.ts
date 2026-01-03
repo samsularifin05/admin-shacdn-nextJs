@@ -10,11 +10,15 @@ export async function seedBarang(prisma: PrismaClient) {
 
   console.log("🌱 Seeding Barang...");
 
+  const firstKategori = await prisma.tm_kategori.findFirst();
+  const firstJenis = await prisma.tm_jenis.findFirst();
+  const firstKodeBaki = await prisma.tm_baki.findFirst();
+
   const data = {
   "kodeBarang": "00000001",
-  "kategori": 1,
-  "jenis": 1,
-  "kodeBaki": 1,
+  "kategori": firstKategori?.id || 1,
+  "jenis": firstJenis?.id || 1,
+  "kodeBaki": firstKodeBaki?.id || 1,
   "barangSepuhan": "TIDAK",
   "stockSepuh": 1.5,
   "beratSepuh": 1.5,

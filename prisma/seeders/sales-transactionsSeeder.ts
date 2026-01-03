@@ -10,6 +10,8 @@ export async function seedSalesTransaction(prisma: PrismaClient) {
 
   console.log("🌱 Seeding SalesTransaction...");
 
+
+
   const data = {
   "transactionCode": "CC-FJ-20260103-0001",
   "barcode": "Sample data",

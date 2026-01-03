@@ -88,23 +88,19 @@ export const BakiForm = ({ initialData, onSuccess }: Props) => {
             className="uppercase"
             
           />
-          <FormInput
+          <FormGram
             name="beratBaki"
             label="Berat Baki"
-            type="number"
-            placeholder="0"
+            placeholder="0.0"
             disabled={isLoading}
-            
             
             
           />
-          <FormInput
+          <FormGram
             name="beratBandrol"
             label="Berat Bandrol"
-            type="number"
-            placeholder="0"
+            placeholder="0.0"
             disabled={isLoading}
-            
             
             
           />

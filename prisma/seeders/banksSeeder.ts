@@ -10,6 +10,8 @@ export async function seedBank(prisma: PrismaClient) {
 
   console.log("🌱 Seeding Bank...");
 
+
+
   const data = {
   "code": "Sample data",
   "name": "Sample data",

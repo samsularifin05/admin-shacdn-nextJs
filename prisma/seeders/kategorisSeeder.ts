@@ -10,6 +10,8 @@ export async function seedKategori(prisma: PrismaClient) {
 
   console.log("🌱 Seeding Kategori...");
 
+
+
   const data = {
   "kodeGroup": "KATEGORI-01",
   "namaGroup": "Sample Kategori",

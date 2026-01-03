@@ -10,10 +10,12 @@ export async function seedJenis(prisma: PrismaClient) {
 
   console.log("🌱 Seeding Jenis...");
 
+  const firstKodeGroup = await prisma.tm_kategori.findFirst();
+
   const data = {
   "kodeJenis": "JENIS-01",
   "namaJenis": "Sample Jenis",
-  "kodeGroup": 1
+  "kodeGroup": firstKodeGroup?.id || 1
 };
 
   await prisma.tm_jenis.create({

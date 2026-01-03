@@ -16,13 +16,13 @@
     {
       "name": "beratBaki",
       "label": "Berat Baki",
-      "type": "number",
+      "type": "gram",
       "defaultValue": 0
     },
     {
       "name": "beratBandrol",
       "label": "Berat Bandrol",
-      "type": "number",
+      "type": "gram",
       "defaultValue": 0
     }
   ]

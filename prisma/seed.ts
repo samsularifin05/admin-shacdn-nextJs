@@ -7,6 +7,7 @@ import { seedKategori } from "./seeders/kategorisSeeder";
 import { seedJenis } from "./seeders/jenisSeeder";
 import { seedBaki } from "./seeders/bakisSeeder";
 import { seedBarang } from "./seeders/barangsSeeder";
+import { seedSalesTransaction } from "./seeders/sales-transactionsSeeder";
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -28,6 +29,7 @@ async function main() {
   await seedUsers(prisma);
 
   console.log("✨ Database seeding completed!");
+  await seedSalesTransaction(prisma);
 }
 
 main()

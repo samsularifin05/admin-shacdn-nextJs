@@ -102,6 +102,13 @@ export const BarangTable = () => {
   const columns: ColumnDef<Barang>[] = useMemo(
     () => [
       {
+        accessorKey: "kodeBarang",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Kode Barang" />,
+        
+        
+        
+      },
+      {
         accessorKey: "kategori",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Kategori" />,
         

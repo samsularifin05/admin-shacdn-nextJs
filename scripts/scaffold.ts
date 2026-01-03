@@ -11,7 +11,8 @@ type FieldType =
   | "email"
   | "currency"
   | "rupiah"
-  | "async-select";
+  | "async-select"
+  | "gram";
 
 interface Field {
   name: string;
@@ -24,6 +25,7 @@ interface Field {
   valueField?: string;
   relatedTable?: string; // For async-select: the Prisma model name to join
   relatedDisplayField?: string; // For async-select: which field to display in table
+  autoCode?: string; // Pattern like "{00000000}" or "QCC-FJ-{YYYYMMDD}-{0001}"
   defaultValue?: any;
   formula?: string;
   readOnly?: boolean;
@@ -32,6 +34,7 @@ interface Field {
     min?: number;
     max?: number;
   };
+  uppercase?: boolean; // If true (default), transform to uppercase. If false, lowercase/as-is.
 }
 
 interface GeneratorConfig {
@@ -164,57 +167,87 @@ const apiDir = path.resolve(process.cwd(), "src/pages/api", resourceName);
 // Generators
 
 const generateSchema = () => {
-  const fieldDefs = fields
+  const schemaFields = fields
     .map((f) => {
-      let zType = "z.string()";
+      const isOptional = f.required === false || f.required === undefined;
+      let zodType = "";
       if (
         f.type === "number" ||
         f.type === "currency" ||
         f.type === "rupiah" ||
-        f.type === "async-select"
-      )
-        zType = "z.coerce.number()";
-      if (f.type === "boolean") zType = "z.boolean()";
-      if (f.type === "select" && f.options)
-        zType = `z.enum(${JSON.stringify(f.options)})`;
-      if (f.type === "email") zType = "z.string().email()";
+        f.type === "gram"
+      ) {
+        zodType = "z.coerce.number()";
+      } else if (f.type === "boolean") {
+        zodType = "z.boolean()";
+      } else if (f.type === "select" && f.options) {
+        zodType = `z.enum([${f.options.map((opt) => `"${opt}"`).join(",")}])`;
+      } else if (f.type === "async-select") {
+        zodType = "z.coerce.number()";
+      } else if (f.type === "email") {
+        zodType = "z.string().email()";
+      } else {
+        zodType = "z.string()";
+      }
 
-      let validation = zType;
-      // Zod modifiers
-      if (f.validation?.min) validation += `.min(${f.validation.min})`;
-      if (f.required === false) validation += ".optional()";
+      if (isOptional) {
+        if (f.type === "select" || f.type === "async-select") {
+          zodType += ".optional().nullable()";
+        } else {
+          zodType += ".optional()";
+        }
+      } else {
+        zodType += ".min(1, 'Required')";
+      }
 
-      return `  ${f.name}: ${validation},`;
+      // Add text transformation (uppercase default)
+      if (f.type === "string" || f.type === "text" || f.type === "email") {
+        const isUppercase = f.uppercase !== false; // Default true
+        if (isUppercase) {
+          // Use safe transform handling nullable/optional
+          zodType += ".transform(v => v?.toUpperCase())";
+        } else {
+          zodType += ".transform(v => v?.toLowerCase())";
+        }
+      }
+
+      return `  ${f.name}: ${zodType},`;
     })
     .join("\n");
 
-  const tsTypes = fields
+  const typeFields = fields
     .map((f) => {
-      let t = "string";
+      const isOptional = f.required === false || f.required === undefined;
+      let tsType = "";
       if (
         f.type === "number" ||
         f.type === "currency" ||
         f.type === "rupiah" ||
-        f.type === "async-select"
-      )
-        t = "number";
-      if (f.type === "boolean") t = "boolean";
-      if (f.type === "select" && f.options)
-        t = f.options.map((o) => `"${o}"`).join(" | ");
-      if (f.required === false) t += " | null | undefined";
-      return `  ${f.name}${f.required === false ? "?" : ""}: ${t};`;
+        f.type === "gram"
+      ) {
+        tsType = "number";
+      } else if (f.type === "boolean") {
+        tsType = "boolean";
+      } else if (f.type === "select" && f.options) {
+        tsType = f.options.map((opt) => `"${opt}"`).join(" | ");
+      } else if (f.type === "async-select") {
+        tsType = "number";
+      } else {
+        tsType = "string";
+      }
+      return `  ${f.name}${isOptional ? "?" : ""}: ${tsType};`;
     })
     .join("\n");
 
-  const relationTypes = fields
-    .filter((f) => f.type === "async-select" && f.relatedTable)
+  const relationFields = fields
+    .filter((f) => f.type === "async-select")
     .map((f) => `  ${f.name}Rel?: any;`)
     .join("\n");
 
   return `import { z } from "zod";
 
 export const ${toCamelCase(moduleName)}Schema = z.object({
-${fieldDefs}
+${schemaFields}
 });
 
 export type ${moduleName}FormData = z.infer<typeof ${toCamelCase(
@@ -223,8 +256,8 @@ export type ${moduleName}FormData = z.infer<typeof ${toCamelCase(
 
 export type ${moduleName} = {
   id: number;
-${tsTypes}
-${relationTypes}
+${typeFields}
+${relationFields}
   createdAt?: string;
   updatedAt?: string;
 };
@@ -284,6 +317,150 @@ const generateServer = () => {
           .join(",\n")}\n        },`
       : "";
 
+  const autoCodeFields = fields.filter((f) => f.autoCode);
+  const autoCodeLogic =
+    autoCodeFields.length > 0
+      ? `\n    // Auto-generate codes for: ${autoCodeFields
+          .map((f) => f.name)
+          .join(", ")}
+${autoCodeFields
+  .map((f) => {
+    const pattern = f.autoCode!;
+    // Match sequence pattern like {0000} or {0001}
+    const seqMatch = pattern.match(/\{0*[01]?\}/);
+    const seqPattern = seqMatch ? seqMatch[0] : "{0000}";
+    const seqLength = seqPattern.length - 2;
+
+    // Check if pattern has date placeholders
+    const hasDate =
+      pattern.includes("{YYYY") ||
+      pattern.includes("{MM}") ||
+      pattern.includes("{DD}");
+
+    // Check if there's any prefix/suffix around the sequence pattern
+    // For pure sequential like {00000000}, this will be true
+    const isPureSequential = pattern === seqPattern;
+
+    // For patterns with prefix, extract it (without date placeholders for now)
+    let staticPrefix = pattern.replace(seqPattern, "");
+
+    // Check if prefix contains date placeholders
+    const hasPrefixWithDate =
+      staticPrefix.includes("{YYYY") ||
+      staticPrefix.includes("{MM}") ||
+      staticPrefix.includes("{DD}");
+
+    let codeGenLogic = "";
+
+    // Add date variables only if needed
+    if (hasDate) {
+      codeGenLogic = `    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+
+`;
+    }
+
+    if (isPureSequential) {
+      // No prefix - pure sequential number
+      codeGenLogic += `    const lastRecord_${
+        f.name
+      } = await prisma.${toCamelCase(tableName)}.findFirst({
+      orderBy: { ${f.name}: "desc" },
+    });
+
+    let nextSeq_${f.name} = 1;
+    if (lastRecord_${f.name}) {
+      const lastCode = lastRecord_${f.name}.${f.name};
+      const lastSeq = parseInt(lastCode);
+      if (!isNaN(lastSeq)) {
+        nextSeq_${f.name} = lastSeq + 1;
+      }
+    }
+    data.${f.name} = String(nextSeq_${f.name}).padStart(${seqLength}, "0");`;
+    } else {
+      // Has prefix - need to build the prefix string
+      const prefixParts = [];
+
+      // Build prefix with date placeholders replaced
+      if (hasPrefixWithDate) {
+        const prefixTemplate = staticPrefix
+          .replace("{YYYYMMDD}", "${year}${month}${day}")
+          .replace("{YYMMDD}", "${String(year).slice(-2)}${month}${day}")
+          .replace("{YYYY}", "${year}")
+          .replace("{YY}", "${String(year).slice(-2)}")
+          .replace("{MM}", "${month}")
+          .replace("{DD}", "${day}");
+
+        codeGenLogic += `    const prefix_${f.name} = \`${prefixTemplate}\`;
+    const lastRecord_${f.name} = await prisma.${toCamelCase(
+          tableName
+        )}.findFirst({
+      where: {
+        ${f.name}: {
+          startsWith: prefix_${f.name},
+        },
+      },
+      orderBy: { ${f.name}: "desc" },
+    });
+
+    let nextSeq_${f.name} = 1;
+    if (lastRecord_${f.name}) {
+      const lastCode = lastRecord_${f.name}.${f.name};
+      const lastSeqStr = lastCode.substring(prefix_${f.name}.length);
+      const lastSeq = parseInt(lastSeqStr);
+      if (!isNaN(lastSeq)) {
+        nextSeq_${f.name} = lastSeq + 1;
+      }
+    }
+    data.${f.name} = prefix_${f.name} + String(nextSeq_${
+          f.name
+        }).padStart(${seqLength}, "0");`;
+      } else {
+        // Static prefix without date
+        codeGenLogic += `    const lastRecord_${
+          f.name
+        } = await prisma.${toCamelCase(tableName)}.findFirst({
+      where: {
+        ${f.name}: {
+          startsWith: "${staticPrefix}",
+        },
+      },
+      orderBy: { ${f.name}: "desc" },
+    });
+
+    let nextSeq_${f.name} = 1;
+    if (lastRecord_${f.name}) {
+      const lastCode = lastRecord_${f.name}.${f.name};
+      const lastSeqStr = lastCode.substring("${staticPrefix}".length);
+      const lastSeq = parseInt(lastSeqStr);
+      if (!isNaN(lastSeq)) {
+        nextSeq_${f.name} = lastSeq + 1;
+      }
+    }
+    data.${f.name} = "${staticPrefix}" + String(nextSeq_${
+          f.name
+        }).padStart(${seqLength}, "0");`;
+      }
+    }
+
+    return codeGenLogic;
+  })
+  .join("\n\n")}
+`
+      : "";
+
+  // Detect search field (try to find name or code field)
+  const searchField =
+    fields.find(
+      (f) =>
+        f.name.toLowerCase().includes("nama") ||
+        f.name.toLowerCase().includes("name") ||
+        f.name.toLowerCase().includes("kode") ||
+        f.name.toLowerCase().includes("code")
+    ) || fields[0];
+
   // Try to use @/lib/prisma, fallback to manual fix if needed
   return `import { prisma } from "@/lib/prisma";
 import { ${moduleName}FormData } from "../types/${resourceName}.schema";
@@ -295,8 +472,7 @@ export const ${toCamelCase(moduleName)}Server = {
     const where: any = {};
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        // Add other search fields if needed
+        { ${searchField.name}: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -321,15 +497,13 @@ export const ${toCamelCase(moduleName)}Server = {
     };
   },
 
-
-
   async getById(id: number) {
     return prisma.${toCamelCase(tableName)}.findUnique({
       where: { id },${includeStr}
     });
   },
 
-  async create(data: ${moduleName}FormData) {
+  async create(data: ${moduleName}FormData) {${autoCodeLogic}
     return prisma.${toCamelCase(tableName)}.create({
       data: {
         ...data,
@@ -395,93 +569,90 @@ const generateForm = () => {
 
   const formFields = fields
     .map((f) => {
-      let input = ``;
-      if (f.type === "select") {
-        input = `
-          <FormSelect
-            name="${f.name}"
-            label="${f.label}"
-            placeholder="Select ${f.label}"
-            options={[
-              ${f.options
-                ?.map((opt) => `{ label: "${opt}", value: "${opt}" }`)
-                .join(",\n              ")}
-            ]}
-            disabled={isLoading}
-          />`;
-      } else if (f.type === "async-select") {
-        input = `
-          <FormAsyncSelect
-            name="${f.name}"
-            label="${f.label}"
-            placeholder="Select ${f.label}"
-            endpoint="${f.endpoint || ""}"
-            ${f.labelField ? `labelField="${f.labelField}"` : ""}
-            ${f.valueField ? `valueField="${f.valueField}"` : ""}
-            disabled={isLoading}
-          />`;
-      } else if (f.type === "boolean") {
-        input = `
-          <FormCheckbox
-            name="${f.name}"
-            label="${f.label}"
-            disabled={isLoading}
-          />`;
-      } else if (f.type === "currency" || f.type === "rupiah") {
-        // Determine readonly prop
-        let readOnlyProp = "";
-        if (f.readOnly) {
-          readOnlyProp = "readOnly";
-        } else if (f.readOnlyOnEdit) {
-          readOnlyProp = "readOnly={!!initialData}";
-        }
+      // Hide autoCode fields from invalid
+      if (f.autoCode) return "";
 
-        // Determine className prop
-        let classNameProp = "";
-        if (f.readOnly) {
-          classNameProp = 'className="bg-muted"';
-        } else if (f.readOnlyOnEdit) {
-          classNameProp = 'className={initialData ? "bg-muted" : ""}';
-        }
+      const isFormula = !!f.formula;
+      const readOnlyProp = f.readOnly || isFormula ? "readOnly" : undefined;
 
-        input = `
-          <FormCurrency
+      let inputClasses = [];
+      if (readOnlyProp) inputClasses.push("bg-muted");
+      if ((f.type === "text" || f.type === "string") && f.uppercase !== false) {
+        inputClasses.push("uppercase");
+      }
+
+      const className =
+        inputClasses.length > 0 ? `className="${inputClasses.join(" ")}"` : "";
+
+      if (f.type === "select" && f.options) {
+        return `          <FormSelect
             name="${f.name}"
             label="${f.label}"
-            placeholder="${f.label}"
+            placeholder="Select ${f.label.toLowerCase()}"
+            options={[${f.options
+              .map((opt) => `"${opt}"`)
+              .join(", ")}].map(opt => ({ label: opt, value: opt }))}
             disabled={isLoading}
-            ${readOnlyProp}
-            ${classNameProp}
-          />`;
-      } else {
-        // Determine readonly prop
-        let readOnlyProp = "";
-        if (f.readOnly) {
-          readOnlyProp = "readOnly";
-        } else if (f.readOnlyOnEdit) {
-          readOnlyProp = "readOnly={!!initialData}";
-        }
-
-        // Determine className prop
-        let classNameProp = "";
-        if (f.readOnly) {
-          classNameProp = 'className="bg-muted"';
-        } else if (f.readOnlyOnEdit) {
-          classNameProp = 'className={initialData ? "bg-muted" : ""}';
-        }
-
-        input = `
-          <FormInput
-            name="${f.name}"
-            label="${f.label}"
-            placeholder="${f.label}"
-            type="${f.type === "number" ? "number" : "text"}"
-            disabled={isLoading}
-            ${readOnlyProp}
-            ${classNameProp}
           />`;
       }
-      return input;
+
+      if (f.type === "async-select") {
+        return `          <FormAsyncSelect
+            name="${f.name}"
+            label="${f.label}"
+            placeholder="Search ${f.label.toLowerCase()}..."
+            endpoint="${f.endpoint}"
+            labelField="${f.labelField || "name"}"
+            valueField="${f.valueField || "id"}"
+            disabled={isLoading}
+          />`;
+      }
+
+      if (f.type === "boolean") {
+        return `          <FormCheckbox
+            name="${f.name}"
+            label="${f.label}"
+            disabled={isLoading}
+          />`;
+      }
+
+      if (f.type === "gram") {
+        return `          <FormGram
+            name="${f.name}"
+            label="${f.label}"
+            placeholder="0.0"
+            disabled={isLoading}
+            ${readOnlyProp ? "readOnly" : ""}
+            ${className}
+          />`;
+      }
+
+      if (f.type === "currency" || f.type === "rupiah") {
+        return `          <FormCurrency
+            name="${f.name}"
+            label="${f.label}"
+            placeholder="0"
+            disabled={isLoading}
+            ${readOnlyProp ? "readOnly" : ""}
+            ${className}
+          />`;
+      }
+
+      return `          <FormInput
+            name="${f.name}"
+            label="${f.label}"
+            type="${
+              f.type === "number"
+                ? "number"
+                : f.type === "email"
+                ? "email"
+                : "text"
+            }"
+            placeholder="Enter ${f.label.toLowerCase()}"
+            disabled={isLoading}
+            ${readOnlyProp ? "readOnly" : ""}
+            ${className}
+          />`;
     })
     .join("\n");
 
@@ -492,7 +663,7 @@ import { ${toCamelCase(
     moduleName
   )}Schema, ${moduleName}FormData, ${moduleName} } from "../types/${resourceName}.schema";
 import { Button } from "@/components/ui/button";
-import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect } from "@/components/form";
+import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram } from "@/components/form";
 import { ${toCamelCase(
     moduleName
   )}Service } from "../services/${resourceName}.service";
@@ -957,7 +1128,30 @@ export function ${moduleName}Delete({ ${toCamelCase(
 const generateSeeder = () => {
   const sampleData: Record<string, any> = {};
   fields.forEach((f) => {
-    if (f.type === "string" || f.type === "text") {
+    if (f.autoCode) {
+      let code = f.autoCode;
+      const today = new Date();
+      const year = String(today.getFullYear());
+      const month = String(today.getMonth() + 1).padStart(2, "0");
+      const day = String(today.getDate()).padStart(2, "0");
+
+      const seqMatch = code.match(/\{0*[01]?\}/);
+      const seqPattern = seqMatch ? seqMatch[0] : "{0000}";
+      const seqLength = seqPattern.length - 2;
+      // Use '1' padded to sequence length
+      const sampleSeq = "1".padStart(seqLength, "0");
+
+      code = code
+        .replace(seqPattern, sampleSeq)
+        .replace("{YYYY}", year)
+        .replace("{YY}", year.slice(-2))
+        .replace("{MM}", month)
+        .replace("{DD}", day)
+        .replace("{YYYYMMDD}", `${year}${month}${day}`)
+        .replace("{YYMMDD}", `${year.slice(-2)}${month}${day}`);
+
+      sampleData[f.name] = code;
+    } else if (f.type === "string" || f.type === "text") {
       if (f.name.toLowerCase().includes("nama"))
         sampleData[f.name] = `Sample ${moduleName}`;
       else if (f.name.toLowerCase().includes("kode"))
@@ -966,9 +1160,10 @@ const generateSeeder = () => {
     } else if (
       f.type === "number" ||
       f.type === "currency" ||
-      f.type === "rupiah"
+      f.type === "rupiah" ||
+      f.type === "gram"
     ) {
-      sampleData[f.name] = 1000;
+      sampleData[f.name] = f.type === "gram" ? 1.5 : 1000;
     } else if (f.type === "boolean") {
       sampleData[f.name] = true;
     } else if (f.type === "select" && f.options) {
@@ -983,17 +1178,19 @@ const generateSeeder = () => {
   return `import { PrismaClient } from "@prisma/client";
 
 export async function seed${toPascalCase(moduleName)}(prisma: PrismaClient) {
+  // Check if data already exists
+  const count = await prisma.${toCamelCase(tableName)}.count();
+  if (count > 0) {
+    console.log("⏭️ ${moduleName} already seeded. Skipping...");
+    return;
+  }
+
   console.log("🌱 Seeding ${moduleName}...");
 
   const data = ${JSON.stringify(sampleData, null, 2)};
 
-  await prisma.${toCamelCase(tableName)}.upsert({
-    where: { id: 1 },
-    update: data,
-    create: {
-      id: 1,
-      ...data
-    },
+  await prisma.${toCamelCase(tableName)}.create({
+    data,
   });
 
   console.log("✅ ${moduleName} seeded!");
@@ -1082,15 +1279,11 @@ if (config.route) {
   write(path.join(pageDir, "index.tsx"), generatePage());
 }
 
-// Update schema.prisma
+// Generate Prisma Model
 const prismaSchemaPath = path.resolve(process.cwd(), "prisma/schema.prisma");
-if (fs.existsSync(prismaSchemaPath)) {
-  let schemaContent = fs.readFileSync(prismaSchemaPath, "utf-8");
+let schemaContent = fs.readFileSync(prismaSchemaPath, "utf-8");
 
-  // Check if model already exists
-  if (!schemaContent.includes(`model ${tableName} {`)) {
-    const modelDefinition = `
-model ${tableName} {
+const modelDefinition = `model ${tableName} {
   id        Int      @id @default(autoincrement())
 ${fields
   .map((f) => {
@@ -1099,7 +1292,10 @@ ${fields
   ${f.name}Rel   ${f.relatedTable}? @relation(fields: [${f.name}], references: [id])`;
     }
     const prismaType =
-      f.type === "number" || f.type === "currency" || f.type === "rupiah"
+      f.type === "number" ||
+      f.type === "currency" ||
+      f.type === "rupiah" ||
+      f.type === "gram"
         ? "Float"
         : f.type === "boolean"
         ? "Boolean"
@@ -1111,39 +1307,39 @@ ${fields
   .join("\n")}
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
 ${fields
   .filter((f) => f.type === "async-select")
   .map((f) => `  @@index([${f.name}])`)
   .join("\n")}
 }
 `;
-    fs.appendFileSync(prismaSchemaPath, modelDefinition);
-    console.log(`\n✅ Added model ${tableName} to prisma/schema.prisma`);
-    console.log(
-      "⚠️  Running 'npx prisma db push' and 'npx prisma generate'..."
-    );
-    try {
-      require("child_process").execSync(
-        "npx prisma format && npx prisma db push && npx prisma generate",
-        {
-          stdio: "inherit",
-        }
-      );
-    } catch (e) {
-      console.error(
-        "❌ Failed to run prisma commands. Please run them manually."
-      );
-    }
-  } else {
-    console.log(
-      `\nℹ️  Model ${tableName} already exists in schema.prisma. Skipping...`
-    );
-  }
+
+if (schemaContent.includes(`model ${tableName}`)) {
+  console.log(`\nℹ️  Model ${tableName} already exists. Updating schema...`);
+  // Replace existing model
+  const startStr = `model ${tableName} {`;
+  const startIndex = schemaContent.indexOf(startStr);
+  const endIndex = schemaContent.indexOf("}", startIndex) + 1;
+  schemaContent =
+    schemaContent.slice(0, startIndex) +
+    modelDefinition +
+    schemaContent.slice(endIndex);
 } else {
-  console.log(
-    "\n⚠️  prisma/schema.prisma not found. Please add the model manually."
+  schemaContent += `\n${modelDefinition}`;
+  console.log(`\n✅ Added model ${tableName} to prisma/schema.prisma`);
+}
+
+fs.writeFileSync(prismaSchemaPath, schemaContent);
+console.log("⚠️  Running 'npx prisma format && npx prisma db push'...");
+try {
+  require("child_process").execSync(
+    "npx prisma format && npx prisma db push && npx prisma generate",
+    {
+      stdio: "inherit",
+    }
   );
+} catch (e) {
+  console.error("❌ Failed to run prisma commands. Please run them manually.");
 }
 
 // Try to trigger Next.js hot reload by touching prisma.ts

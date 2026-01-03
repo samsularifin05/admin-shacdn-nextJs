@@ -50,31 +50,28 @@ export const JenisForm = ({ initialData, onSuccess }: Props) => {
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-4">
-
           <FormInput
             name="kodeJenis"
             label="Kode Jenis"
-            placeholder="Kode Jenis"
             type="text"
+            placeholder="Enter kode jenis"
             disabled={isLoading}
             
             
           />
-
           <FormInput
             name="namaJenis"
             label="Nama Jenis"
-            placeholder="Nama Jenis"
             type="text"
+            placeholder="Enter nama jenis"
             disabled={isLoading}
             
             
           />
-
           <FormAsyncSelect
             name="kodeGroup"
             label="Kode Group"
-            placeholder="Select Kode Group"
+            placeholder="Search kode group..."
             endpoint="/api/kategoris"
             labelField="kodeGroup"
             valueField="id"

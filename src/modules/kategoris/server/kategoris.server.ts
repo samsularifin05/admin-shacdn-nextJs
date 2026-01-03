@@ -8,8 +8,7 @@ export const kategoriServer = {
     const where: any = {};
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        // Add other search fields if needed
+        { kodeGroup: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -33,8 +32,6 @@ export const kategoriServer = {
       },
     };
   },
-
-
 
   async getById(id: number) {
     return prisma.tm_kategori.findUnique({

@@ -8,8 +8,7 @@ export const barangServer = {
     const where: any = {};
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        // Add other search fields if needed
+        { kodeBarang: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -39,8 +38,6 @@ export const barangServer = {
     };
   },
 
-
-
   async getById(id: number) {
     return prisma.tm_barang.findUnique({
       where: { id },
@@ -53,6 +50,21 @@ export const barangServer = {
   },
 
   async create(data: BarangFormData) {
+    // Auto-generate codes for: kodeBarang
+    const lastRecord_kodeBarang = await prisma.tm_barang.findFirst({
+      orderBy: { kodeBarang: "desc" },
+    });
+
+    let nextSeq_kodeBarang = 1;
+    if (lastRecord_kodeBarang) {
+      const lastCode = lastRecord_kodeBarang.kodeBarang;
+      const lastSeq = parseInt(lastCode);
+      if (!isNaN(lastSeq)) {
+        nextSeq_kodeBarang = lastSeq + 1;
+      }
+    }
+    data.kodeBarang = String(nextSeq_kodeBarang).padStart(8, "0");
+
     return prisma.tm_barang.create({
       data: {
         ...data,

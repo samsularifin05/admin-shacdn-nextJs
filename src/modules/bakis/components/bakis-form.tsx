@@ -54,52 +54,47 @@ export const BakiForm = ({ initialData, onSuccess }: Props) => {
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-4">
-
           <FormInput
             name="kodeGudang"
             label="Kode Gudang"
-            placeholder="Kode Gudang"
             type="text"
+            placeholder="Enter kode gudang"
             disabled={isLoading}
             
             
           />
-
           <FormInput
             name="kodeBaki"
             label="Kode Baki"
-            placeholder="Kode Baki"
             type="text"
+            placeholder="Enter kode baki"
             disabled={isLoading}
             
             
           />
-
           <FormInput
             name="namaBaki"
             label="Nama Baki"
-            placeholder="Nama Baki"
             type="text"
+            placeholder="Enter nama baki"
             disabled={isLoading}
             
             
           />
-
           <FormInput
             name="beratBaki"
             label="Berat Baki"
-            placeholder="Berat Baki"
             type="number"
+            placeholder="Enter berat baki"
             disabled={isLoading}
             
             
           />
-
           <FormInput
             name="beratBandrol"
             label="Berat Bandrol"
-            placeholder="Berat Bandrol"
             type="number"
+            placeholder="Enter berat bandrol"
             disabled={isLoading}
             
             

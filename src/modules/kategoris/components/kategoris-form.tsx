@@ -56,60 +56,54 @@ export const KategoriForm = ({ initialData, onSuccess }: Props) => {
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-4">
-
           <FormInput
             name="kodeGroup"
             label="Kode Group"
-            placeholder="Kode Group"
             type="text"
+            placeholder="Enter kode group"
             disabled={isLoading}
             
             
           />
-
           <FormInput
             name="namaGroup"
             label="Nama Group"
-            placeholder="Nama Group"
             type="text"
+            placeholder="Enter nama group"
             disabled={isLoading}
             
             
           />
-
           <FormInput
             name="jenisGroup"
             label="Jenis Group"
-            placeholder="Jenis Group"
             type="text"
+            placeholder="Enter jenis group"
             disabled={isLoading}
             
             
           />
-
           <FormCurrency
             name="harga"
             label="Harga"
-            placeholder="Harga"
+            placeholder="0"
             disabled={isLoading}
             
             
           />
-
           <FormCurrency
             name="hargaModal"
             label="Harga Modal"
-            placeholder="Harga Modal"
+            placeholder="0"
             disabled={isLoading}
             
             
           />
-
           <FormInput
             name="kodeWarnaNota"
             label="Kode Warna Nota"
-            placeholder="Kode Warna Nota"
             type="text"
+            placeholder="Enter kode warna nota"
             disabled={isLoading}
             
             

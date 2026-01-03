@@ -8,8 +8,7 @@ export const jenisServer = {
     const where: any = {};
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        // Add other search fields if needed
+        { kodeJenis: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -36,8 +35,6 @@ export const jenisServer = {
       },
     };
   },
-
-
 
   async getById(id: number) {
     return prisma.tm_jenis.findUnique({

@@ -1,124 +1,34 @@
 {
   "moduleName": "SalesTransaction",
   "resourceName": "sales-transactions",
-  "tableName": "tr_sales",
+  "tableName": "tm_sales_transaction",
   "title": "Sales Transaction",
-  "route": "/admin/sales-transactions",
-  "classForm": "grid grid-cols-2 gap-4",
+  "route": "/admin/sales-transaction",
+  "classForm": "grid grid-cols-1 md:grid-cols-1 gap-4",
   "fields": [
     {
-      "name": "kodeBarcode",
-      "type": "string",
-      "label": "Kode Barcode",
+      "name": "transactionCode",
+      "label": "Transaction Code",
+      "type": "text",
+      "autoCode": "CC-FJ-{YYYYMMDD}-{0000}"
+    },
+    {
+      "name": "barcode",
+      "label": "Barcode",
+      "type": "text",
+      "autoCode": "{00000000}"
+    },
+    {
+      "name": "customerName",
+      "label": "Customer Name",
+      "type": "text",
       "required": true
     },
     {
-      "name": "namaBarang",
-      "type": "string",
-      "label": "Nama Barang",
-      "required": true
-    },
-    {
-      "name": "bankId",
-      "type": "async-select",
-      "label": "Bank",
-      "endpoint": "/api/banks",
-      "labelField": "name",
-      "valueField": "id",
-      "required": true,
-      "defaultValue": 0
-    },
-    {
-      "name": "attributeName",
-      "type": "string",
-      "label": "Attribute Name",
-      "required": false
-    },
-    {
-      "name": "kadar",
-      "type": "number",
-      "label": "Kadar (%)",
-      "required": true,
-      "defaultValue": 0
-    },
-    {
-      "name": "hargaSkrg",
+      "name": "totalAmount",
+      "label": "Total Amount",
       "type": "rupiah",
-      "label": "Harga Sekarang",
-      "required": true,
       "defaultValue": 0
-    },
-    {
-      "name": "hargaAtribut",
-      "type": "rupiah",
-      "label": "Harga Atribut",
-      "defaultValue": 0
-    },
-    {
-      "name": "beratAtribut",
-      "type": "number",
-      "label": "Berat Atribut (gram)",
-      "defaultValue": 0
-    },
-    {
-      "name": "berat",
-      "type": "number",
-      "label": "Berat Jual (gram)",
-      "required": true,
-      "defaultValue": 0
-    },
-    {
-      "name": "hargaJual",
-      "type": "rupiah",
-      "label": "Harga Jual (Calculated)",
-      "formula": "(kadar / 100) * hargaSkrg * berat",
-      "readOnly": true,
-      "defaultValue": 0
-    },
-    {
-      "name": "hargaPerGram",
-      "type": "rupiah",
-      "label": "Harga / Gram",
-      "defaultValue": 0
-    },
-    {
-      "name": "ongkos",
-      "type": "rupiah",
-      "label": "Ongkos",
-      "defaultValue": 0
-    },
-    {
-      "name": "tipeDiskon",
-      "type": "select",
-      "label": "Pilih Tipe Diskon",
-      "options": ["Percentage", "Fixed Amount", "None"],
-      "defaultValue": "None"
-    },
-    {
-      "name": "discountRp",
-      "type": "rupiah",
-      "label": "Discount Rp",
-      "defaultValue": 0
-    },
-    {
-      "name": "total",
-      "type": "rupiah",
-      "label": "Total",
-      "formula": "hargaJual + ongkos - discountRp",
-      "readOnly": true,
-      "defaultValue": 0
-    },
-    {
-      "name": "keterangan",
-      "type": "string",
-      "label": "Keterangan",
-      "required": false
-    },
-    {
-      "name": "size",
-      "type": "string",
-      "label": "Size",
-      "required": false
     }
   ]
 }

@@ -34,7 +34,7 @@ export function BarangDelete({ barang: row, onSuccess }: BarangDeleteProps) {
         <div className="space-y-1">
           <p className="text-sm font-semibold">Confirm Deletion</p>
           <p className="text-sm opacity-90">
-            Are you sure you want to delete <strong>{row.kategori}</strong>? This action is permanent and cannot be undone.
+            Are you sure you want to delete <strong>{row.kodeBarang}</strong>? This action is permanent and cannot be undone.
           </p>
         </div>
       </div>

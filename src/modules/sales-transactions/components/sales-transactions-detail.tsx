@@ -9,28 +9,20 @@ export const SalesTransactionDetail = ({ salesTransaction: row }: SalesTransacti
     <div className="space-y-4 py-2">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Kode Barcode</p>
-          <p className="text-sm font-semibold">{row.kodeBarcode}</p>
+          <p className="text-sm font-medium text-muted-foreground">Transaction Code</p>
+          <p className="text-sm font-semibold">{row.transactionCode}</p>
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Nama Barang</p>
-          <p className="text-sm font-semibold">{row.namaBarang}</p>
+          <p className="text-sm font-medium text-muted-foreground">Barcode</p>
+          <p className="text-sm font-semibold">{row.barcode}</p>
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Bank</p>
-          <p className="text-sm font-semibold">{row.bankId}</p>
+          <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
+          <p className="text-sm font-semibold">{row.customerName}</p>
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Attribute Name</p>
-          <p className="text-sm font-semibold">{row.attributeName}</p>
-        </div>
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Kadar (%)</p>
-          <p className="text-sm font-semibold">{row.kadar}</p>
-        </div>
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Harga Sekarang</p>
-          <p className="text-sm font-semibold">{row.hargaSkrg}</p>
+          <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
+          <p className="text-sm font-semibold">{row.totalAmount}</p>
         </div>
       </div>
 

@@ -9,6 +9,10 @@ export const BarangDetail = ({ barang: row }: BarangDetailProps) => {
     <div className="space-y-4 py-2">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">Kode Barang</p>
+          <p className="text-sm font-semibold">{row.kodeBarang}</p>
+        </div>
+        <div className="space-y-1">
           <p className="text-sm font-medium text-muted-foreground">Kategori</p>
           <p className="text-sm font-semibold">{(row as any).kategoriRel?.kodeGroup || row.kategori}</p>
         </div>
@@ -27,10 +31,6 @@ export const BarangDetail = ({ barang: row }: BarangDetailProps) => {
         <div className="space-y-1">
           <p className="text-sm font-medium text-muted-foreground">Stock Sepuh</p>
           <p className="text-sm font-semibold">{row.stockSepuh}</p>
-        </div>
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Berat Sepuh</p>
-          <p className="text-sm font-semibold">{row.beratSepuh}</p>
         </div>
       </div>
 

@@ -34,7 +34,7 @@ export function SalesTransactionDelete({ salesTransaction: row, onSuccess }: Sal
         <div className="space-y-1">
           <p className="text-sm font-semibold">Confirm Deletion</p>
           <p className="text-sm opacity-90">
-            Are you sure you want to delete <strong>{row.kodeBarcode}</strong>? This action is permanent and cannot be undone.
+            Are you sure you want to delete <strong>{row.transactionCode}</strong>? This action is permanent and cannot be undone.
           </p>
         </div>
       </div>

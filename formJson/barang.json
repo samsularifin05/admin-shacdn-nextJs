@@ -4,8 +4,14 @@
   "tableName": "tm_barang",
   "title": "Barang",
   "route": "/admin/barang",
-  "classForm": "grid grid-cols-1 md:grid-cols-3 gap-4",
+  "classForm": "grid grid-cols-1 md:grid-cols-2 gap-4",
   "fields": [
+    {
+      "name": "kodeBarang",
+      "label": "Kode Barang",
+      "type": "text",
+      "autoCode": "{00000000}"
+    },
     {
       "name": "kategori",
       "label": "Kategori",
@@ -40,14 +46,14 @@
     {
       "name": "stockSepuh",
       "label": "Stock Sepuh",
-      "type": "number",
+      "type": "gram",
       "readOnly": true,
       "defaultValue": 0
     },
     {
       "name": "beratSepuh",
       "label": "Berat Sepuh",
-      "type": "number",
+      "type": "gram",
       "readOnly": true,
       "defaultValue": 0
     },
@@ -71,13 +77,13 @@
     {
       "name": "beratAsli",
       "label": "Berat Asli",
-      "type": "number",
+      "type": "gram",
       "defaultValue": 0
     },
     {
       "name": "berat",
       "label": "Berat",
-      "type": "number",
+      "type": "gram",
       "defaultValue": 0
     },
     {
@@ -93,7 +99,7 @@
     {
       "name": "beratAtribut",
       "label": "Berat Atribut",
-      "type": "number",
+      "type": "gram",
       "defaultValue": 0
     },
     {
@@ -105,7 +111,7 @@
     {
       "name": "beratPlastik",
       "label": "Berat Plastik",
-      "type": "number",
+      "type": "gram",
       "defaultValue": 0
     },
     {

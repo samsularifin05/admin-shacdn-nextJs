@@ -102,122 +102,31 @@ export const SalesTransactionTable = () => {
   const columns: ColumnDef<SalesTransaction>[] = useMemo(
     () => [
       {
-        accessorKey: "kodeBarcode",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Kode Barcode" />,
+        accessorKey: "transactionCode",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Transaction Code" />,
         
         
         
       },
       {
-        accessorKey: "namaBarang",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Nama Barang" />,
+        accessorKey: "barcode",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Barcode" />,
         
         
         
       },
       {
-        accessorKey: "bankId",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Bank" />,
+        accessorKey: "customerName",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Customer Name" />,
         
         
         
       },
       {
-        accessorKey: "attributeName",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Attribute Name" />,
+        accessorKey: "totalAmount",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Total Amount" />,
         
-        
-        
-      },
-      {
-        accessorKey: "kadar",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Kadar (%)" />,
-        
-        
-        cell: ({ row }) => <div>{row.getValue("kadar")}</div>,
-      },
-      {
-        accessorKey: "hargaSkrg",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Harga Sekarang" />,
-        
-        cell: ({ row }) => <div className="text-right font-medium">{formatRupiah(row.getValue("hargaSkrg"))}</div>,
-        
-      },
-      {
-        accessorKey: "hargaAtribut",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Harga Atribut" />,
-        
-        cell: ({ row }) => <div className="text-right font-medium">{formatRupiah(row.getValue("hargaAtribut"))}</div>,
-        
-      },
-      {
-        accessorKey: "beratAtribut",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Berat Atribut (gram)" />,
-        
-        
-        cell: ({ row }) => <div>{row.getValue("beratAtribut")}</div>,
-      },
-      {
-        accessorKey: "berat",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Berat Jual (gram)" />,
-        
-        
-        cell: ({ row }) => <div>{row.getValue("berat")}</div>,
-      },
-      {
-        accessorKey: "hargaJual",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Harga Jual (Calculated)" />,
-        
-        cell: ({ row }) => <div className="text-right font-medium">{formatRupiah(row.getValue("hargaJual"))}</div>,
-        
-      },
-      {
-        accessorKey: "hargaPerGram",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Harga / Gram" />,
-        
-        cell: ({ row }) => <div className="text-right font-medium">{formatRupiah(row.getValue("hargaPerGram"))}</div>,
-        
-      },
-      {
-        accessorKey: "ongkos",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Ongkos" />,
-        
-        cell: ({ row }) => <div className="text-right font-medium">{formatRupiah(row.getValue("ongkos"))}</div>,
-        
-      },
-      {
-        accessorKey: "tipeDiskon",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Pilih Tipe Diskon" />,
-        
-        
-        
-      },
-      {
-        accessorKey: "discountRp",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Discount Rp" />,
-        
-        cell: ({ row }) => <div className="text-right font-medium">{formatRupiah(row.getValue("discountRp"))}</div>,
-        
-      },
-      {
-        accessorKey: "total",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Total" />,
-        
-        cell: ({ row }) => <div className="text-right font-medium">{formatRupiah(row.getValue("total"))}</div>,
-        
-      },
-      {
-        accessorKey: "keterangan",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Keterangan" />,
-        
-        
-        
-      },
-      {
-        accessorKey: "size",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Size" />,
-        
-        
+        cell: ({ row }) => <div className="text-right font-medium">{formatRupiah(row.getValue("totalAmount"))}</div>,
         
       },
     ],

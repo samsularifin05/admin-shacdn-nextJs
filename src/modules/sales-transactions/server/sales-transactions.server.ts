@@ -8,19 +8,18 @@ export const salesTransactionServer = {
     const where: any = {};
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        // Add other search fields if needed
+        { transactionCode: { contains: search, mode: "insensitive" } },
       ];
     }
 
     const [data, total] = await Promise.all([
-      prisma.tr_sales.findMany({
+      prisma.tm_sales_transaction.findMany({
         skip,
         take: limit,
         where,
         orderBy: { createdAt: "desc" },
       }),
-      prisma.tr_sales.count({ where }),
+      prisma.tm_sales_transaction.count({ where }),
     ]);
 
     return {
@@ -34,16 +33,55 @@ export const salesTransactionServer = {
     };
   },
 
-
-
   async getById(id: number) {
-    return prisma.tr_sales.findUnique({
+    return prisma.tm_sales_transaction.findUnique({
       where: { id },
     });
   },
 
   async create(data: SalesTransactionFormData) {
-    return prisma.tr_sales.create({
+    // Auto-generate codes for: transactionCode, barcode
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+
+    const prefix_transactionCode = `CC-FJ-${year}${month}${day}-`;
+    const lastRecord_transactionCode = await prisma.tm_sales_transaction.findFirst({
+      where: {
+        transactionCode: {
+          startsWith: prefix_transactionCode,
+        },
+      },
+      orderBy: { transactionCode: "desc" },
+    });
+
+    let nextSeq_transactionCode = 1;
+    if (lastRecord_transactionCode) {
+      const lastCode = lastRecord_transactionCode.transactionCode;
+      const lastSeqStr = lastCode.substring(prefix_transactionCode.length);
+      const lastSeq = parseInt(lastSeqStr);
+      if (!isNaN(lastSeq)) {
+        nextSeq_transactionCode = lastSeq + 1;
+      }
+    }
+    data.transactionCode = prefix_transactionCode + String(nextSeq_transactionCode).padStart(4, "0");
+
+    const lastRecord_barcode = await prisma.tm_sales_transaction.findFirst({
+      orderBy: { barcode: "desc" },
+    });
+
+    let nextSeq_barcode = 1;
+    if (lastRecord_barcode) {
+      const lastCode = lastRecord_barcode.barcode;
+      const lastSeq = parseInt(lastCode);
+      if (!isNaN(lastSeq)) {
+        nextSeq_barcode = lastSeq + 1;
+      }
+    }
+    data.barcode = String(nextSeq_barcode).padStart(8, "0");
+
+    return prisma.tm_sales_transaction.create({
       data: {
         ...data,
       },
@@ -51,14 +89,14 @@ export const salesTransactionServer = {
   },
 
   async update(id: number, data: SalesTransactionFormData) {
-    return prisma.tr_sales.update({
+    return prisma.tm_sales_transaction.update({
       where: { id },
       data,
     });
   },
 
   async delete(id: number) {
-    return prisma.tr_sales.delete({
+    return prisma.tm_sales_transaction.delete({
       where: { id },
     });
   },

@@ -3,7 +3,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { barangSchema, BarangFormData, Barang } from "../types/barangs.schema";
 import { Button } from "@/components/ui/button";
-import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect } from "@/components/form";
+import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram } from "@/components/form";
 import { barangService } from "../services/barangs.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2 } from "lucide-react";
@@ -18,6 +18,7 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
   const form = useForm<BarangFormData>({
     resolver: zodResolver(barangSchema) as any,
     defaultValues: initialData ? {
+      kodeBarang: initialData.kodeBarang ?? undefined,
       kategori: initialData.kategori ?? undefined,
       jenis: initialData.jenis ?? undefined,
       kodeBaki: initialData.kodeBaki ?? undefined,
@@ -36,6 +37,7 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
       beratPlastik: initialData.beratPlastik ?? undefined,
       size: initialData.size ?? undefined
     } : {
+      kodeBarang: "",
       kategori: "",
       jenis: "",
       kodeBaki: "",
@@ -77,177 +79,149 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
   return (
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           <FormAsyncSelect
             name="kategori"
             label="Kategori"
-            placeholder="Select Kategori"
+            placeholder="Search kategori..."
             endpoint="/api/kategoris"
             labelField="kodeGroup"
             valueField="id"
             disabled={isLoading}
           />
-
           <FormAsyncSelect
             name="jenis"
             label="Jenis"
-            placeholder="Select Jenis"
+            placeholder="Search jenis..."
             endpoint="/api/jenis"
             labelField="kodeJenis"
             valueField="id"
             disabled={isLoading}
           />
-
           <FormAsyncSelect
             name="kodeBaki"
             label="Kode Baki"
-            placeholder="Select Kode Baki"
+            placeholder="Search kode baki..."
             endpoint="/api/bakis"
             labelField="kodeBaki"
             valueField="id"
             disabled={isLoading}
           />
-
           <FormSelect
             name="barangSepuhan"
             label="Barang Sepuhan"
-            placeholder="Select Barang Sepuhan"
-            options={[
-              { label: "TIDAK", value: "TIDAK" },
-              { label: "YA", value: "YA" }
-            ]}
+            placeholder="Select barang sepuhan"
+            options={["TIDAK", "YA"].map(opt => ({ label: opt, value: opt }))}
             disabled={isLoading}
           />
-
-          <FormInput
+          <FormGram
             name="stockSepuh"
             label="Stock Sepuh"
-            placeholder="Stock Sepuh"
-            type="number"
+            placeholder="0.0"
             disabled={isLoading}
             readOnly
             className="bg-muted"
           />
-
-          <FormInput
+          <FormGram
             name="beratSepuh"
             label="Berat Sepuh"
-            placeholder="Berat Sepuh"
-            type="number"
+            placeholder="0.0"
             disabled={isLoading}
             readOnly
             className="bg-muted"
           />
-
           <FormInput
             name="kodeIntern"
             label="Kode Intern"
-            placeholder="Kode Intern"
             type="text"
+            placeholder="Enter kode intern"
             disabled={isLoading}
             
-            
+            className="uppercase"
           />
-
           <FormSelect
             name="markis"
             label="Markis"
-            placeholder="Select Markis"
-            options={[
-              { label: "TIDAK", value: "TIDAK" },
-              { label: "YA", value: "YA" }
-            ]}
+            placeholder="Select markis"
+            options={["TIDAK", "YA"].map(opt => ({ label: opt, value: opt }))}
             disabled={isLoading}
           />
-
           <FormInput
             name="namaBarang"
             label="Nama Barang"
-            placeholder="Nama Barang"
             type="text"
+            placeholder="Enter nama barang"
             disabled={isLoading}
             
-            
+            className="uppercase"
           />
-
-          <FormInput
+          <FormGram
             name="beratAsli"
             label="Berat Asli"
-            placeholder="Berat Asli"
-            type="number"
+            placeholder="0.0"
             disabled={isLoading}
             
             
           />
-
-          <FormInput
+          <FormGram
             name="berat"
             label="Berat"
-            placeholder="Berat"
-            type="number"
+            placeholder="0.0"
             disabled={isLoading}
             
             
           />
-
           <FormInput
             name="kadarCetak"
             label="Kadar Cetak"
-            placeholder="Kadar Cetak"
             type="text"
+            placeholder="Enter kadar cetak"
             disabled={isLoading}
             
-            
+            className="uppercase"
           />
-
           <FormInput
             name="attributeName"
             label="Attribute Name"
-            placeholder="Attribute Name"
             type="text"
+            placeholder="Enter attribute name"
             disabled={isLoading}
             
-            
+            className="uppercase"
           />
-
-          <FormInput
+          <FormGram
             name="beratAtribut"
             label="Berat Atribut"
-            placeholder="Berat Atribut"
-            type="number"
+            placeholder="0.0"
             disabled={isLoading}
             
             
           />
-
           <FormCurrency
             name="hargaAtribut"
             label="Harga Atribut"
-            placeholder="Harga Atribut"
+            placeholder="0"
             disabled={isLoading}
             
             
           />
-
-          <FormInput
+          <FormGram
             name="beratPlastik"
             label="Berat Plastik"
-            placeholder="Berat Plastik"
-            type="number"
+            placeholder="0.0"
             disabled={isLoading}
             
             
           />
-
           <FormInput
             name="size"
             label="Size"
-            placeholder="Size"
             type="text"
+            placeholder="Enter size"
             disabled={isLoading}
             
-            
+            className="uppercase"
           />
         </div>
         <div className="flex justify-end gap-2 pt-4">

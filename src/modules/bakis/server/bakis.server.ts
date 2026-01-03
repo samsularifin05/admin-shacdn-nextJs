@@ -8,8 +8,7 @@ export const bakiServer = {
     const where: any = {};
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        // Add other search fields if needed
+        { kodeGudang: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -33,8 +32,6 @@ export const bakiServer = {
       },
     };
   },
-
-
 
   async getById(id: number) {
     return prisma.tm_baki.findUnique({

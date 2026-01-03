@@ -18,23 +18,23 @@ export const SalesTransactionForm = ({ initialData, onSuccess }: Props) => {
   const form = useForm<SalesTransactionFormData>({
     resolver: zodResolver(salesTransactionSchema) as any,
     defaultValues: initialData ? {
-      kodeBarcode: initialData.kodeBarcode,
-      namaBarang: initialData.namaBarang,
-      bankId: initialData.bankId,
-      attributeName: initialData.attributeName,
-      kadar: initialData.kadar,
-      hargaSkrg: initialData.hargaSkrg,
-      hargaAtribut: initialData.hargaAtribut,
-      beratAtribut: initialData.beratAtribut,
-      berat: initialData.berat,
-      hargaJual: initialData.hargaJual,
-      hargaPerGram: initialData.hargaPerGram,
-      ongkos: initialData.ongkos,
-      tipeDiskon: initialData.tipeDiskon,
-      discountRp: initialData.discountRp,
-      total: initialData.total,
-      keterangan: initialData.keterangan,
-      size: initialData.size
+      kodeBarcode: initialData.kodeBarcode ?? undefined,
+      namaBarang: initialData.namaBarang ?? undefined,
+      bankId: initialData.bankId ?? undefined,
+      attributeName: initialData.attributeName ?? undefined,
+      kadar: initialData.kadar ?? undefined,
+      hargaSkrg: initialData.hargaSkrg ?? undefined,
+      hargaAtribut: initialData.hargaAtribut ?? undefined,
+      beratAtribut: initialData.beratAtribut ?? undefined,
+      berat: initialData.berat ?? undefined,
+      hargaJual: initialData.hargaJual ?? undefined,
+      hargaPerGram: initialData.hargaPerGram ?? undefined,
+      ongkos: initialData.ongkos ?? undefined,
+      tipeDiskon: initialData.tipeDiskon ?? undefined,
+      discountRp: initialData.discountRp ?? undefined,
+      total: initialData.total ?? undefined,
+      keterangan: initialData.keterangan ?? undefined,
+      size: initialData.size ?? undefined
     } : {
       kodeBarcode: "",
       namaBarang: "",
@@ -191,31 +191,28 @@ export const SalesTransactionForm = ({ initialData, onSuccess }: Props) => {
             
           />
 
-          <FormInput
+          <FormCurrency
             name="hargaJual"
             label="Harga Jual (Calculated)"
             placeholder="Harga Jual (Calculated)"
-            type="number"
             disabled={isLoading}
             readOnly
             className="bg-muted"
           />
 
-          <FormInput
+          <FormCurrency
             name="hargaPerGram"
             label="Harga / Gram"
             placeholder="Harga / Gram"
-            type="number"
             disabled={isLoading}
             
             
           />
 
-          <FormInput
+          <FormCurrency
             name="ongkos"
             label="Ongkos"
             placeholder="Ongkos"
-            type="number"
             disabled={isLoading}
             
             
@@ -233,21 +230,19 @@ export const SalesTransactionForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
           />
 
-          <FormInput
+          <FormCurrency
             name="discountRp"
             label="Discount Rp"
             placeholder="Discount Rp"
-            type="number"
             disabled={isLoading}
             
             
           />
 
-          <FormInput
+          <FormCurrency
             name="total"
             label="Total"
             placeholder="Total"
-            type="number"
             disabled={isLoading}
             readOnly
             className="bg-muted"

@@ -237,6 +237,14 @@ export const ${toCamelCase(moduleName)}Server = {
     };
   },
 
+
+
+  async getById(id: number) {
+    return prisma.${toCamelCase(tableName)}.findUnique({
+      where: { id },
+    });
+  },
+
   async create(data: ${moduleName}FormData) {
     return prisma.${toCamelCase(tableName)}.create({
       data: {
@@ -417,7 +425,9 @@ export const ${moduleName}Form = ({ initialData, onSuccess }: Props) => {
   const form = useForm<${moduleName}FormData>({
     resolver: zodResolver(${toCamelCase(moduleName)}Schema) as any,
     defaultValues: initialData ? {
-      ${fields.map((f) => `${f.name}: initialData.${f.name}`).join(",\n      ")}
+      ${fields
+        .map((f) => `${f.name}: initialData.${f.name} ?? undefined`)
+        .join(",\n      ")}
     } : {
       ${fields
         .map(
@@ -490,6 +500,11 @@ const generateTable = () => {
             : ""
         }
         ${
+          f.type === "currency" || f.type === "rupiah"
+            ? `cell: ({ row }) => <div className="text-right font-medium">{formatRupiah(row.getValue("${f.name}"))}</div>,`
+            : ""
+        }
+        ${
           f.type === "number"
             ? `cell: ({ row }) => <div>{row.getValue("${f.name}")}</div>,`
             : ""
@@ -503,6 +518,7 @@ import { useMemo, useCallback, useRef } from "react";
 import { Pencil, Trash2, Plus, Eye } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
+import { formatRupiah } from "@/lib/utils";
 import { ${moduleName} } from "../types/${resourceName}.schema";
 import { useModalStore } from "@/stores/modal-store";
 import { ${moduleName}Form } from "./${resourceName}-form";
@@ -669,6 +685,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     switch (req.method) {
+      case "GET":
+        const item = await ${toCamelCase(moduleName)}Server.getById(id);
+        if (!item) return res.status(404).json({ message: "Not Found" });
+        return res.status(200).json(item);
+
       case "PUT":
         const updated = await ${toCamelCase(
           moduleName

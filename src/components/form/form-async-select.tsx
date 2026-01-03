@@ -16,6 +16,7 @@ interface FormAsyncSelectProps {
   disabled?: boolean;
 }
 
+// Helper to manage internal state for display vs form value for ID
 export const FormAsyncSelect = ({
   name,
   label,
@@ -29,10 +30,53 @@ export const FormAsyncSelect = ({
   const {
     control,
     formState: { errors },
+    watch,
   } = useFormContext();
+
+  const value = watch(name);
 
   const error = errors[name];
   const errorMessage = error?.message as string | undefined;
+
+  // Local state to store the full option object for display
+  const [selectedOption, setSelectedOption] = React.useState<any>(null);
+  const fetchedValueRef = React.useRef<any>(undefined);
+
+  // Fetch initial option if value exists (e.g. Edit mode)
+  React.useEffect(() => {
+    const fetchOption = async () => {
+      if (!value) {
+        if (selectedOption) setSelectedOption(null);
+        fetchedValueRef.current = undefined;
+        return;
+      }
+
+      // If we already have the correct option loaded, skip
+      if (selectedOption?.value === value) return;
+      // Prevent duplicate fetches for the same value
+      if (fetchedValueRef.current === value) return;
+
+      fetchedValueRef.current = value;
+
+      try {
+        const res = await apiClient.get(`${endpoint}/${value}`);
+        const data = await res.json();
+        if (data) {
+          setSelectedOption({
+            label: data[labelField],
+            value: data[valueField],
+            original: data,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch initial option", err);
+        fetchedValueRef.current = undefined; // Allow retry on failure
+      }
+    };
+
+    fetchOption();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, endpoint, labelField, valueField]);
 
   const loadOptions = async (
     search: string,
@@ -50,7 +94,6 @@ export const FormAsyncSelect = ({
       const json = await res.json();
 
       // Find the data array in the response
-      // Expecting { [resourceName]: [], meta: {} }
       const dataKey = Object.keys(json).find((key) => Array.isArray(json[key]));
       const data = dataKey ? json[dataKey] : [];
       const meta = json.meta;
@@ -59,7 +102,7 @@ export const FormAsyncSelect = ({
         options: data.map((item: any) => ({
           label: item[labelField],
           value: item[valueField],
-          original: item, // Keep original data if needed
+          original: item,
         })),
         hasMore: meta ? page < meta.totalPages : false,
         additional: {
@@ -85,53 +128,59 @@ export const FormAsyncSelect = ({
       <Controller
         control={control}
         name={name}
-        render={({ field: { value, onChange, ref } }) => (
-          <AsyncPaginate
-            selectRef={ref}
-            value={value ? { label: value, value: value } : null}
-            loadOptions={loadOptions as any}
-            additional={{
-              page: 1,
-            }}
-            onChange={(option: any) => {
-              onChange(option ? option.value : null);
-            }}
-            menuPortalTarget={
-              typeof document !== "undefined" ? document.body : null
-            }
-            menuPosition="fixed"
-            // Custom styles to match Shadcn roughly
-            styles={{
-              menuPortal: (base) => ({
-                ...base,
-                zIndex: 99999,
-                pointerEvents: "auto", // Fix for Radix UI Dialog pointer locking
-              }),
-              menu: (base) => ({
-                ...base,
-                zIndex: 99999,
-                backgroundColor: "white", // Hardcoded to ensure opacity
-                border: "1px solid #e5e7eb", // Tailwind gray-200
-                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-              }),
-              control: (base, state) => ({
-                ...base,
-                minHeight: "44px",
-                height: "44px",
-                borderRadius: "calc(var(--radius) - 2px)",
-                borderColor: error
-                  ? "hsl(var(--destructive))"
-                  : "hsl(var(--input))",
-                boxShadow: state.isFocused
-                  ? "0 0 0 1px hsl(var(--ring))"
-                  : "none",
-              }),
-            }}
-            placeholder={placeholder || "Select..."}
-            isDisabled={disabled}
-            isClearable
-          />
-        )}
+        render={({ field: { value, onChange, ref } }) => {
+          return (
+            <AsyncPaginate
+              selectRef={ref}
+              // Prefer local selectedOption (with label), fallback to constructing object from value (shows ID)
+              value={
+                selectedOption ||
+                (value ? { label: value, value: value } : null)
+              }
+              loadOptions={loadOptions as any}
+              additional={{
+                page: 1,
+              }}
+              onChange={(option: any) => {
+                setSelectedOption(option);
+                onChange(option ? option.value : null);
+              }}
+              menuPortalTarget={
+                typeof document !== "undefined" ? document.body : null
+              }
+              menuPosition="fixed"
+              styles={{
+                menuPortal: (base) => ({
+                  ...base,
+                  zIndex: 99999,
+                  pointerEvents: "auto",
+                }),
+                menu: (base) => ({
+                  ...base,
+                  zIndex: 99999,
+                  backgroundColor: "white",
+                  border: "1px solid #e5e7eb",
+                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                }),
+                control: (base, state) => ({
+                  ...base,
+                  minHeight: "44px",
+                  height: "44px",
+                  borderRadius: "calc(var(--radius) - 2px)",
+                  borderColor: error
+                    ? "hsl(var(--destructive))"
+                    : "hsl(var(--input))",
+                  boxShadow: state.isFocused
+                    ? "0 0 0 1px hsl(var(--ring))"
+                    : "none",
+                }),
+              }}
+              placeholder={placeholder || "Select..."}
+              isDisabled={disabled}
+              isClearable
+            />
+          );
+        }}
       />
       {errorMessage && (
         <p className="text-sm font-medium text-destructive">{errorMessage}</p>

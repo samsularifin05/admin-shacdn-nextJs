@@ -64,7 +64,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
     const registration = register(name);
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 p-1">
         {label && (
           <Label htmlFor={name} className={cn(error && "text-destructive")}>
             {label}
@@ -74,6 +74,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
           <Input
             id={name}
             type={inputType}
+            min={type === "number" ? 0 : undefined}
             {...registration}
             {...props}
             ref={(e) => {
@@ -83,6 +84,12 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
               } else if (ref) {
                 ref.current = e;
               }
+            }}
+            onKeyDown={(e) => {
+              if (type === "number" && e.key === "-") {
+                e.preventDefault();
+              }
+              props.onKeyDown?.(e);
             }}
             onFocus={(e) => e.target.select()}
             className={cn(

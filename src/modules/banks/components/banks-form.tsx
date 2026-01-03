@@ -18,13 +18,13 @@ export const BankForm = ({ initialData, onSuccess }: Props) => {
   const form = useForm<BankFormData>({
     resolver: zodResolver(bankSchema) as any,
     defaultValues: initialData ? {
-      code: initialData.code,
-      name: initialData.name,
-      category: initialData.category,
-      balance: initialData.balance,
-      conversionRate: initialData.conversionRate,
-      totalValue: initialData.totalValue,
-      isActive: initialData.isActive
+      code: initialData.code ?? undefined,
+      name: initialData.name ?? undefined,
+      category: initialData.category ?? undefined,
+      balance: initialData.balance ?? undefined,
+      conversionRate: initialData.conversionRate ?? undefined,
+      totalValue: initialData.totalValue ?? undefined,
+      isActive: initialData.isActive ?? undefined
     } : {
       code: "",
       name: "",

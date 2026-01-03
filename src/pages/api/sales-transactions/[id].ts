@@ -7,6 +7,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     switch (req.method) {
+      case "GET":
+        const item = await salesTransactionServer.getById(id);
+        if (!item) return res.status(404).json({ message: "Not Found" });
+        return res.status(200).json(item);
+
       case "PUT":
         const updated = await salesTransactionServer.update(id, req.body);
         return res.status(200).json(updated);

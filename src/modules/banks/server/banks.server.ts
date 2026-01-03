@@ -34,6 +34,14 @@ export const bankServer = {
     };
   },
 
+
+
+  async getById(id: number) {
+    return prisma.tm_banks.findUnique({
+      where: { id },
+    });
+  },
+
   async create(data: BankFormData) {
     return prisma.tm_banks.create({
       data: {

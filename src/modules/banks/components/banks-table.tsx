@@ -3,6 +3,7 @@ import { useMemo, useCallback, useRef } from "react";
 import { Pencil, Trash2, Plus, Eye } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
+import { formatRupiah } from "@/lib/utils";
 import { Bank } from "../types/banks.schema";
 import { useModalStore } from "@/stores/modal-store";
 import { BankForm } from "./banks-form";
@@ -105,10 +106,12 @@ export const BankTable = () => {
         header: ({ column }) => <DataTableColumnHeader column={column} title="Bank Code" />,
         
         
+        
       },
       {
         accessorKey: "name",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Bank Name" />,
+        
         
         
       },
@@ -117,10 +120,12 @@ export const BankTable = () => {
         header: ({ column }) => <DataTableColumnHeader column={column} title="Category" />,
         
         
+        
       },
       {
         accessorKey: "balance",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Default Balance" />,
+        
         
         cell: ({ row }) => <div>{row.getValue("balance")}</div>,
       },
@@ -128,11 +133,13 @@ export const BankTable = () => {
         accessorKey: "conversionRate",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Conversion Rate" />,
         
+        
         cell: ({ row }) => <div>{row.getValue("conversionRate")}</div>,
       },
       {
         accessorKey: "totalValue",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Total Value (Calculated)" />,
+        
         
         cell: ({ row }) => <div>{row.getValue("totalValue")}</div>,
       },
@@ -140,6 +147,7 @@ export const BankTable = () => {
         accessorKey: "isActive",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Active Status" />,
         cell: ({ row }) => <div>{row.getValue("isActive") ? "Yes" : "No"}</div>,
+        
         
       },
     ],

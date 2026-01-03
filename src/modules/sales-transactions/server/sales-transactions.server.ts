@@ -34,6 +34,14 @@ export const salesTransactionServer = {
     };
   },
 
+
+
+  async getById(id: number) {
+    return prisma.tr_sales.findUnique({
+      where: { id },
+    });
+  },
+
   async create(data: SalesTransactionFormData) {
     return prisma.tr_sales.create({
       data: {

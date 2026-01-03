@@ -21,7 +21,7 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
     const errorMessage = error?.message as string | undefined;
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 p-1">
         {label && (
           <Label htmlFor={name} className={cn(error && "text-destructive")}>
             {label}

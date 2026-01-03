@@ -30,7 +30,7 @@ export function FormCheckbox({
   const value = watch(name);
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-2 p-1", className)}>
       <div className="flex items-center space-x-2">
         <Checkbox
           id={name}

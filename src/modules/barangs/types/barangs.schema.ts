@@ -41,6 +41,9 @@ export type Barang = {
   hargaAtribut: number;
   beratPlastik: number;
   size: string;
+  kategoriRel?: any;
+  jenisRel?: any;
+  kodeBakiRel?: any;
   createdAt?: string;
   updatedAt?: string;
 };

@@ -17,6 +17,7 @@ export type Baki = {
   namaBaki: string;
   beratBaki: number;
   beratBandrol: number;
+
   createdAt?: string;
   updatedAt?: string;
 };

@@ -120,7 +120,11 @@ export const JenisTable = () => {
         header: ({ column }) => <DataTableColumnHeader column={column} title="Kode Group" />,
         
         
-        
+        cell: ({ row }) => {
+                const original = row.original as any;
+                const rel = original.kodeGroupRel;
+                return <div>{rel ? rel.kodeGroup : row.getValue("kodeGroup")}</div>;
+              },
       },
     ],
     []

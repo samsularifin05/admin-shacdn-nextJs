@@ -106,21 +106,33 @@ export const BarangTable = () => {
         header: ({ column }) => <DataTableColumnHeader column={column} title="Kategori" />,
         
         
-        
+        cell: ({ row }) => {
+                const original = row.original as any;
+                const rel = original.kategoriRel;
+                return <div>{rel ? rel.kodeGroup : row.getValue("kategori")}</div>;
+              },
       },
       {
         accessorKey: "jenis",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Jenis" />,
         
         
-        
+        cell: ({ row }) => {
+                const original = row.original as any;
+                const rel = original.jenisRel;
+                return <div>{rel ? rel.kodeJenis : row.getValue("jenis")}</div>;
+              },
       },
       {
         accessorKey: "kodeBaki",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Kode Baki" />,
         
         
-        
+        cell: ({ row }) => {
+                const original = row.original as any;
+                const rel = original.kodeBakiRel;
+                return <div>{rel ? rel.kodeBaki : row.getValue("kodeBaki")}</div>;
+              },
       },
       {
         accessorKey: "barangSepuhan",
@@ -134,14 +146,14 @@ export const BarangTable = () => {
         header: ({ column }) => <DataTableColumnHeader column={column} title="Stock Sepuh" />,
         
         
-        cell: ({ row }) => <div>{row.getValue("stockSepuh")}</div>,
+        
       },
       {
         accessorKey: "beratSepuh",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Berat Sepuh" />,
         
         
-        cell: ({ row }) => <div>{row.getValue("beratSepuh")}</div>,
+        
       },
       {
         accessorKey: "kodeIntern",
@@ -169,14 +181,14 @@ export const BarangTable = () => {
         header: ({ column }) => <DataTableColumnHeader column={column} title="Berat Asli" />,
         
         
-        cell: ({ row }) => <div>{row.getValue("beratAsli")}</div>,
+        
       },
       {
         accessorKey: "berat",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Berat" />,
         
         
-        cell: ({ row }) => <div>{row.getValue("berat")}</div>,
+        
       },
       {
         accessorKey: "kadarCetak",
@@ -197,7 +209,7 @@ export const BarangTable = () => {
         header: ({ column }) => <DataTableColumnHeader column={column} title="Berat Atribut" />,
         
         
-        cell: ({ row }) => <div>{row.getValue("beratAtribut")}</div>,
+        
       },
       {
         accessorKey: "hargaAtribut",
@@ -211,7 +223,7 @@ export const BarangTable = () => {
         header: ({ column }) => <DataTableColumnHeader column={column} title="Berat Plastik" />,
         
         
-        cell: ({ row }) => <div>{row.getValue("beratPlastik")}</div>,
+        
       },
       {
         accessorKey: "size",

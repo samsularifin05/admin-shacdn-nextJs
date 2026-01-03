@@ -127,14 +127,14 @@ export const BakiTable = () => {
         header: ({ column }) => <DataTableColumnHeader column={column} title="Berat Baki" />,
         
         
-        cell: ({ row }) => <div>{row.getValue("beratBaki")}</div>,
+        
       },
       {
         accessorKey: "beratBandrol",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Berat Bandrol" />,
         
         
-        cell: ({ row }) => <div>{row.getValue("beratBandrol")}</div>,
+        
       },
     ],
     []

@@ -19,6 +19,7 @@ export type Kategori = {
   harga: number;
   hargaModal: number;
   kodeWarnaNota: string;
+
   createdAt?: string;
   updatedAt?: string;
 };

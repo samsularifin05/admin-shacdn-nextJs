@@ -119,7 +119,7 @@ export const FormAsyncSelect = ({
   };
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-2 p-1", className)}>
       {label && (
         <Label htmlFor={name} className={cn(error && "text-destructive")}>
           {label}

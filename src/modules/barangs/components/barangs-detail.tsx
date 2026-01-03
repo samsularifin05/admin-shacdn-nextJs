@@ -10,15 +10,15 @@ export const BarangDetail = ({ barang: row }: BarangDetailProps) => {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
           <p className="text-sm font-medium text-muted-foreground">Kategori</p>
-          <p className="text-sm font-semibold">{row.kategori}</p>
+          <p className="text-sm font-semibold">{(row as any).kategoriRel?.kodeGroup || row.kategori}</p>
         </div>
         <div className="space-y-1">
           <p className="text-sm font-medium text-muted-foreground">Jenis</p>
-          <p className="text-sm font-semibold">{row.jenis}</p>
+          <p className="text-sm font-semibold">{(row as any).jenisRel?.kodeJenis || row.jenis}</p>
         </div>
         <div className="space-y-1">
           <p className="text-sm font-medium text-muted-foreground">Kode Baki</p>
-          <p className="text-sm font-semibold">{row.kodeBaki}</p>
+          <p className="text-sm font-semibold">{(row as any).kodeBakiRel?.kodeBaki || row.kodeBaki}</p>
         </div>
         <div className="space-y-1">
           <p className="text-sm font-medium text-muted-foreground">Barang Sepuhan</p>

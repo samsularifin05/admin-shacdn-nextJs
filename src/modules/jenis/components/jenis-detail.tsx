@@ -18,7 +18,7 @@ export const JenisDetail = ({ jenis: row }: JenisDetailProps) => {
         </div>
         <div className="space-y-1">
           <p className="text-sm font-medium text-muted-foreground">Kode Group</p>
-          <p className="text-sm font-semibold">{row.kodeGroup}</p>
+          <p className="text-sm font-semibold">{(row as any).kodeGroupRel?.kodeGroup || row.kodeGroup}</p>
         </div>
       </div>
 

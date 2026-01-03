@@ -18,6 +18,11 @@ export const barangServer = {
         skip,
         take: limit,
         where,
+        include: {
+          kategoriRel: true,
+          jenisRel: true,
+          kodeBakiRel: true
+        },
         orderBy: { createdAt: "desc" },
       }),
       prisma.tm_barang.count({ where }),
@@ -39,6 +44,11 @@ export const barangServer = {
   async getById(id: number) {
     return prisma.tm_barang.findUnique({
       where: { id },
+        include: {
+          kategoriRel: true,
+          jenisRel: true,
+          kodeBakiRel: true
+        },
     });
   },
 
@@ -47,6 +57,11 @@ export const barangServer = {
       data: {
         ...data,
       },
+        include: {
+          kategoriRel: true,
+          jenisRel: true,
+          kodeBakiRel: true
+        },
     });
   },
 
@@ -54,6 +69,11 @@ export const barangServer = {
     return prisma.tm_barang.update({
       where: { id },
       data,
+        include: {
+          kategoriRel: true,
+          jenisRel: true,
+          kodeBakiRel: true
+        },
     });
   },
 

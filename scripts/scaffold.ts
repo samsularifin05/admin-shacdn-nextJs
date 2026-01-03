@@ -4,6 +4,7 @@ import * as path from "path";
 // Types
 type FieldType =
   | "string"
+  | "text"
   | "number"
   | "boolean"
   | "select"
@@ -21,6 +22,8 @@ interface Field {
   endpoint?: string;
   labelField?: string;
   valueField?: string;
+  relatedTable?: string; // For async-select: the Prisma model name to join
+  relatedDisplayField?: string; // For async-select: which field to display in table
   defaultValue?: any;
   formula?: string;
   readOnly?: boolean;
@@ -79,6 +82,70 @@ const config = JSON.parse(
 ) as GeneratorConfig;
 const { moduleName, resourceName, tableName, fields, classForm, title } =
   config;
+
+// Auto-detect relations for async-select fields
+// Build a map of resourceName → {tableName, labelField}
+const formJsonDir = path.resolve(process.cwd(), "formJson");
+const resourceMap = new Map<
+  string,
+  { tableName: string; codeField?: string; nameField?: string }
+>();
+
+if (fs.existsSync(formJsonDir)) {
+  const jsonFiles = fs
+    .readdirSync(formJsonDir)
+    .filter((f) => f.endsWith(".json"));
+  jsonFiles.forEach((file) => {
+    try {
+      const cfg = JSON.parse(
+        fs.readFileSync(path.join(formJsonDir, file), "utf-8")
+      ) as GeneratorConfig;
+      // Find the first text field that looks like a code (contains 'kode' or 'code')
+      const codeField = cfg.fields.find(
+        (f) =>
+          f.type === "text" &&
+          (f.name.toLowerCase().includes("kode") ||
+            f.name.toLowerCase().includes("code"))
+      );
+      // Find name field
+      const nameField = cfg.fields.find(
+        (f) =>
+          f.type === "text" &&
+          (f.name.toLowerCase().includes("nama") ||
+            f.name.toLowerCase().includes("name"))
+      );
+
+      resourceMap.set(cfg.resourceName, {
+        tableName: cfg.tableName,
+        codeField: codeField?.name,
+        nameField: nameField?.name,
+      });
+    } catch (e) {
+      // Skip invalid files
+    }
+  });
+}
+
+// Enrich async-select fields with relation info
+fields.forEach((field) => {
+  if (field.type === "async-select" && field.endpoint) {
+    // Extract resource name from endpoint: /api/kategoris → kategoris
+    const match = field.endpoint.match(/\/api\/([^/?]+)/);
+    if (match) {
+      const relatedResource = match[1];
+      const relatedInfo = resourceMap.get(relatedResource);
+      if (relatedInfo) {
+        field.relatedTable = relatedInfo.tableName;
+        // Prefer the labelField specified in the config, otherwise use codeField or nameField
+        field.relatedDisplayField =
+          field.labelField ||
+          relatedInfo.codeField ||
+          relatedInfo.nameField ||
+          "name";
+      }
+    }
+  }
+});
 
 // Paths
 const moduleDir = path.resolve(process.cwd(), "src/modules", resourceName);
@@ -139,6 +206,11 @@ const generateSchema = () => {
     })
     .join("\n");
 
+  const relationTypes = fields
+    .filter((f) => f.type === "async-select" && f.relatedTable)
+    .map((f) => `  ${f.name}Rel?: any;`)
+    .join("\n");
+
   return `import { z } from "zod";
 
 export const ${toCamelCase(moduleName)}Schema = z.object({
@@ -152,6 +224,7 @@ export type ${moduleName}FormData = z.infer<typeof ${toCamelCase(
 export type ${moduleName} = {
   id: number;
 ${tsTypes}
+${relationTypes}
   createdAt?: string;
   updatedAt?: string;
 };
@@ -200,6 +273,17 @@ export const ${toCamelCase(moduleName)}Service = {
 };
 
 const generateServer = () => {
+  // Build include object for relations
+  const asyncSelectFields = fields.filter(
+    (f) => f.type === "async-select" && f.relatedTable
+  );
+  const includeStr =
+    asyncSelectFields.length > 0
+      ? `\n        include: {\n${asyncSelectFields
+          .map((f) => `          ${f.name}Rel: true`)
+          .join(",\n")}\n        },`
+      : "";
+
   // Try to use @/lib/prisma, fallback to manual fix if needed
   return `import { prisma } from "@/lib/prisma";
 import { ${moduleName}FormData } from "../types/${resourceName}.schema";
@@ -220,7 +304,7 @@ export const ${toCamelCase(moduleName)}Server = {
       prisma.${toCamelCase(tableName)}.findMany({
         skip,
         take: limit,
-        where,
+        where,${includeStr}
         orderBy: { createdAt: "desc" },
       }),
       prisma.${toCamelCase(tableName)}.count({ where }),
@@ -241,7 +325,7 @@ export const ${toCamelCase(moduleName)}Server = {
 
   async getById(id: number) {
     return prisma.${toCamelCase(tableName)}.findUnique({
-      where: { id },
+      where: { id },${includeStr}
     });
   },
 
@@ -249,14 +333,14 @@ export const ${toCamelCase(moduleName)}Server = {
     return prisma.${toCamelCase(tableName)}.create({
       data: {
         ...data,
-      },
+      },${includeStr}
     });
   },
 
   async update(id: number, data: ${moduleName}FormData) {
     return prisma.${toCamelCase(tableName)}.update({
       where: { id },
-      data,
+      data,${includeStr}
     });
   },
 
@@ -505,8 +589,12 @@ const generateTable = () => {
             : ""
         }
         ${
-          f.type === "number"
-            ? `cell: ({ row }) => <div>{row.getValue("${f.name}")}</div>,`
+          f.type === "async-select" && f.relatedTable
+            ? `cell: ({ row }) => {
+                const original = row.original as any;
+                const rel = original.${f.name}Rel;
+                return <div>{rel ? rel.${f.relatedDisplayField} : row.getValue("${f.name}")}</div>;
+              },`
             : ""
         }
       },`;
@@ -743,7 +831,9 @@ const generateDetail = () => {
   const fieldRows = displayFields
     .map((f) => {
       let valueDisplay = `{row.${f.name}}`;
-      if (f.type === "boolean") {
+      if (f.type === "async-select" && f.relatedTable) {
+        valueDisplay = `{(row as any).${f.name}Rel?.${f.relatedDisplayField} || row.${f.name}}`;
+      } else if (f.type === "boolean") {
         valueDisplay = `{row.${f.name} ? "Yes" : "No"}`;
       } else if (f.type === "number") {
         valueDisplay = `{row.${f.name}}`;
@@ -863,6 +953,54 @@ export function ${moduleName}Delete({ ${toCamelCase(
 `;
 };
 
+// 11. Seeder Generator
+const generateSeeder = () => {
+  const sampleData: Record<string, any> = {};
+  fields.forEach((f) => {
+    if (f.type === "string" || f.type === "text") {
+      if (f.name.toLowerCase().includes("nama"))
+        sampleData[f.name] = `Sample ${moduleName}`;
+      else if (f.name.toLowerCase().includes("kode"))
+        sampleData[f.name] = `${moduleName.toUpperCase()}-01`;
+      else sampleData[f.name] = "Sample data";
+    } else if (
+      f.type === "number" ||
+      f.type === "currency" ||
+      f.type === "rupiah"
+    ) {
+      sampleData[f.name] = 1000;
+    } else if (f.type === "boolean") {
+      sampleData[f.name] = true;
+    } else if (f.type === "select" && f.options) {
+      sampleData[f.name] = f.options[0];
+    } else if (f.type === "async-select") {
+      sampleData[f.name] = 1; // Assuming ID 1 exists
+    } else if (f.type === "email") {
+      sampleData[f.name] = "sample@example.com";
+    }
+  });
+
+  return `import { PrismaClient } from "@prisma/client";
+
+export async function seed${toPascalCase(moduleName)}(prisma: PrismaClient) {
+  console.log("🌱 Seeding ${moduleName}...");
+
+  const data = ${JSON.stringify(sampleData, null, 2)};
+
+  await prisma.${toCamelCase(tableName)}.upsert({
+    where: { id: 1 },
+    update: data,
+    create: {
+      id: 1,
+      ...data
+    },
+  });
+
+  console.log("✅ ${moduleName} seeded!");
+}
+`;
+};
+
 // WRITE FILES
 const write = (p: string, content: string) => {
   console.log(`Writing ${p}...`);
@@ -900,6 +1038,39 @@ write(
 write(path.join(apiDir, "index.ts"), generateApiIndex());
 write(path.join(apiDir, "[id].ts"), generateApiDetail());
 
+// 12. Seeder Generation & Update prisma/seed.ts
+const seedersDir = path.resolve(process.cwd(), "prisma/seeders");
+if (!fs.existsSync(seedersDir)) fs.mkdirSync(seedersDir, { recursive: true });
+const seederPath = path.join(seedersDir, `${resourceName}Seeder.ts`);
+write(seederPath, generateSeeder());
+
+const mainSeedPath = path.resolve(process.cwd(), "prisma/seed.ts");
+if (fs.existsSync(mainSeedPath)) {
+  let mainSeedContent = fs.readFileSync(mainSeedPath, "utf-8");
+  const seederFuncName = `seed${toPascalCase(moduleName)}`;
+  if (!mainSeedContent.includes(seederFuncName)) {
+    // Add import after other imports
+    const importStatement = `import { ${seederFuncName} } from "./seeders/${resourceName}Seeder";\n`;
+    const lastImportIndex = mainSeedContent.lastIndexOf("import ");
+    const endOfLastImport = mainSeedContent.indexOf("\n", lastImportIndex) + 1;
+    mainSeedContent =
+      mainSeedContent.slice(0, endOfLastImport) +
+      importStatement +
+      mainSeedContent.slice(endOfLastImport);
+
+    // Add call to main function - append to the end of main function body
+    mainSeedContent = mainSeedContent.replace(
+      /async function main\(\) \{([\s\S]*?)\}/,
+      (match, body) => {
+        // Find the return or the end of the body
+        return `async function main() {${body}  await ${seederFuncName}(prisma);\n}`;
+      }
+    );
+    fs.writeFileSync(mainSeedPath, mainSeedContent);
+    console.log(`✅ Updated prisma/seed.ts with ${seederFuncName}`);
+  }
+}
+
 // Generate Page if route is specified
 if (config.route) {
   const route = config.route.startsWith("/")
@@ -922,22 +1093,29 @@ if (fs.existsSync(prismaSchemaPath)) {
 model ${tableName} {
   id        Int      @id @default(autoincrement())
 ${fields
-  .map(
-    (f) =>
-      `  ${f.name}      ${
-        f.type === "number" ||
-        f.type === "currency" ||
-        f.type === "rupiah" ||
-        f.type === "async-select"
-          ? "Float"
-          : f.type === "boolean"
-          ? "Boolean"
-          : "String"
-      }   ${f.required === false ? "?" : ""}`
-  )
+  .map((f) => {
+    if (f.type === "async-select" && f.relatedTable) {
+      return `  ${f.name}      Int?
+  ${f.name}Rel   ${f.relatedTable}? @relation(fields: [${f.name}], references: [id])`;
+    }
+    const prismaType =
+      f.type === "number" || f.type === "currency" || f.type === "rupiah"
+        ? "Float"
+        : f.type === "boolean"
+        ? "Boolean"
+        : "String";
+    return `  ${f.name}      ${prismaType}   ${
+      f.required === false ? "?" : ""
+    }`;
+  })
   .join("\n")}
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+${fields
+  .filter((f) => f.type === "async-select")
+  .map((f) => `  @@index([${f.name}])`)
+  .join("\n")}
 }
 `;
     fs.appendFileSync(prismaSchemaPath, modelDefinition);
@@ -947,7 +1125,7 @@ ${fields
     );
     try {
       require("child_process").execSync(
-        "npx prisma db push && npx prisma generate",
+        "npx prisma format && npx prisma db push && npx prisma generate",
         {
           stdio: "inherit",
         }

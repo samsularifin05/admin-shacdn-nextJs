@@ -18,6 +18,9 @@ export const jenisServer = {
         skip,
         take: limit,
         where,
+        include: {
+          kodeGroupRel: true
+        },
         orderBy: { createdAt: "desc" },
       }),
       prisma.tm_jenis.count({ where }),
@@ -39,6 +42,9 @@ export const jenisServer = {
   async getById(id: number) {
     return prisma.tm_jenis.findUnique({
       where: { id },
+        include: {
+          kodeGroupRel: true
+        },
     });
   },
 
@@ -47,6 +53,9 @@ export const jenisServer = {
       data: {
         ...data,
       },
+        include: {
+          kodeGroupRel: true
+        },
     });
   },
 
@@ -54,6 +63,9 @@ export const jenisServer = {
     return prisma.tm_jenis.update({
       where: { id },
       data,
+        include: {
+          kodeGroupRel: true
+        },
     });
   },
 

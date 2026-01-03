@@ -13,6 +13,7 @@ export type Jenis = {
   kodeJenis: string;
   namaJenis: string;
   kodeGroup: number;
+  kodeGroupRel?: any;
   createdAt?: string;
   updatedAt?: string;
 };

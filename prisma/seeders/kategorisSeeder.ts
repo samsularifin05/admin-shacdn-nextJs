@@ -12,7 +12,7 @@ export async function seedKategori(prisma: PrismaClient) {
 
 
 
-  const data = {
+  const data: any = {
   "kodeGroup": "KATEGORI-01",
   "namaGroup": "Sample Kategori",
   "jenisGroup": "Sample data",

@@ -12,7 +12,7 @@ export async function seedJenis(prisma: PrismaClient) {
 
   const firstKodeGroup = await prisma.tm_kategori.findFirst();
 
-  const data = {
+  const data: any = {
   "kodeJenis": "JENIS-01",
   "namaJenis": "Sample Jenis",
   "kodeGroup": firstKodeGroup?.id || 1

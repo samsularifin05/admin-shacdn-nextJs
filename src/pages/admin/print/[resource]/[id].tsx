@@ -86,37 +86,74 @@ export default function PrintPage() {
         <div className="border-t border-dashed border-black my-1" />
 
         <div className="space-y-1">
-          <div className="space-y-0.5">
-            <p className="font-bold uppercase text-[10px]">
-              {data.namaBarang || "Detail Item"}
-            </p>
-            {Object.entries(data).map(([key, value]) => {
-              if (
-                [
-                  "id",
-                  "createdAt",
-                  "updatedAt",
-                  "transactionCode",
-                  "namaBarang",
-                  "customerName",
-                  "totalAmount",
-                ].includes(key)
-              )
-                return null;
-              if (value === null || value === undefined || value === "")
-                return null;
-              if (typeof value === "object") return null;
+          {data.items && Array.isArray(data.items) && data.items.length > 0 ? (
+            <div className="space-y-1">
+              <table className="w-full text-[9px] border-collapse">
+                <thead>
+                  <tr className="border-b border-dashed border-black">
+                    <th className="text-left font-bold pb-1">ITEM</th>
+                    <th className="text-right font-bold pb-1">QTY</th>
+                    <th className="text-right font-bold pb-1">SUB</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-dashed divide-black/30">
+                  {data.items.map((item: any, idx: number) => (
+                    <tr key={idx}>
+                      <td className="py-1">
+                        <div className="font-bold">
+                          {item.namaBarang ||
+                            item.barangRel?.namaBarang ||
+                            `PROD-${item.barangId}`}
+                        </div>
+                        <div className="text-[8px] opacity-70">
+                          @ {item.harga?.toLocaleString("id-ID")}
+                        </div>
+                      </td>
+                      <td className="text-right py-1 align-top">{item.qty}</td>
+                      <td className="text-right py-1 align-top font-bold">
+                        {item.subtotal?.toLocaleString("id-ID")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="space-y-0.5">
+              <p className="font-bold uppercase text-[10px]">
+                {data.namaBarang || "Detail Item"}
+              </p>
+              {Object.entries(data).map(([key, value]) => {
+                if (
+                  [
+                    "id",
+                    "createdAt",
+                    "updatedAt",
+                    "transactionCode",
+                    "namaBarang",
+                    "customerName",
+                    "totalAmount",
+                    "paymentMethod",
+                    "items",
+                    "transactionDate",
+                  ].includes(key)
+                )
+                  return null;
+                if (value === null || value === undefined || value === "")
+                  return null;
+                if (typeof value === "object") return null;
 
-              return (
-                <div key={key} className="flex justify-between text-[9px]">
-                  <span className="capitalize">
-                    {key.replace(/([A-Z])/g, " $1")}:
-                  </span>
-                  <span className="text-right">{String(value)}</span>
-                </div>
-              );
-            })}
-          </div>
+                return (
+                  <div key={key} className="flex justify-between text-[9px]">
+                    <span className="capitalize">
+                      {key.replace(/([A-Z])/g, " $1")}:
+                    </span>
+                    <span className="text-right">{String(value)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="border-t border-dashed border-black my-1" />
@@ -124,7 +161,7 @@ export default function PrintPage() {
         <div className="space-y-0.5 font-bold">
           <div className="flex justify-between text-[11px]">
             <span>TOTAL</span>
-            <span>
+            <span className="text-right">
               Rp{" "}
               {data.totalAmount?.toLocaleString("id-ID") ||
                 (data.harga ? data.harga.toLocaleString("id-ID") : "0")}
@@ -132,15 +169,18 @@ export default function PrintPage() {
           </div>
           <div className="flex justify-between text-[9px]">
             <span>PEMBAYARAN</span>
-            <span>TUNAI</span>
+            <span className="text-right uppercase">
+              {data.paymentMethod || "TUNAI"}
+            </span>
           </div>
         </div>
 
         <div className="border-t border-dashed border-black my-2" />
 
         <div className="text-center space-y-0.5 text-[9px] italic">
-          <p>TERIMA KASIH</p>
-          <p>Barang tidak dapat ditukar</p>
+          <p className="font-bold">TERIMA KASIH</p>
+          <p>Barang tidak dapat ditukar/dikembalikan</p>
+          <p>*** Simpan struk ini sebagai bukti ***</p>
         </div>
 
         <div className="mt-4 no-print flex justify-center pb-5">

@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useCallback, useRef } from "react";
-import { Pencil, Trash2, Plus, Eye } from "lucide-react";
+import { Pencil, Trash2, Plus, Eye, ChevronRight, ChevronDown } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
 import { formatRupiah } from "@/lib/utils";
@@ -27,7 +27,7 @@ export const BankTable = () => {
         case "create":
           onOpen("form", {
             title: "Add Bank",
-            size: "lg",
+            size: "xl",
             content: <BankForm onSuccess={refreshTable} />,
           });
           break;
@@ -45,7 +45,7 @@ export const BankTable = () => {
           if (row) {
             onOpen("form", {
               title: "Edit Bank",
-              size: "lg",
+              size: "xl",
               content: <BankForm initialData={row} onSuccess={refreshTable} />,
             });
           }
@@ -103,6 +103,7 @@ export const BankTable = () => {
 
   const columns: ColumnDef<Bank>[] = useMemo(
     () => [
+
       {
         accessorKey: "code",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Bank Code" />,
@@ -156,6 +157,8 @@ export const BankTable = () => {
     []
   );
 
+  
+
   return (
     <ServerDataTable
       ref={tableRef}
@@ -164,6 +167,7 @@ export const BankTable = () => {
       columns={columns}
       actions={tableActions}
       searchPlaceholder="Search banks..."
+      
     />
   );
 };

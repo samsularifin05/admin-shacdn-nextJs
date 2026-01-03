@@ -14,25 +14,27 @@ export async function seedBarang(prisma: PrismaClient) {
   const firstJenis = await prisma.tm_jenis.findFirst();
   const firstKodeBaki = await prisma.tm_baki.findFirst();
 
-  const data = {
+  const data: any = {
   "kodeBarang": "00000001",
   "kategori": firstKategori?.id || 1,
   "jenis": firstJenis?.id || 1,
   "kodeBaki": firstKodeBaki?.id || 1,
   "barangSepuhan": "TIDAK",
-  "stockSepuh": 1.5,
-  "beratSepuh": 1.5,
+  "stockSepuh": 0,
+  "beratSepuh": 0,
   "kodeIntern": "BARANG-01",
   "markis": "TIDAK",
   "namaBarang": "Sample Barang",
-  "beratAsli": 1.5,
-  "berat": 1.5,
+  "beratAsli": 0,
+  "berat": 0,
   "kadarCetak": "Sample data",
   "attributeName": "Sample data",
-  "beratAtribut": 1.5,
-  "hargaAtribut": 1000,
-  "beratPlastik": 1.5,
-  "size": "Sample data"
+  "beratAtribut": 0,
+  "hargaAtribut": 0,
+  "beratPlastik": 0,
+  "size": "Sample data",
+  "stock": 10,
+  "hargaJual": 100000
 };
 
   await prisma.tm_barang.create({

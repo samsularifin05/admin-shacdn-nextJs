@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useCallback, useRef } from "react";
-import { Pencil, Trash2, Plus, Eye, Printer } from "lucide-react";
+import { Pencil, Trash2, Plus, Eye, Printer, ChevronRight, ChevronDown } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
 import { formatRupiah } from "@/lib/utils";
@@ -42,7 +42,7 @@ export const SalesTransactionTable = () => {
         case "create":
           onOpen("form", {
             title: "Add Sales Transaction",
-            size: "lg",
+            size: "xl",
             content: <SalesTransactionForm onSuccess={refreshTable} />,
           });
           break;
@@ -60,7 +60,7 @@ export const SalesTransactionTable = () => {
           if (row) {
             onOpen("form", {
               title: "Edit Sales Transaction",
-              size: "lg",
+              size: "xl",
               content: <SalesTransactionForm initialData={row} onSuccess={refreshTable} />,
             });
           }
@@ -125,57 +125,101 @@ export const SalesTransactionTable = () => {
   const columns: ColumnDef<SalesTransaction>[] = useMemo(
     () => [
       {
+        id: "expander",
+        header: () => null,
+        cell: ({ row }) => {
+          return (
+            <button
+              onClick={() => row.toggleExpanded()}
+              className="flex items-center justify-center w-6 h-6 rounded-md hover:bg-muted transition-colors"
+            >
+              {row.getIsExpanded() ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </button>
+          );
+        },
+      },
+      {
         accessorKey: "transactionCode",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Transaction Code" />,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="No. Transaksi" />,
         
         
         
       },
       {
-        accessorKey: "barcode",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Barcode" />,
+        accessorKey: "transactionDate",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Tanggal" />,
         
         
-        
-      },
-      {
-        accessorKey: "namaBarang",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Nama Barang" />,
-        
-        
-        
-      },
-      {
-        accessorKey: "berat",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Berat" />,
-        
-        
-        
-      },
-      {
-        accessorKey: "harga",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Harga" />,
-        
-        cell: ({ row }) => <div className="text-right font-medium">{formatRupiah(row.getValue("harga"))}</div>,
         
       },
       {
         accessorKey: "customerName",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Customer Name" />,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Nama Pelanggan" />,
         
         
         
       },
       {
         accessorKey: "totalAmount",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Total Amount" />,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Total Bayar" />,
         
         cell: ({ row }) => <div className="text-right font-medium">{formatRupiah(row.getValue("totalAmount"))}</div>,
+        
+      },
+      {
+        accessorKey: "paymentMethod",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Metode Bayar" />,
+        
+        
         
       },
     ],
     []
   );
+
+  const renderSubComponent = ({ row }: { row: any }) => {
+    const data = row.original;
+    const items = data.items || [];
+
+    if (items.length === 0) {
+      return (
+        <div className="p-4 text-center text-sm text-muted-foreground italic">
+          No items found.
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-4 bg-muted/20 border-y border-dashed">
+        <div className="overflow-hidden rounded-md border bg-background">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 border-b">
+              <tr>
+                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Barang</th>
+                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Harga</th>
+                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Qty</th>
+                <th className="px-4 py-2 text-left font-medium text-muted-foreground">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {items.map((item: any, idx: number) => (
+                <tr key={idx} className="hover:bg-muted/30">
+                  <td className="px-4 py-2">{item.barangIdRel?.namaBarang || item.barangId}</td>
+                  <td className="px-4 py-2">{formatRupiah(item.harga)}</td>
+                  <td className="px-4 py-2">{item.qty}</td>
+                  <td className="px-4 py-2">{formatRupiah(item.subtotal)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <ServerDataTable
@@ -185,6 +229,8 @@ export const SalesTransactionTable = () => {
       columns={columns}
       actions={tableActions}
       searchPlaceholder="Search salestransactions..."
+      renderSubComponent={renderSubComponent}
+      getRowCanExpand={() => true}
     />
   );
 };

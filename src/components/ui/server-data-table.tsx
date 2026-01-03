@@ -17,6 +17,8 @@ interface ServerDataTableProps<TData, TValue> {
   actions?: ButtonConfig<TData>[];
   dataPath?: string; // Key to find data in response (e.g., "users")
   searchPlaceholder?: string;
+  renderSubComponent?: (props: { row: any }) => React.ReactNode;
+  getRowCanExpand?: (row: any) => boolean;
 }
 
 export interface ServerDataTableRef {
@@ -28,7 +30,15 @@ export const ServerDataTable = forwardRef<
   ServerDataTableProps<any, any>
 >(
   (
-    { endpoint, columns, actions, dataPath = "data", searchPlaceholder },
+    {
+      endpoint,
+      columns,
+      actions,
+      dataPath = "data",
+      searchPlaceholder,
+      renderSubComponent,
+      getRowCanExpand,
+    },
     ref
   ) => {
     // State
@@ -129,6 +139,8 @@ export const ServerDataTable = forwardRef<
         totalCount={totalCount}
         pagination={pagination}
         onPaginationChange={setPagination}
+        renderSubComponent={renderSubComponent}
+        getRowCanExpand={getRowCanExpand}
       />
     );
   }

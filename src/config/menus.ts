@@ -32,25 +32,21 @@ export const navigation: NavSection[] = [
         href: "/admin/baki",
         icon: Package,
       },
-
       {
         title: "Bank",
         href: "/admin/banks",
         icon: Package,
       },
-
       {
         title: "Barang",
         href: "/admin/barang",
         icon: Package,
       },
-
       {
         title: "Jenis",
         href: "/admin/jenis",
         icon: Package,
       },
-
       {
         title: "Kategori",
         href: "/admin/kategori",

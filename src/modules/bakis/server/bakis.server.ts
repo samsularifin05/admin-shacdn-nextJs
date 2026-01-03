@@ -44,21 +44,38 @@ export const bakiServer = {
   async getById(id: number) {
     return prisma.tm_baki.findUnique({
       where: { id },
+      include: {
+        
+        
+      },
     });
   },
 
   async create(data: BakiFormData) {
+    const createData: any = { ...data };
+    
+
+    
     return prisma.tm_baki.create({
-      data: {
-        ...data,
+      data: createData,
+      include: {
+        
+        
       },
     });
   },
 
   async update(id: number, data: BakiFormData) {
+    const updateData: any = { ...data };
+    
+
     return prisma.tm_baki.update({
       where: { id },
-      data,
+      data: updateData,
+      include: {
+        
+        
+      },
     });
   },
 

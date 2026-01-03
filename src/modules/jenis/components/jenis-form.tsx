@@ -3,7 +3,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { jenisSchema, JenisFormData, Jenis } from "../types/jenis.schema";
 import { Button } from "@/components/ui/button";
-import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram } from "@/components/form";
+import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram, FormCart } from "@/components/form";
 import { jenisService } from "../services/jenis.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2 } from "lucide-react";
@@ -25,7 +25,7 @@ export const JenisForm = ({ initialData, onSuccess }: Props) => {
     } : {
       kodeJenis: "",
       namaJenis: "",
-      kodeGroup: ""
+      kodeGroup: 0
     },
   });
 

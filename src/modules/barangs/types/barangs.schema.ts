@@ -19,6 +19,8 @@ export const barangSchema = z.object({
   hargaAtribut: z.coerce.number().optional(),
   beratPlastik: z.coerce.number().optional(),
   size: z.string().optional().transform(v => v?.toUpperCase()),
+  stock: z.coerce.number().optional(),
+  hargaJual: z.coerce.number().optional(),
 });
 
 export type BarangFormData = z.infer<typeof barangSchema>;
@@ -43,6 +45,8 @@ export type Barang = {
   hargaAtribut?: number;
   beratPlastik?: number;
   size?: string;
+  stock?: number;
+  hargaJual?: number;
   kategoriRel?: any;
   jenisRel?: any;
   kodeBakiRel?: any;

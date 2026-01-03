@@ -3,7 +3,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { barangSchema, BarangFormData, Barang } from "../types/barangs.schema";
 import { Button } from "@/components/ui/button";
-import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram } from "@/components/form";
+import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram, FormCart } from "@/components/form";
 import { barangService } from "../services/barangs.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2 } from "lucide-react";
@@ -36,12 +36,14 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
       beratAtribut: initialData.beratAtribut ?? undefined,
       hargaAtribut: initialData.hargaAtribut ?? undefined,
       beratPlastik: initialData.beratPlastik ?? undefined,
-      size: initialData.size ?? undefined
+      size: initialData.size ?? undefined,
+      stock: initialData.stock ?? undefined,
+      hargaJual: initialData.hargaJual ?? undefined
     } : {
       kodeBarang: "",
-      kategori: "",
-      jenis: "",
-      kodeBaki: "",
+      kategori: 0,
+      jenis: 0,
+      kodeBaki: 0,
       barangSepuhan: "TIDAK",
       stockSepuh: 0,
       beratSepuh: 0,
@@ -55,7 +57,9 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
       beratAtribut: 0,
       hargaAtribut: 0,
       beratPlastik: 0,
-      size: ""
+      size: "",
+      stock: 10,
+      hargaJual: 100000
     },
   });
 
@@ -244,6 +248,24 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
+          />
+          <FormInput
+            name="stock"
+            label="Stock"
+            type="number"
+            placeholder="0"
+            disabled={isLoading}
+            
+            
+            
+          />
+          <FormCurrency
+            name="hargaJual"
+            label="Harga Jual"
+            placeholder="0"
+            disabled={isLoading}
+            
             
           />
         </div>

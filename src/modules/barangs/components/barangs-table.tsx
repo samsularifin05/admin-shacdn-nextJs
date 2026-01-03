@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useCallback, useRef } from "react";
-import { Pencil, Trash2, Plus, Eye } from "lucide-react";
+import { Pencil, Trash2, Plus, Eye, ChevronRight, ChevronDown } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
 import { formatRupiah } from "@/lib/utils";
@@ -27,7 +27,7 @@ export const BarangTable = () => {
         case "create":
           onOpen("form", {
             title: "Add Barang",
-            size: "lg",
+            size: "xl",
             content: <BarangForm onSuccess={refreshTable} />,
           });
           break;
@@ -45,7 +45,7 @@ export const BarangTable = () => {
           if (row) {
             onOpen("form", {
               title: "Edit Barang",
-              size: "lg",
+              size: "xl",
               content: <BarangForm initialData={row} onSuccess={refreshTable} />,
             });
           }
@@ -103,6 +103,7 @@ export const BarangTable = () => {
 
   const columns: ColumnDef<Barang>[] = useMemo(
     () => [
+
       {
         accessorKey: "kodeBarang",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Kode Barang" />,
@@ -241,9 +242,25 @@ export const BarangTable = () => {
         
         
       },
+      {
+        accessorKey: "stock",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Stock" />,
+        
+        
+        
+      },
+      {
+        accessorKey: "hargaJual",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Harga Jual" />,
+        
+        cell: ({ row }) => <div className="text-right font-medium">{formatRupiah(row.getValue("hargaJual"))}</div>,
+        
+      },
     ],
     []
   );
+
+  
 
   return (
     <ServerDataTable
@@ -253,6 +270,7 @@ export const BarangTable = () => {
       columns={columns}
       actions={tableActions}
       searchPlaceholder="Search barangs..."
+      
     />
   );
 };

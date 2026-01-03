@@ -12,12 +12,12 @@ export async function seedBaki(prisma: PrismaClient) {
 
 
 
-  const data = {
+  const data: any = {
   "kodeGudang": "BAKI-01",
   "kodeBaki": "BAKI-01",
   "namaBaki": "Sample Baki",
-  "beratBaki": 1.5,
-  "beratBandrol": 1.5
+  "beratBaki": 0,
+  "beratBandrol": 0
 };
 
   await prisma.tm_baki.create({

@@ -47,30 +47,38 @@ export const jenisServer = {
   async getById(id: number) {
     return prisma.tm_jenis.findUnique({
       where: { id },
-        include: {
-          kodeGroupRel: true
-        },
+      include: {
+        kodeGroupRel: true
+        
+      },
     });
   },
 
   async create(data: JenisFormData) {
+    const createData: any = { ...data };
+    
+
+    
     return prisma.tm_jenis.create({
-      data: {
-        ...data,
+      data: createData,
+      include: {
+        kodeGroupRel: true
+        
       },
-        include: {
-          kodeGroupRel: true
-        },
     });
   },
 
   async update(id: number, data: JenisFormData) {
+    const updateData: any = { ...data };
+    
+
     return prisma.tm_jenis.update({
       where: { id },
-      data,
-        include: {
-          kodeGroupRel: true
-        },
+      data: updateData,
+      include: {
+        kodeGroupRel: true
+        
+      },
     });
   },
 

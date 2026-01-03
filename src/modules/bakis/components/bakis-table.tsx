@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useCallback, useRef } from "react";
-import { Pencil, Trash2, Plus, Eye } from "lucide-react";
+import { Pencil, Trash2, Plus, Eye, ChevronRight, ChevronDown } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
 import { formatRupiah } from "@/lib/utils";
@@ -27,7 +27,7 @@ export const BakiTable = () => {
         case "create":
           onOpen("form", {
             title: "Add Baki",
-            size: "lg",
+            size: "xl",
             content: <BakiForm onSuccess={refreshTable} />,
           });
           break;
@@ -45,7 +45,7 @@ export const BakiTable = () => {
           if (row) {
             onOpen("form", {
               title: "Edit Baki",
-              size: "lg",
+              size: "xl",
               content: <BakiForm initialData={row} onSuccess={refreshTable} />,
             });
           }
@@ -103,6 +103,7 @@ export const BakiTable = () => {
 
   const columns: ColumnDef<Baki>[] = useMemo(
     () => [
+
       {
         accessorKey: "kodeGudang",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Kode Gudang" />,
@@ -142,6 +143,8 @@ export const BakiTable = () => {
     []
   );
 
+  
+
   return (
     <ServerDataTable
       ref={tableRef}
@@ -150,6 +153,7 @@ export const BakiTable = () => {
       columns={columns}
       actions={tableActions}
       searchPlaceholder="Search bakis..."
+      
     />
   );
 };

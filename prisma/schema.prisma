@@ -25,29 +25,6 @@ model User {
   @@map("users")
 }
 
-model tr_sales {
-  id            Int      @id @default(autoincrement())
-  kodeBarcode   String
-  namaBarang    String
-  bankId        Float
-  attributeName String?
-  kadar         Float
-  hargaSkrg     Float
-  hargaAtribut  Float
-  beratAtribut  Float
-  berat         Float
-  hargaJual     Float
-  hargaPerGram  Float
-  ongkos        Float
-  tipeDiskon    String
-  discountRp    Float
-  total         Float
-  keterangan    String?
-  size          String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
 model tm_baki {
   id           Int      @id @default(autoincrement())
   kodeGudang   String
@@ -75,30 +52,33 @@ model tm_banks {
 }
 
 model tm_barang {
-  id            Int          @id @default(autoincrement())
-  kodeBarang    String
-  kategori      Int?
-  kategoriRel   tm_kategori? @relation(fields: [kategori], references: [id])
-  jenis         Int?
-  jenisRel      tm_jenis?    @relation(fields: [jenis], references: [id])
-  kodeBaki      Int?
-  kodeBakiRel   tm_baki?     @relation(fields: [kodeBaki], references: [id])
-  barangSepuhan String
-  stockSepuh    Float
-  beratSepuh    Float
-  kodeIntern    String
-  markis        String
-  namaBarang    String
-  beratAsli     Float
-  berat         Float
-  kadarCetak    String
-  attributeName String
-  beratAtribut  Float
-  hargaAtribut  Float
-  beratPlastik  Float
-  size          String
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id                        Int                           @id @default(autoincrement())
+  kodeBarang                String
+  kategori                  Int?
+  kategoriRel               tm_kategori?                  @relation(fields: [kategori], references: [id])
+  jenis                     Int?
+  jenisRel                  tm_jenis?                     @relation(fields: [jenis], references: [id])
+  kodeBaki                  Int?
+  kodeBakiRel               tm_baki?                      @relation(fields: [kodeBaki], references: [id])
+  barangSepuhan             String
+  stockSepuh                Float
+  beratSepuh                Float
+  kodeIntern                String
+  markis                    String
+  namaBarang                String
+  beratAsli                 Float
+  berat                     Float
+  kadarCetak                String
+  attributeName             String
+  beratAtribut              Float
+  hargaAtribut              Float
+  beratPlastik              Float
+  size                      String
+  stock                     Float
+  hargaJual                 Float
+  createdAt                 DateTime                      @default(now())
+  updatedAt                 DateTime                      @updatedAt
+  tmSalesTransactionDetails tm_sales_transaction_detail[]
 
   @@index([kategori])
   @@index([jenis])
@@ -134,14 +114,28 @@ model tm_kategori {
 }
 
 model tm_sales_transaction {
-  id              Int      @id @default(autoincrement())
+  id              Int                           @id @default(autoincrement())
   transactionCode String
-  barcode         String
-  namaBarang      String
-  berat           Float
-  harga           Float
+  transactionDate String
   customerName    String
+  items           tm_sales_transaction_detail[]
   totalAmount     Float
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  paymentMethod   String
+  createdAt       DateTime                      @default(now())
+  updatedAt       DateTime                      @updatedAt
+}
+
+model tm_sales_transaction_detail {
+  id          Int                  @id @default(autoincrement())
+  parentId    Int
+  parent      tm_sales_transaction @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  barangId    Int?
+  barangIdRel tm_barang?           @relation(fields: [barangId], references: [id])
+  harga       Float
+  qty         Float
+  subtotal    Float                @default(0)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@index([parentId])
 }

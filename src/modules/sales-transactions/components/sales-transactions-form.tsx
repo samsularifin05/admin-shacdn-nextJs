@@ -3,7 +3,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { salesTransactionSchema, SalesTransactionFormData, SalesTransaction } from "../types/sales-transactions.schema";
 import { Button } from "@/components/ui/button";
-import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram } from "@/components/form";
+import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram, FormCart } from "@/components/form";
 import { salesTransactionService } from "../services/sales-transactions.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2, Printer } from "lucide-react";
@@ -20,20 +20,18 @@ export const SalesTransactionForm = ({ initialData, onSuccess }: Props) => {
     resolver: zodResolver(salesTransactionSchema) as any,
     defaultValues: initialData ? {
       transactionCode: initialData.transactionCode ?? undefined,
-      barcode: initialData.barcode ?? undefined,
-      namaBarang: initialData.namaBarang ?? undefined,
-      berat: initialData.berat ?? undefined,
-      harga: initialData.harga ?? undefined,
+      transactionDate: initialData.transactionDate ?? undefined,
       customerName: initialData.customerName ?? undefined,
-      totalAmount: initialData.totalAmount ?? undefined
+      items: initialData.items ?? [],
+      totalAmount: initialData.totalAmount ?? undefined,
+      paymentMethod: initialData.paymentMethod ?? undefined
     } : {
       transactionCode: "",
-      barcode: "",
-      namaBarang: "",
-      berat: 0,
-      harga: 0,
-      customerName: "",
-      totalAmount: 0
+      transactionDate: "2026-01-03",
+      customerName: "CASH",
+      items: [],
+      totalAmount: 0,
+      paymentMethod: "TUNAI"
     },
   });
 
@@ -81,63 +79,48 @@ export const SalesTransactionForm = ({ initialData, onSuccess }: Props) => {
   return (
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
 
           <FormInput
-            name="barcode"
-            label="Barcode"
+            name="transactionDate"
+            label="Tanggal"
             type="text"
-            placeholder="Enter barcode"
+            placeholder="Enter tanggal"
             disabled={isLoading}
             
             className="uppercase"
-            lookupEndpoint="/api/barangs" onObjectChange={(data) => {
-            setValue("namaBarang", data?.namaBarang ?? ""); setValue("berat", data?.berat ?? 0); setValue("harga", data?.kategoriRel?.harga ?? 0);
-          }}
-          />
-          <FormInput
-            name="namaBarang"
-            label="Nama Barang"
-            type="text"
-            placeholder="Enter nama barang"
-            disabled={isLoading}
-            readOnly
-            className="bg-muted uppercase"
             
-          />
-          <FormGram
-            name="berat"
-            label="Berat"
-            placeholder="0.0"
-            disabled={isLoading}
-            readOnly
-            className="bg-muted"
-          />
-          <FormCurrency
-            name="harga"
-            label="Harga"
-            placeholder="0"
-            disabled={isLoading}
-            readOnly
-            className="bg-muted"
           />
           <FormInput
             name="customerName"
-            label="Customer Name"
+            label="Nama Pelanggan"
             type="text"
-            placeholder="Enter customer name"
+            placeholder="Enter nama pelanggan"
             disabled={isLoading}
             
             className="uppercase"
             
           />
+          <FormCart
+            name="items"
+            label="Daftar Barang"
+            fields={[{"name":"barangId","label":"Barang","type":"async-select","endpoint":"/api/barangs","labelField":"namaBarang","valueField":"id","relatedTable":"tm_barang","autoFill":{"harga":"hargaJual"}},{"name":"harga","label":"Harga","type":"rupiah"},{"name":"qty","label":"Qty","type":"number"},{"name":"subtotal","label":"Subtotal","type":"rupiah","readOnly":true}]}
+            totalField="totalAmount"
+          />
           <FormCurrency
             name="totalAmount"
-            label="Total Amount"
+            label="Total Bayar"
             placeholder="0"
             disabled={isLoading}
-            
-            
+            readOnly
+            className="bg-muted"
+          />
+          <FormSelect
+            name="paymentMethod"
+            label="Metode Bayar"
+            placeholder="Select metode bayar"
+            options={["TUNAI", "TRANSFER", "QRIS"].map(opt => ({ label: opt, value: opt }))}
+            disabled={isLoading}
           />
         </div>
         <div className="flex items-center space-x-2 py-2 border-t border-dashed">

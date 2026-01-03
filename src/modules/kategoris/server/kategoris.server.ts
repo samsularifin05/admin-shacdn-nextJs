@@ -44,21 +44,38 @@ export const kategoriServer = {
   async getById(id: number) {
     return prisma.tm_kategori.findUnique({
       where: { id },
+      include: {
+        
+        
+      },
     });
   },
 
   async create(data: KategoriFormData) {
+    const createData: any = { ...data };
+    
+
+    
     return prisma.tm_kategori.create({
-      data: {
-        ...data,
+      data: createData,
+      include: {
+        
+        
       },
     });
   },
 
   async update(id: number, data: KategoriFormData) {
+    const updateData: any = { ...data };
+    
+
     return prisma.tm_kategori.update({
       where: { id },
-      data,
+      data: updateData,
+      include: {
+        
+        
+      },
     });
   },
 

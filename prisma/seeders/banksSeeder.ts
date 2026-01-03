@@ -12,12 +12,12 @@ export async function seedBank(prisma: PrismaClient) {
 
 
 
-  const data = {
+  const data: any = {
   "code": "Sample data",
   "name": "Sample data",
   "category": "Local",
-  "balance": 1000,
-  "conversionRate": 1000,
+  "balance": 0,
+  "conversionRate": 1,
   "totalValue": 1000,
   "isActive": true
 };

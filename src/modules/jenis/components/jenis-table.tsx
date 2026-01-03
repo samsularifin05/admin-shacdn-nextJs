@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useCallback, useRef } from "react";
-import { Pencil, Trash2, Plus, Eye } from "lucide-react";
+import { Pencil, Trash2, Plus, Eye, ChevronRight, ChevronDown } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
 import { formatRupiah } from "@/lib/utils";
@@ -27,7 +27,7 @@ export const JenisTable = () => {
         case "create":
           onOpen("form", {
             title: "Add Jenis",
-            size: "lg",
+            size: "xl",
             content: <JenisForm onSuccess={refreshTable} />,
           });
           break;
@@ -45,7 +45,7 @@ export const JenisTable = () => {
           if (row) {
             onOpen("form", {
               title: "Edit Jenis",
-              size: "lg",
+              size: "xl",
               content: <JenisForm initialData={row} onSuccess={refreshTable} />,
             });
           }
@@ -103,6 +103,7 @@ export const JenisTable = () => {
 
   const columns: ColumnDef<Jenis>[] = useMemo(
     () => [
+
       {
         accessorKey: "kodeJenis",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Kode Jenis" />,
@@ -132,6 +133,8 @@ export const JenisTable = () => {
     []
   );
 
+  
+
   return (
     <ServerDataTable
       ref={tableRef}
@@ -140,6 +143,7 @@ export const JenisTable = () => {
       columns={columns}
       actions={tableActions}
       searchPlaceholder="Search jeniss..."
+      
     />
   );
 };

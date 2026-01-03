@@ -273,6 +273,7 @@ export function AppSidebar() {
     ): string[] => {
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
+        if (!item) continue;
         const currentId =
           parentIds.length > 0
             ? `${parentIds.join("-")}-${i}`

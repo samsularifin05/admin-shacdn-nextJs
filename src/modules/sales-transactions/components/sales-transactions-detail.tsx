@@ -9,28 +9,28 @@ export const SalesTransactionDetail = ({ salesTransaction: row }: SalesTransacti
     <div className="space-y-4 py-2">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Transaction Code</p>
+          <p className="text-sm font-medium text-muted-foreground">No. Transaksi</p>
           <p className="text-sm font-semibold">{row.transactionCode}</p>
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Barcode</p>
-          <p className="text-sm font-semibold">{row.barcode}</p>
+          <p className="text-sm font-medium text-muted-foreground">Tanggal</p>
+          <p className="text-sm font-semibold">{row.transactionDate}</p>
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Nama Barang</p>
-          <p className="text-sm font-semibold">{row.namaBarang}</p>
-        </div>
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Berat</p>
-          <p className="text-sm font-semibold">{row.berat}</p>
-        </div>
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Harga</p>
-          <p className="text-sm font-semibold">{row.harga}</p>
-        </div>
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
+          <p className="text-sm font-medium text-muted-foreground">Nama Pelanggan</p>
           <p className="text-sm font-semibold">{row.customerName}</p>
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">Daftar Barang</p>
+          <p className="text-sm font-semibold">{row.items}</p>
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">Total Bayar</p>
+          <p className="text-sm font-semibold">{row.totalAmount}</p>
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">Metode Bayar</p>
+          <p className="text-sm font-semibold">{row.paymentMethod}</p>
         </div>
       </div>
 

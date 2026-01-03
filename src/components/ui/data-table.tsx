@@ -22,7 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState } from "react";
+import React, { useState, Fragment } from "react";
 import { ArrowUpDown, MoreHorizontal } from "lucide-react";
 
 import {
@@ -59,6 +59,9 @@ interface DataTableProps<TData, TValue> {
   // Features
   enableSorting?: boolean;
   enableColumnVisibility?: boolean;
+  // Expansion
+  renderSubComponent?: (props: { row: any }) => React.ReactNode;
+  getRowCanExpand?: (row: any) => boolean;
 
   // Styling
   className?: string;
@@ -80,6 +83,8 @@ export function DataTable<TData, TValue>({
   isLoading = false,
   enableSorting = true,
   enableColumnVisibility = false,
+  renderSubComponent,
+  getRowCanExpand,
   className,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -87,6 +92,7 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
+  const [expanded, setExpanded] = useState<any>({});
 
   // Only use internal state if external is not provided
   const [internalPagination, setInternalPagination] = useState<PaginationState>(
@@ -135,6 +141,9 @@ export function DataTable<TData, TValue>({
       : undefined,
     // Row selection
     onRowSelectionChange: setRowSelection,
+    // Expansion
+    getRowCanExpand,
+    onExpandedChange: setExpanded,
     state: {
       sorting,
       columnFilters,
@@ -142,8 +151,12 @@ export function DataTable<TData, TValue>({
       rowSelection,
       pagination,
       globalFilter,
+      expanded,
     },
   });
+
+  const hasExpansion = !!renderSubComponent;
+  const hasActions = actions.some((a) => !a.isAdd && a.show !== false);
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -157,7 +170,7 @@ export function DataTable<TData, TValue>({
       )}
 
       {/* Table with horizontal scroll on mobile */}
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-hidden">
         <div className="overflow-x-auto">
           <Table className="min-w-[600px]">
             <caption className="sr-only">
@@ -178,10 +191,11 @@ export function DataTable<TData, TValue>({
                       </TableHead>
                     );
                   })}
-                  {actions.some(
-                    (a) =>
-                      (a.group === "action" || !a.isAdd) && a.show !== false
-                  ) && <TableHead className="text-center">Actions</TableHead>}
+                  {hasActions && (
+                    <TableHead className="text-center w-[80px]">
+                      Actions
+                    </TableHead>
+                  )}
                 </TableRow>
               ))}
             </TableHeader>
@@ -195,10 +209,7 @@ export function DataTable<TData, TValue>({
                         <div className="h-4 bg-muted animate-pulse rounded" />
                       </TableCell>
                     ))}
-                    {actions.some(
-                      (a) =>
-                        (a.group === "action" || !a.isAdd) && a.show !== false
-                    ) && (
+                    {hasActions && (
                       <TableCell className="text-center">
                         <div className="h-4 bg-muted animate-pulse rounded" />
                       </TableCell>
@@ -207,78 +218,91 @@ export function DataTable<TData, TValue>({
                 ))
               ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                    {actions.some((a) => !a.isAdd && a.show !== false) && (
-                      <TableCell className="text-center">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 p-0"
+                  <Fragment key={row.id}>
+                    <TableRow data-state={row.getIsSelected() && "selected"}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                      {hasActions && (
+                        <TableCell className="text-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 p-0"
+                              >
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              className="w-[160px]"
                             >
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="w-[160px]"
-                          >
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            {actions
-                              .filter(
-                                (a) =>
-                                  (a.group === "action" || !a.isAdd) &&
-                                  a.show !== false
-                              )
-                              .map((action, idx) => {
-                                if (action.isSeparator) {
-                                  return <DropdownMenuSeparator key={idx} />;
-                                }
-                                return (
-                                  <DropdownMenuItem
-                                    key={idx}
-                                    onClick={() =>
-                                      action.onClick?.(row.original as TData)
-                                    }
-                                    className={action.className}
-                                    disabled={
-                                      typeof action.disabled === "function"
-                                        ? action.disabled(row.original as TData)
-                                        : action.disabled
-                                    }
-                                  >
-                                    {action.icon && (
-                                      <span className="mr-2">
-                                        {action.icon}
-                                      </span>
-                                    )}
-                                    {action.label}
-                                  </DropdownMenuItem>
-                                );
-                              })}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              {actions
+                                .filter(
+                                  (a) =>
+                                    (a.group === "action" || !a.isAdd) &&
+                                    a.show !== false
+                                )
+                                .map((action, idx) => {
+                                  if (action.isSeparator) {
+                                    return <DropdownMenuSeparator key={idx} />;
+                                  }
+                                  return (
+                                    <DropdownMenuItem
+                                      key={idx}
+                                      onClick={() =>
+                                        action.onClick?.(row.original as TData)
+                                      }
+                                      className={action.className}
+                                      disabled={
+                                        typeof action.disabled === "function"
+                                          ? action.disabled(
+                                              row.original as TData
+                                            )
+                                          : action.disabled
+                                      }
+                                    >
+                                      {action.icon && (
+                                        <span className="mr-2">
+                                          {action.icon}
+                                        </span>
+                                      )}
+                                      {action.label}
+                                    </DropdownMenuItem>
+                                  );
+                                })}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                    {row.getIsExpanded() && renderSubComponent && (
+                      <TableRow className="bg-muted/30 hover:bg-muted/30 border-t-0">
+                        <TableCell
+                          colSpan={
+                            row.getVisibleCells().length + (hasActions ? 1 : 0)
+                          }
+                          className="p-0"
+                        >
+                          {renderSubComponent({ row })}
+                        </TableCell>
+                      </TableRow>
                     )}
-                  </TableRow>
+                  </Fragment>
                 ))
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={columns.length}
+                    colSpan={columns.length + (hasActions ? 1 : 0)}
                     className="h-24 text-center"
                   >
                     No results.

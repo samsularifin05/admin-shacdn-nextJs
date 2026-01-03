@@ -10,16 +10,24 @@ export async function seedSalesTransaction(prisma: PrismaClient) {
 
   console.log("🌱 Seeding SalesTransaction...");
 
+  const detailItemsBarangId = await prisma.tm_barang.findFirst();
 
-
-  const data = {
-  "transactionCode": "CC-FJ-20260103-0001",
-  "barcode": "Sample data",
-  "namaBarang": "Sample SalesTransaction",
-  "berat": 1.5,
-  "harga": 1000,
-  "customerName": "Sample data",
-  "totalAmount": 1000
+  const data: any = {
+  "transactionCode": "SLS-20260104-0001",
+  "transactionDate": "2026-01-03",
+  "customerName": "CASH",
+  "items": {
+    "create": [
+      {
+        "barangId": detailItemsBarangId?.id || 1,
+        "harga": 500,
+        "qty": 500,
+        "subtotal": 500
+      }
+    ]
+  },
+  "totalAmount": 0,
+  "paymentMethod": "TUNAI"
 };
 
   await prisma.tm_sales_transaction.create({

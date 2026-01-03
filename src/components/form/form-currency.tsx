@@ -12,11 +12,21 @@ interface FormCurrencyProps {
   disabled?: boolean;
   readOnly?: boolean;
   placeholder?: string;
+  onChange?: (value: number) => void;
 }
 
 export const FormCurrency = forwardRef<HTMLInputElement, FormCurrencyProps>(
   (
-    { name, label, description, className, disabled, readOnly, placeholder },
+    {
+      name,
+      label,
+      description,
+      className,
+      disabled,
+      readOnly,
+      placeholder,
+      onChange,
+    },
     ref
   ) => {
     const {
@@ -52,6 +62,7 @@ export const FormCurrency = forwardRef<HTMLInputElement, FormCurrencyProps>(
       const rawValue = e.target.value;
       const numValue = parseRupiah(rawValue);
       setValue(name, numValue);
+      if (onChange) onChange(numValue);
     };
 
     return (

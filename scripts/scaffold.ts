@@ -12,7 +12,20 @@ type FieldType =
   | "currency"
   | "rupiah"
   | "async-select"
-  | "gram";
+  | "gram"
+  | "detail"; // New type for cart/detail collections
+
+interface DetailField {
+  name: string;
+  label: string;
+  type: "string" | "number" | "currency" | "rupiah" | "async-select" | "gram";
+  endpoint?: string;
+  labelField?: string;
+  valueField?: string;
+  relatedTable?: string;
+  autoFill?: Record<string, string>;
+  readOnly?: boolean;
+}
 
 interface Field {
   name: string;
@@ -23,9 +36,9 @@ interface Field {
   endpoint?: string;
   labelField?: string;
   valueField?: string;
-  relatedTable?: string; // For async-select: the Prisma model name to join
-  relatedDisplayField?: string; // For async-select: which field to display in table
-  autoCode?: string; // Pattern like "{00000000}" or "QCC-FJ-{YYYYMMDD}-{0001}"
+  relatedTable?: string;
+  relatedDisplayField?: string;
+  autoCode?: string;
   defaultValue?: any;
   formula?: string;
   readOnly?: boolean;
@@ -34,12 +47,14 @@ interface Field {
     min?: number;
     max?: number;
   };
-  uppercase?: boolean; // If true (default), transform to uppercase. If false, lowercase/as-is.
+  uppercase?: boolean;
   dependency?: {
     field: string;
     queryParam: string;
   };
-  autoFill?: Record<string, string>; // "targetField": "sourceProperty"
+  autoFill?: Record<string, string>;
+  // For detail type
+  detailFields?: DetailField[];
 }
 
 interface GeneratorConfig {
@@ -51,6 +66,13 @@ interface GeneratorConfig {
   classForm?: string;
   fields: Field[];
   printable?: boolean;
+  stockLogic?: {
+    type: "reduce" | "increase";
+    targetTable: string; // e.g., "tm_barang"
+    identifierField: string; // e.g., "barangId" -> identifies which item to update
+    stockField: string; // e.g., "stock"
+    quantityField: string; // e.g., "qty"
+  };
 }
 
 // Helpers
@@ -196,6 +218,23 @@ const generateSchema = () => {
         }
       } else if (f.type === "email") {
         zodType = "z.string().email()";
+      } else if (f.type === "detail" && f.detailFields) {
+        const detailZodFields = f.detailFields
+          .map((df) => {
+            let dfZod = "";
+            if (
+              df.type === "number" ||
+              df.type === "currency" ||
+              df.type === "rupiah" ||
+              df.type === "gram"
+            )
+              dfZod = "z.coerce.number()";
+            else if (df.type === "async-select") dfZod = "z.coerce.number()";
+            else dfZod = "z.string()";
+            return `${df.name}: ${dfZod}${df.readOnly ? ".optional()" : ""}`;
+          })
+          .join(", ");
+        zodType = `z.array(z.object({ ${detailZodFields} })).default([])`;
       } else {
         zodType = "z.string()";
       }
@@ -255,6 +294,21 @@ const generateSchema = () => {
         } else {
           tsType = "string";
         }
+      } else if (f.type === "detail" && f.detailFields) {
+        const detailTsFields = f.detailFields
+          .map((df) => {
+            let dfTs =
+              df.type === "number" ||
+              df.type === "currency" ||
+              df.type === "rupiah" ||
+              df.type === "gram" ||
+              df.type === "async-select"
+                ? "number"
+                : "string";
+            return `    ${df.name}: ${dfTs};`;
+          })
+          .join("\n");
+        tsType = "{\n" + detailTsFields + "\n  }[]";
       } else {
         tsType = "string";
       }
@@ -336,11 +390,22 @@ const generateServer = () => {
       f.relatedTable &&
       (!f.valueField || f.valueField === "id")
   );
+  const detailFields = fields.filter((f) => f.type === "detail");
+
   const includeStr =
-    asyncSelectFields.length > 0
-      ? `\n        include: {\n${asyncSelectFields
-          .map((f) => `          ${f.name}Rel: true`)
-          .join(",\n")}\n        },`
+    asyncSelectFields.length > 0 || detailFields.length > 0
+      ? `\n        include: {\n${[
+          ...asyncSelectFields.map((f) => `          ${f.name}Rel: true`),
+          ...detailFields.map((f) => {
+            const detailRelations = f.detailFields
+              ?.filter((df) => df.type === "async-select" && df.relatedTable)
+              .map((df) => `${df.name}Rel: true`)
+              .join(", ");
+            return detailRelations
+              ? `          ${f.name}: { include: { ${detailRelations} } }`
+              : `          ${f.name}: true`;
+          }),
+        ].join(",\n")}\n        },`
       : "";
 
   const autoCodeFields = fields.filter((f) => f.autoCode);
@@ -533,22 +598,118 @@ export const ${toCamelCase(moduleName)}Server = {
 
   async getById(id: number) {
     return prisma.${toCamelCase(tableName)}.findUnique({
-      where: { id },${includeStr}
+      where: { id },
+      include: {
+        ${asyncSelectFields
+          .map((f) => `${f.name}Rel: true`)
+          .join(",\n        ")}
+        ${fields
+          .filter((f) => f.type === "detail")
+          .map((f) => {
+            const detailRelations = f.detailFields
+              ?.filter((df) => df.type === "async-select" && df.relatedTable)
+              .map((df) => `${df.name}Rel: true`)
+              .join(", ");
+            return detailRelations
+              ? `${f.name}: { include: { ${detailRelations} } }`
+              : `${f.name}: true`;
+          })
+          .join(",\n        ")}
+      },
     });
   },
 
   async create(data: ${moduleName}FormData) {${autoCodeLogic}
+    const createData: any = { ...data };
+    ${fields
+      .filter((f) => f.type === "detail")
+      .map(
+        (f) => `
+    if (data.${f.name}) {
+      createData.${f.name} = {
+        create: data.${f.name}
+      };
+    }`
+      )
+      .join("\n")}
+
+    ${
+      config.stockLogic
+        ? `
+    return prisma.$transaction(async (tx) => {
+      const result = await tx.${toCamelCase(tableName)}.create({
+        data: createData,
+        include: { 
+          ${fields
+            .filter((f) => f.type === "detail")
+            .map((f) => `${f.name}: true`)
+            .join(", ")} 
+        }
+      });
+
+      // Stock Logic: ${config.stockLogic.type} ${config.stockLogic.targetTable}
+      const detailField = ${JSON.stringify(
+        fields.find((f) => f.type === "detail")?.name || ""
+      )};
+      if (detailField && result[detailField]) {
+        for (const item of (result[detailField] as any[])) {
+          if (item.${config.stockLogic.identifierField}) {
+            await tx.${toCamelCase(config.stockLogic.targetTable)}.update({
+              where: { id: item.${config.stockLogic.identifierField} },
+              data: {
+                ${config.stockLogic.stockField}: {
+                  ${
+                    config.stockLogic.type === "reduce"
+                      ? "decrement"
+                      : "increment"
+                  }: item.${config.stockLogic.quantityField}
+                }
+              }
+            });
+          }
+        }
+      }
+      return result;
+    });`
+        : `
     return prisma.${toCamelCase(tableName)}.create({
-      data: {
-        ...data,
-      },${includeStr}
-    });
+      data: createData,
+      include: {
+        ${asyncSelectFields.map((f) => `${f.name}Rel: true`).join(",\n")}
+        ${fields
+          .filter((f) => f.type === "detail")
+          .map((f) => `${f.name}: true`)
+          .join(",\n")}
+      },
+    });`
+    }
   },
 
   async update(id: number, data: ${moduleName}FormData) {
+    const updateData: any = { ...data };
+    ${fields
+      .filter((f) => f.type === "detail")
+      .map(
+        (f) => `
+    if (data.${f.name}) {
+      updateData.${f.name} = {
+        deleteMany: {},
+        create: data.${f.name}
+      };
+    }`
+      )
+      .join("\n")}
+
     return prisma.${toCamelCase(tableName)}.update({
       where: { id },
-      data,${includeStr}
+      data: updateData,
+      include: {
+        ${asyncSelectFields.map((f) => `${f.name}Rel: true`).join(",\n")}
+        ${fields
+          .filter((f) => f.type === "detail")
+          .map((f) => `${f.name}: true`)
+          .join(",\n")}
+      },
     });
   },
 
@@ -671,6 +832,19 @@ const generateForm = () => {
           />`;
       }
 
+      if (f.type === "detail") {
+        return `          <FormCart
+            name="${f.name}"
+            label="${f.label}"
+            fields={${JSON.stringify(f.detailFields || [])}}
+            ${
+              fields.some((tf) => tf.name === "totalAmount")
+                ? 'totalField="totalAmount"'
+                : ""
+            }
+          />`;
+      }
+
       if (f.type === "boolean") {
         return `          <FormCheckbox
             name="${f.name}"
@@ -786,7 +960,7 @@ import { ${toCamelCase(
     moduleName
   )}Schema, ${moduleName}FormData, ${moduleName} } from "../types/${resourceName}.schema";
 import { Button } from "@/components/ui/button";
-import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram } from "@/components/form";
+import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram, FormCart } from "@/components/form";
 import { ${toCamelCase(
     moduleName
   )}Service } from "../services/${resourceName}.service";
@@ -805,24 +979,37 @@ export const ${moduleName}Form = ({ initialData, onSuccess }: Props) => {
     resolver: zodResolver(${toCamelCase(moduleName)}Schema) as any,
     defaultValues: initialData ? {
       ${fields
-        .map((f) => `${f.name}: initialData.${f.name} ?? undefined`)
+        .map((f) => {
+          if (f.type === "detail") {
+            return `${f.name}: initialData.${f.name} ?? []`;
+          }
+          return `${f.name}: initialData.${f.name} ?? undefined`;
+        })
         .join(",\n      ")}
     } : {
       ${fields
-        .map(
-          (f) =>
-            `${f.name}: ${
-              f.defaultValue !== undefined
-                ? JSON.stringify(f.defaultValue)
-                : f.type === "boolean"
-                ? "false"
-                : f.type === "number"
-                ? "0"
-                : f.type === "select"
-                ? "undefined"
-                : '""'
-            }`
-        )
+        .map((f) => {
+          let defaultValue = '""';
+          if (f.defaultValue !== undefined) {
+            defaultValue = JSON.stringify(f.defaultValue);
+            if (f.defaultValue === "today")
+              defaultValue = '"' + new Date().toISOString().split("T")[0] + '"';
+          } else if (f.type === "boolean") {
+            defaultValue = "false";
+          } else if (
+            ["number", "currency", "rupiah", "gram"].includes(f.type) ||
+            (f.type === "async-select" &&
+              f.relatedTable &&
+              (!f.valueField || f.valueField === "id"))
+          ) {
+            defaultValue = "0";
+          } else if (f.type === "select") {
+            defaultValue = "undefined";
+          } else if (f.type === "detail") {
+            defaultValue = "[]";
+          }
+          return `${f.name}: ${defaultValue}`;
+        })
         .join(",\n      ")}
     },
   });
@@ -916,7 +1103,11 @@ ${formFields}
 };
 
 const generateTable = () => {
+  const detailField = fields.find((f) => f.type === "detail");
+  const hasDetail = !!detailField;
+
   const columns = fields
+    .filter((f) => f.type !== "detail") // Don't show detail arrays in main columns
     .map((f) => {
       return `      {
         accessorKey: "${f.name}",
@@ -946,11 +1137,32 @@ const generateTable = () => {
     })
     .join("\n");
 
+  const expanderColumn = hasDetail
+    ? `      {
+        id: "expander",
+        header: () => null,
+        cell: ({ row }) => {
+          return (
+            <button
+              onClick={() => row.toggleExpanded()}
+              className="flex items-center justify-center w-6 h-6 rounded-md hover:bg-muted transition-colors"
+            >
+              {row.getIsExpanded() ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </button>
+          );
+        },
+      },`
+    : "";
+
   return `import { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useCallback, useRef } from "react";
 import { Pencil, Trash2, Plus, Eye${
     config.printable ? ", Printer" : ""
-  } } from "lucide-react";
+  }, ChevronRight, ChevronDown } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
 import { formatRupiah } from "@/lib/utils";
@@ -1000,7 +1212,7 @@ export const ${moduleName}Table = () => {
         case "create":
           onOpen("form", {
             title: "Add ${title}",
-            size: "lg",
+            size: "xl",
             content: <${moduleName}Form onSuccess={refreshTable} />,
           });
           break;
@@ -1018,7 +1230,7 @@ export const ${moduleName}Table = () => {
           if (row) {
             onOpen("form", {
               title: "Edit ${title}",
-              size: "lg",
+              size: "xl",
               content: <${moduleName}Form initialData={row} onSuccess={refreshTable} />,
             });
           }
@@ -1088,10 +1300,64 @@ export const ${moduleName}Table = () => {
 
   const columns: ColumnDef<${moduleName}>[] = useMemo(
     () => [
+${expanderColumn}
 ${columns}
     ],
     []
   );
+
+  ${
+    hasDetail
+      ? `const renderSubComponent = ({ row }: { row: any }) => {
+    const data = row.original;
+    const items = data.${detailField.name} || [];
+
+    if (items.length === 0) {
+      return (
+        <div className="p-4 text-center text-sm text-muted-foreground italic">
+          No items found.
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-4 bg-muted/20 border-y border-dashed">
+        <div className="overflow-hidden rounded-md border bg-background">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 border-b">
+              <tr>
+                ${detailField.detailFields
+                  ?.map(
+                    (df) =>
+                      `<th className="px-4 py-2 text-left font-medium text-muted-foreground">${df.label}</th>`
+                  )
+                  .join("\n                ")}
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {items.map((item: any, idx: number) => (
+                <tr key={idx} className="hover:bg-muted/30">
+                  ${detailField.detailFields
+                    ?.map((df) => {
+                      if (df.type === "async-select" && df.relatedTable) {
+                        return `<td className="px-4 py-2">{item.${df.name}Rel?.${df.labelField} || item.${df.name}}</td>`;
+                      }
+                      if (df.type === "rupiah" || df.type === "currency") {
+                        return `<td className="px-4 py-2">{formatRupiah(item.${df.name})}</td>`;
+                      }
+                      return `<td className="px-4 py-2">{item.${df.name}}</td>`;
+                    })
+                    .join("\n                  ")}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };`
+      : ""
+  }
 
   return (
     <ServerDataTable
@@ -1101,6 +1367,11 @@ ${columns}
       columns={columns}
       actions={tableActions}
       searchPlaceholder="Search ${moduleName.toLowerCase()}s..."
+      ${
+        hasDetail
+          ? `renderSubComponent={renderSubComponent}\n      getRowCanExpand={() => true}`
+          : ""
+      }
     />
   );
 };
@@ -1344,7 +1615,15 @@ const generateSeeder = () => {
   const placeholders: Record<string, string> = {};
 
   fields.forEach((f) => {
-    if (f.autoCode) {
+    let value: any = undefined;
+
+    if (f.defaultValue !== undefined && f.type !== "detail") {
+      if (f.defaultValue === "today") {
+        value = new Date().toISOString().split("T")[0];
+      } else {
+        value = f.defaultValue;
+      }
+    } else if (f.autoCode) {
       let code = f.autoCode;
       const today = new Date();
       const year = String(today.getFullYear());
@@ -1354,7 +1633,6 @@ const generateSeeder = () => {
       const seqMatch = code.match(/\{0*[01]?\}/);
       const seqPattern = seqMatch ? seqMatch[0] : "{0000}";
       const seqLength = seqPattern.length - 2;
-      // Use '1' padded to sequence length
       const sampleSeq = "1".padStart(seqLength, "0");
 
       code = code
@@ -1366,24 +1644,23 @@ const generateSeeder = () => {
         .replace("{YYYYMMDD}", `${year}${month}${day}`)
         .replace("{YYMMDD}", `${year.slice(-2)}${month}${day}`);
 
-      sampleData[f.name] = code;
+      value = code;
     } else if (f.type === "string" || f.type === "text") {
-      if (f.name.toLowerCase().includes("nama"))
-        sampleData[f.name] = `Sample ${moduleName}`;
+      if (f.name.toLowerCase().includes("nama")) value = `Sample ${moduleName}`;
       else if (f.name.toLowerCase().includes("kode"))
-        sampleData[f.name] = `${moduleName.toUpperCase()}-01`;
-      else sampleData[f.name] = "Sample data";
+        value = `${moduleName.toUpperCase()}-01`;
+      else value = "Sample data";
     } else if (
       f.type === "number" ||
       f.type === "currency" ||
       f.type === "rupiah" ||
       f.type === "gram"
     ) {
-      sampleData[f.name] = f.type === "gram" ? 1.5 : 1000;
+      value = f.type === "gram" ? 1.5 : 1000;
     } else if (f.type === "boolean") {
-      sampleData[f.name] = true;
+      value = true;
     } else if (f.type === "select" && f.options) {
-      sampleData[f.name] = f.options[0];
+      value = f.options[0];
     } else if (f.type === "async-select") {
       const isIdValue = !f.valueField || f.valueField === "id";
       if (isIdValue && f.relatedTable) {
@@ -1394,14 +1671,46 @@ const generateSeeder = () => {
           )}.findFirst();`
         );
         placeholders[f.name] = `${varName}?.id || 1`;
-        sampleData[f.name] = `__PLACEHOLDER_${f.name}__`;
+        value = `__PLACEHOLDER_${f.name}__`;
       } else if (isIdValue) {
-        sampleData[f.name] = 1;
+        value = 1;
       } else {
-        sampleData[f.name] = "SAMPLE-CODE";
+        value = "SAMPLE-CODE";
       }
     } else if (f.type === "email") {
-      sampleData[f.name] = "sample@example.com";
+      value = "sample@example.com";
+    } else if (f.type === "detail" && f.detailFields) {
+      const detailSample: any = {};
+      f.detailFields.forEach((df) => {
+        if (df.type === "async-select" && df.relatedTable) {
+          const varName = `detail${toPascalCase(f.name)}${toPascalCase(
+            df.name
+          )}`;
+          relFetchers.push(
+            `  const ${varName} = await prisma.${toCamelCase(
+              df.relatedTable
+            )}.findFirst();`
+          );
+          detailSample[df.name] = `__PLACEHOLDER_DETAIL_${f.name}_${df.name}__`;
+          placeholders[`DETAIL_${f.name}_${df.name}`] = `${varName}?.id || 1`;
+        } else if (
+          df.type === "number" ||
+          df.type === "currency" ||
+          df.type === "rupiah" ||
+          df.type === "gram"
+        ) {
+          detailSample[df.name] = df.type === "gram" ? 1.2 : 500;
+        } else {
+          detailSample[df.name] = "Sample Detail";
+        }
+      });
+      value = { create: [detailSample] };
+    } else if (f.type === "detail") {
+      value = { create: [] };
+    }
+
+    if (value !== undefined) {
+      sampleData[f.name] = value;
     }
   });
 
@@ -1424,7 +1733,7 @@ export async function seed${toPascalCase(moduleName)}(prisma: PrismaClient) {
 
 ${relFetchers.join("\n")}
 
-  const data = ${dataStr};
+  const data: any = ${dataStr};
 
   await prisma.${toCamelCase(tableName)}.create({
     data,
@@ -1520,10 +1829,50 @@ if (config.route) {
 const prismaSchemaPath = path.resolve(process.cwd(), "prisma/schema.prisma");
 let schemaContent = fs.readFileSync(prismaSchemaPath, "utf-8");
 
+const detailTablesDef = fields
+  .filter((f) => f.type === "detail")
+  .map((f) => {
+    const detailTableName = `${tableName}_detail`;
+    const detailFieldsList = f.detailFields
+      ?.map((df) => {
+        if (df.type === "async-select" && df.relatedTable) {
+          return `  ${df.name}      Int?
+  ${df.name}Rel   ${df.relatedTable}? @relation(fields: [${df.name}], references: [id])`;
+        }
+        const prismaType =
+          df.type === "number" ||
+          df.type === "currency" ||
+          df.type === "rupiah" ||
+          df.type === "gram"
+            ? "Float"
+            : df.type === "async-select"
+            ? "Int"
+            : "String";
+        return `  ${df.name}      ${prismaType}   ${
+          df.readOnly ? "@default(0)" : ""
+        }`;
+      })
+      .join("\n");
+
+    return `model ${detailTableName} {
+  id        Int      @id @default(autoincrement())
+  parentId  Int
+  parent    ${tableName} @relation(fields: [parentId], references: [id], onDelete: Cascade)
+${detailFieldsList}
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([parentId])
+}`;
+  })
+  .join("\n");
+
 const modelDefinition = `model ${tableName} {
   id        Int      @id @default(autoincrement())
 ${fields
   .map((f) => {
+    if (f.type === "detail") {
+      return `  ${f.name}   ${tableName}_detail[]`;
+    }
     if (
       f.type === "async-select" &&
       f.relatedTable &&
@@ -1553,6 +1902,8 @@ ${fields
   .map((f) => `  @@index([${f.name}])`)
   .join("\n")}
 }
+
+${detailTablesDef}
 `;
 
 if (schemaContent.includes(`model ${tableName}`)) {
@@ -1561,10 +1912,24 @@ if (schemaContent.includes(`model ${tableName}`)) {
   const startStr = `model ${tableName} {`;
   const startIndex = schemaContent.indexOf(startStr);
   const endIndex = schemaContent.indexOf("}", startIndex) + 1;
+
+  // Also try to remove old detail table if exists
+  const detailTableName = `${tableName}_detail`;
+  if (schemaContent.includes(`model ${detailTableName}`)) {
+    const dStart = schemaContent.indexOf(`model ${detailTableName} {`);
+    const dEnd = schemaContent.indexOf("}", dStart) + 1;
+    // Remove it first to avoid duplication
+    schemaContent = schemaContent.slice(0, dStart) + schemaContent.slice(dEnd);
+  }
+
+  // Re-calculate startIndex because we might have shifted content
+  const newStartIndex = schemaContent.indexOf(startStr);
+  const newEndIndex = schemaContent.indexOf("}", newStartIndex) + 1;
+
   schemaContent =
-    schemaContent.slice(0, startIndex) +
+    schemaContent.slice(0, newStartIndex) +
     modelDefinition +
-    schemaContent.slice(endIndex);
+    schemaContent.slice(newEndIndex);
 } else {
   schemaContent += `\n${modelDefinition}`;
   console.log(`\n✅ Added model ${tableName} to prisma/schema.prisma`);

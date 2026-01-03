@@ -44,21 +44,38 @@ export const bankServer = {
   async getById(id: number) {
     return prisma.tm_banks.findUnique({
       where: { id },
+      include: {
+        
+        
+      },
     });
   },
 
   async create(data: BankFormData) {
+    const createData: any = { ...data };
+    
+
+    
     return prisma.tm_banks.create({
-      data: {
-        ...data,
+      data: createData,
+      include: {
+        
+        
       },
     });
   },
 
   async update(id: number, data: BankFormData) {
+    const updateData: any = { ...data };
+    
+
     return prisma.tm_banks.update({
       where: { id },
-      data,
+      data: updateData,
+      include: {
+        
+        
+      },
     });
   },
 

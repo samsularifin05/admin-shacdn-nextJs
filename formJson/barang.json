@@ -122,6 +122,18 @@
       "name": "size",
       "label": "Size",
       "type": "text"
+    },
+    {
+      "name": "stock",
+      "label": "Stock",
+      "type": "number",
+      "defaultValue": 10
+    },
+    {
+      "name": "hargaJual",
+      "label": "Harga Jual",
+      "type": "rupiah",
+      "defaultValue": 100000
     }
   ]
 }

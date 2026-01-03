@@ -4,22 +4,23 @@ Dokumentasi ini menjelaskan cara membuat file konfigurasi `.json` di dalam folde
 
 ## Struktur Utama JSON
 
-| Properti       | Tipe      | Deskripsi                                                 | Contoh                       |
-| :------------- | :-------- | :-------------------------------------------------------- | :--------------------------- |
-| `moduleName`   | `string`  | Nama modul dalam format PascalCase.                       | `"SalesTransaction"`         |
-| `resourceName` | `string`  | Nama resource (plural, lowercase) untuk folder & API.     | `"sales-transactions"`       |
-| `tableName`    | `string`  | Nama tabel database (Prisma).                             | `"tm_sales_transaction"`     |
-| `title`        | `string`  | Judul modul untuk UI.                                     | `"Sales Transaction"`        |
-| `route`        | `string`  | Path URL halaman admin.                                   | `"/admin/sales-transaction"` |
-| `classForm`    | `string`  | (Opsional) CSS class untuk layout form.                   | `"grid grid-cols-2 gap-4"`   |
-| `printable`    | `boolean` | (Opsional) Aktifkan fitur cetak struk otomatis & reprint. | `true`                       |
-| `fields`       | `array`   | Daftar field dalam modul.                                 | `[...]`                      |
+| Properti       | Tipe      | Deskripsi                                                    | Contoh                       |
+| :------------- | :-------- | :----------------------------------------------------------- | :--------------------------- |
+| `moduleName`   | `string`  | Nama modul dalam format PascalCase.                          | `"SalesTransaction"`         |
+| `resourceName` | `string`  | Nama resource (plural, lowercase) untuk folder & API.        | `"sales-transactions"`       |
+| `tableName`    | `string`  | Nama tabel database (Prisma).                                | `"tm_sales_transaction"`     |
+| `title`        | `string`  | Judul modul untuk UI.                                        | `"Sales Transaction"`        |
+| `route`        | `string`  | Path URL halaman admin.                                      | `"/admin/sales-transaction"` |
+| `classForm`    | `string`  | (Opsional) CSS class untuk layout form.                      | `"grid grid-cols-2 gap-4"`   |
+| `printable`    | `boolean` | (Opsional) Aktifkan fitur cetak struk otomatis & reprint.    | `true`                       |
+| `fields`       | `array`   | Daftar field dalam modul.                                    | `[...]`                      |
+| `stockLogic`   | `object`  | (Opsional) Aturan otomatisasi stok (pengurangan/penambahan). | `{...}`                      |
 
 ---
 
 ## Definisi Field (`fields`)
 
-Setiap objek dalam array `fields` mendukung properti berikut:
+Every object within the array `fields` supports the following properties:
 
 ### Properti Dasar
 
@@ -27,7 +28,10 @@ Setiap objek dalam array `fields` mendukung properti berikut:
 - `label` (Wajib): Nama tampilan field di UI.
 - `type` (Wajib): Tipe input. (Lihat bagian [Tipe Field](#tipe-field)).
 - `required`: `boolean` (default `true`). Jika `false`, field bersifat opsional.
-- `defaultValue`: Nilai awal field.
+- `defaultValue`: Nilai awal field. Bisa berupa string statis atau kata kunci khusus:
+  - `"today"`: Mengisi otomatis dengan tanggal hari ini (YYYY-MM-DD).
+  - `"CASH"`: Contoh nilai default teks.
+  - `0`: Contoh nilai default angka.
 - `readOnly`: `boolean`. Jika `true`, input tidak bisa diedit (biasanya untuk hasil kalkulasi).
 - `readOnlyOnEdit`: `boolean`. Jika `true`, field hanya bisa diisi saat data baru (create), tidak bisa diubah saat edit.
 - `uppercase`: `boolean` (default `true`). Jika `true`, teks otomatis menjadi huruf besar.
@@ -43,6 +47,7 @@ Setiap objek dalam array `fields` mendukung properti berikut:
 - `endpoint`: `string`. API endpoint untuk pencarian data (`async-select`) atau autofill pada input `text`.
 - `labelField`: `string`. Properti data API yang ditampilkan di label dropdown (untuk `async-select`).
 - `valueField`: `string`. Properti data API yang disimpan sebagai nilai (default: `"id"`).
+- `relatedTable`: `string`. Nama tabel referensi di database (untuk `async-select`). Wajib diisi jika ingin membuat relasi formal di Prisma (penting untuk lookup nama barang saat print/detail).
 
 ---
 
@@ -58,6 +63,7 @@ Setiap objek dalam array `fields` mendukung properti berikut:
 | `gram`                | Input angka desimal (berat). Sangat ketat: hanya angka dan titik. |
 | `select`              | Dropdown dengan pilihan statis (menggunakan properti `options`).  |
 | `async-select`        | Dropdown pencarian yang mengambil data dari `endpoint` (API).     |
+| `detail`              | Tipe khusus untuk tabel item/keranjang (Master-Detail).           |
 
 ---
 
@@ -96,6 +102,53 @@ Contoh: Memilih Kategori akan memfilter pilihan Jenis.
 }
 ```
 
+### 3. Master-Detail (Sub-Form / Cart)
+
+Digunakan untuk membuat transaksi dengan banyak item (seperti keranjang belanja).
+
+```json
+{
+  "name": "items",
+  "label": "Daftar Barang",
+  "type": "detail",
+  "detailFields": [
+    {
+      "name": "barangId",
+      "label": "Barang",
+      "type": "async-select",
+      "relatedTable": "tm_barang",
+      "endpoint": "/api/barangs",
+      "autoFill": { "harga": "hargaJual" }
+    },
+    { "name": "qty", "label": "Qty", "type": "number" },
+    {
+      "name": "subtotal",
+      "label": "Subtotal",
+      "type": "rupiah",
+      "readOnly": true
+    }
+  ]
+}
+```
+
+- **`detailFields`**: Daftar field yang ada di dalam baris keranjang.
+- **Kalkulasi**: Jika ada field bernama `subtotal` dan `qty` & `harga`, sistem akan menghitung subtotal secara otomatis.
+- **Grand Total**: Jika field utama memiliki nama `totalAmount`, maka total dari seluruh subtotal akan otomatis dijumlahkan ke sana.
+
+### 4. Stock Logic
+
+Otomatis mengurangi atau menambah stok di tabel target saat transaksi disimpan/diupdate.
+
+```json
+"stockLogic": {
+  "type": "reduce", // atau "increase"
+  "targetTable": "tm_barang", // Tabel database target
+  "identifierField": "barangId", // Kolom di tabel detail yang merujuk ke ID target
+  "stockField": "stock", // Kolom stok di tabel target
+  "quantityField": "qty" // Kolom jumlah di tabel detail yang digunakan untuk hitung
+}
+```
+
 ---
 
 ## Perintah Perintah
@@ -117,21 +170,46 @@ Jalankan perintah ini di terminal:
 
 ```json
 {
-  "moduleName": "Bank",
-  "resourceName": "banks",
-  "tableName": "tm_banks",
-  "title": "Bank",
-  "route": "/admin/banks",
+  "moduleName": "SalesTransaction",
+  "resourceName": "sales-transactions",
+  "tableName": "tm_sales_transaction",
+  "title": "Sales Transaction",
+  "route": "/admin/sales-transaction",
+  "printable": true,
+  "stockLogic": {
+    "type": "reduce",
+    "targetTable": "tm_barang",
+    "identifierField": "barangId",
+    "stockField": "stock",
+    "quantityField": "qty"
+  },
   "fields": [
-    { "name": "code", "label": "Bank Code", "type": "text", "uppercase": true },
-    { "name": "name", "label": "Bank Name", "type": "text" },
     {
-      "name": "category",
-      "label": "Category",
-      "type": "select",
-      "options": ["Local", "International"]
+      "name": "transactionCode",
+      "label": "No. Transaksi",
+      "type": "text",
+      "autoCode": "SLS-{YYYYMMDD}-{0001}",
+      "readOnly": true
     },
-    { "name": "balance", "label": "Initial Balance", "type": "currency" }
+    {
+      "name": "transactionDate",
+      "label": "Tanggal",
+      "type": "string",
+      "defaultValue": "today"
+    },
+    {
+      "name": "items",
+      "type": "detail",
+      "detailFields": [
+        {
+          "name": "barangId",
+          "type": "async-select",
+          "relatedTable": "tm_barang",
+          "endpoint": "/api/barangs"
+        },
+        { "name": "qty", "type": "number" }
+      ]
+    }
   ]
 }
 ```

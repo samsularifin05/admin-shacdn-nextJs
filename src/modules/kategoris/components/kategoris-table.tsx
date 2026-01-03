@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useCallback, useRef } from "react";
-import { Pencil, Trash2, Plus, Eye } from "lucide-react";
+import { Pencil, Trash2, Plus, Eye, ChevronRight, ChevronDown } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
 import { formatRupiah } from "@/lib/utils";
@@ -27,7 +27,7 @@ export const KategoriTable = () => {
         case "create":
           onOpen("form", {
             title: "Add Kategori",
-            size: "lg",
+            size: "xl",
             content: <KategoriForm onSuccess={refreshTable} />,
           });
           break;
@@ -45,7 +45,7 @@ export const KategoriTable = () => {
           if (row) {
             onOpen("form", {
               title: "Edit Kategori",
-              size: "lg",
+              size: "xl",
               content: <KategoriForm initialData={row} onSuccess={refreshTable} />,
             });
           }
@@ -103,6 +103,7 @@ export const KategoriTable = () => {
 
   const columns: ColumnDef<Kategori>[] = useMemo(
     () => [
+
       {
         accessorKey: "kodeGroup",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Kode Group" />,
@@ -149,6 +150,8 @@ export const KategoriTable = () => {
     []
   );
 
+  
+
   return (
     <ServerDataTable
       ref={tableRef}
@@ -157,6 +160,7 @@ export const KategoriTable = () => {
       columns={columns}
       actions={tableActions}
       searchPlaceholder="Search kategoris..."
+      
     />
   );
 };

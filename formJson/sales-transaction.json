@@ -5,57 +5,81 @@
   "title": "Sales Transaction",
   "route": "/admin/sales-transaction",
   "printable": true,
-  "classForm": "grid grid-cols-1 md:grid-cols-2 gap-4",
+  "stockLogic": {
+    "type": "reduce",
+    "targetTable": "tm_barang",
+    "identifierField": "barangId",
+    "stockField": "stock",
+    "quantityField": "qty"
+  },
   "fields": [
     {
       "name": "transactionCode",
-      "label": "Transaction Code",
+      "label": "No. Transaksi",
       "type": "text",
-      "autoCode": "CC-FJ-{YYYYMMDD}-{0000}",
+      "autoCode": "SLS-{YYYYMMDD}-{0001}",
       "readOnly": true
     },
     {
-      "name": "barcode",
-      "label": "Barcode",
-      "type": "text",
-      "endpoint": "/api/barangs",
-      "autoFill": {
-        "namaBarang": "namaBarang",
-        "berat": "berat",
-        "harga": "kategoriRel?.harga"
-      }
-    },
-    {
-      "name": "namaBarang",
-      "label": "Nama Barang",
-      "type": "text",
-      "readOnly": true
-    },
-    {
-      "name": "berat",
-      "label": "Berat",
-      "type": "gram",
-      "readOnly": true,
-      "defaultValue": 0
-    },
-    {
-      "name": "harga",
-      "label": "Harga",
-      "type": "rupiah",
-      "readOnly": true,
-      "defaultValue": 0
+      "name": "transactionDate",
+      "label": "Tanggal",
+      "type": "string",
+      "defaultValue": "today"
     },
     {
       "name": "customerName",
-      "label": "Customer Name",
+      "label": "Nama Pelanggan",
       "type": "text",
-      "required": true
+      "defaultValue": "CASH"
+    },
+    {
+      "name": "items",
+      "label": "Daftar Barang",
+      "type": "detail",
+      "detailFields": [
+        {
+          "name": "barangId",
+          "label": "Barang",
+          "type": "async-select",
+          "endpoint": "/api/barangs",
+          "labelField": "namaBarang",
+          "valueField": "id",
+          "relatedTable": "tm_barang",
+          "autoFill": {
+            "harga": "hargaJual"
+          }
+        },
+        {
+          "name": "harga",
+          "label": "Harga",
+          "type": "rupiah"
+        },
+        {
+          "name": "qty",
+          "label": "Qty",
+          "type": "number"
+        },
+        {
+          "name": "subtotal",
+          "label": "Subtotal",
+          "type": "rupiah",
+          "readOnly": true
+        }
+      ]
     },
     {
       "name": "totalAmount",
-      "label": "Total Amount",
+      "label": "Total Bayar",
       "type": "rupiah",
+      "readOnly": true,
       "defaultValue": 0
+    },
+    {
+      "name": "paymentMethod",
+      "label": "Metode Bayar",
+      "type": "select",
+      "options": ["TUNAI", "TRANSFER", "QRIS"],
+      "defaultValue": "TUNAI"
     }
   ]
 }

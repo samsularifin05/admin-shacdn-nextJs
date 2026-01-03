@@ -25,6 +25,9 @@ export const salesTransactionServer = {
         skip,
         take: limit,
         where,
+        include: {
+          items: { include: { barangIdRel: true } }
+        },
         orderBy: { createdAt: "desc" },
       }),
       prisma.tm_sales_transaction.count({ where }),
@@ -44,6 +47,10 @@ export const salesTransactionServer = {
   async getById(id: number) {
     return prisma.tm_sales_transaction.findUnique({
       where: { id },
+      include: {
+        
+        items: { include: { barangIdRel: true } }
+      },
     });
   },
 
@@ -54,7 +61,7 @@ export const salesTransactionServer = {
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
 
-    const prefix_transactionCode = `CC-FJ-${year}${month}${day}-`;
+    const prefix_transactionCode = `SLS-${year}${month}${day}-`;
     const lastRecord_transactionCode = await prisma.tm_sales_transaction.findFirst({
       where: {
         transactionCode: {
@@ -75,17 +82,60 @@ export const salesTransactionServer = {
     }
     data.transactionCode = prefix_transactionCode + String(nextSeq_transactionCode).padStart(4, "0");
 
-    return prisma.tm_sales_transaction.create({
-      data: {
-        ...data,
-      },
+    const createData: any = { ...data };
+    
+    if (data.items) {
+      createData.items = {
+        create: data.items
+      };
+    }
+
+    
+    return prisma.$transaction(async (tx) => {
+      const result = await tx.tm_sales_transaction.create({
+        data: createData,
+        include: { 
+          items: true 
+        }
+      });
+
+      // Stock Logic: reduce tm_barang
+      const detailField = "items";
+      if (detailField && result[detailField]) {
+        for (const item of (result[detailField] as any[])) {
+          if (item.barangId) {
+            await tx.tm_barang.update({
+              where: { id: item.barangId },
+              data: {
+                stock: {
+                  decrement: item.qty
+                }
+              }
+            });
+          }
+        }
+      }
+      return result;
     });
   },
 
   async update(id: number, data: SalesTransactionFormData) {
+    const updateData: any = { ...data };
+    
+    if (data.items) {
+      updateData.items = {
+        deleteMany: {},
+        create: data.items
+      };
+    }
+
     return prisma.tm_sales_transaction.update({
       where: { id },
-      data,
+      data: updateData,
+      include: {
+        
+        items: true
+      },
     });
   },
 

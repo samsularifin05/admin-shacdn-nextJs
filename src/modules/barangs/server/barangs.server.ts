@@ -49,11 +49,12 @@ export const barangServer = {
   async getById(id: number) {
     return prisma.tm_barang.findUnique({
       where: { id },
-        include: {
-          kategoriRel: true,
-          jenisRel: true,
-          kodeBakiRel: true
-        },
+      include: {
+        kategoriRel: true,
+        jenisRel: true,
+        kodeBakiRel: true
+        
+      },
     });
   },
 
@@ -73,27 +74,34 @@ export const barangServer = {
     }
     data.kodeBarang = String(nextSeq_kodeBarang).padStart(8, "0");
 
+    const createData: any = { ...data };
+    
+
+    
     return prisma.tm_barang.create({
-      data: {
-        ...data,
+      data: createData,
+      include: {
+        kategoriRel: true,
+jenisRel: true,
+kodeBakiRel: true
+        
       },
-        include: {
-          kategoriRel: true,
-          jenisRel: true,
-          kodeBakiRel: true
-        },
     });
   },
 
   async update(id: number, data: BarangFormData) {
+    const updateData: any = { ...data };
+    
+
     return prisma.tm_barang.update({
       where: { id },
-      data,
-        include: {
-          kategoriRel: true,
-          jenisRel: true,
-          kodeBakiRel: true
-        },
+      data: updateData,
+      include: {
+        kategoriRel: true,
+jenisRel: true,
+kodeBakiRel: true
+        
+      },
     });
   },
 

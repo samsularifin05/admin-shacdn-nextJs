@@ -64,6 +64,7 @@ export const KategoriForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
           <FormInput
             name="namaGroup"
@@ -73,6 +74,7 @@ export const KategoriForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
           <FormInput
             name="jenisGroup"
@@ -82,6 +84,7 @@ export const KategoriForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
           <FormCurrency
             name="harga"
@@ -107,6 +110,7 @@ export const KategoriForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
         </div>
         <div className="flex justify-end gap-2 pt-4">

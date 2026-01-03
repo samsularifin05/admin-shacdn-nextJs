@@ -145,6 +145,7 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
           <FormSelect
             name="markis"
@@ -161,6 +162,7 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
           <FormGram
             name="beratAsli"
@@ -186,6 +188,7 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
           <FormInput
             name="attributeName"
@@ -195,6 +198,7 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
           <FormGram
             name="beratAtribut"
@@ -228,6 +232,7 @@ export const BarangForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
         </div>
         <div className="flex justify-end gap-2 pt-4">

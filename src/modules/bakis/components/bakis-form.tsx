@@ -62,6 +62,7 @@ export const BakiForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
           <FormInput
             name="kodeBaki"
@@ -71,6 +72,7 @@ export const BakiForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
           <FormInput
             name="namaBaki"
@@ -80,13 +82,15 @@ export const BakiForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
           <FormInput
             name="beratBaki"
             label="Berat Baki"
             type="number"
-            placeholder="Enter berat baki"
+            placeholder="0"
             disabled={isLoading}
+            
             
             
           />
@@ -94,8 +98,9 @@ export const BakiForm = ({ initialData, onSuccess }: Props) => {
             name="beratBandrol"
             label="Berat Bandrol"
             type="number"
-            placeholder="Enter berat bandrol"
+            placeholder="0"
             disabled={isLoading}
+            
             
             
           />

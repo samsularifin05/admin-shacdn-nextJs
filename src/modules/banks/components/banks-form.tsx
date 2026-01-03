@@ -80,6 +80,7 @@ export const BankForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
           <FormInput
             name="name"
@@ -89,6 +90,7 @@ export const BankForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
           <FormSelect
             name="category"
@@ -101,8 +103,9 @@ export const BankForm = ({ initialData, onSuccess }: Props) => {
             name="balance"
             label="Default Balance"
             type="number"
-            placeholder="Enter default balance"
+            placeholder="0"
             disabled={isLoading}
+            
             
             
           />
@@ -110,8 +113,9 @@ export const BankForm = ({ initialData, onSuccess }: Props) => {
             name="conversionRate"
             label="Conversion Rate"
             type="number"
-            placeholder="Enter conversion rate"
+            placeholder="0"
             disabled={isLoading}
+            
             
             
           />
@@ -119,10 +123,11 @@ export const BankForm = ({ initialData, onSuccess }: Props) => {
             name="totalValue"
             label="Total Value (Calculated)"
             type="number"
-            placeholder="Enter total value (calculated)"
+            placeholder="0"
             disabled={isLoading}
             readOnly
             className="bg-muted"
+            
           />
           <FormCheckbox
             name="isActive"

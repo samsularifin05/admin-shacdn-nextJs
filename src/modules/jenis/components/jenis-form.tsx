@@ -58,6 +58,7 @@ export const JenisForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
           <FormInput
             name="namaJenis"
@@ -67,6 +68,7 @@ export const JenisForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
           <FormAsyncSelect
             name="kodeGroup"

@@ -17,12 +17,20 @@ export const SalesTransactionDetail = ({ salesTransaction: row }: SalesTransacti
           <p className="text-sm font-semibold">{row.barcode}</p>
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
-          <p className="text-sm font-semibold">{row.customerName}</p>
+          <p className="text-sm font-medium text-muted-foreground">Nama Barang</p>
+          <p className="text-sm font-semibold">{row.namaBarang}</p>
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
-          <p className="text-sm font-semibold">{row.totalAmount}</p>
+          <p className="text-sm font-medium text-muted-foreground">Berat</p>
+          <p className="text-sm font-semibold">{row.berat}</p>
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">Harga</p>
+          <p className="text-sm font-semibold">{row.harga}</p>
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
+          <p className="text-sm font-semibold">{row.customerName}</p>
         </div>
       </div>
 

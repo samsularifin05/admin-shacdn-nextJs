@@ -77,6 +77,7 @@ export const JenisForm = ({ initialData, onSuccess }: Props) => {
             valueField="id"
             disabled={isLoading}
             
+            
           />
         </div>
         <div className="flex justify-end gap-2 pt-4">

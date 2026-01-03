@@ -116,6 +116,27 @@ export const SalesTransactionTable = () => {
         
       },
       {
+        accessorKey: "namaBarang",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Nama Barang" />,
+        
+        
+        
+      },
+      {
+        accessorKey: "berat",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Berat" />,
+        
+        
+        
+      },
+      {
+        accessorKey: "harga",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Harga" />,
+        
+        cell: ({ row }) => <div className="text-right font-medium">{formatRupiah(row.getValue("harga"))}</div>,
+        
+      },
+      {
         accessorKey: "customerName",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Customer Name" />,
         

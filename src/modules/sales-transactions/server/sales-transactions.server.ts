@@ -48,7 +48,7 @@ export const salesTransactionServer = {
   },
 
   async create(data: SalesTransactionFormData) {
-    // Auto-generate codes for: transactionCode, barcode
+    // Auto-generate codes for: transactionCode
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -74,20 +74,6 @@ export const salesTransactionServer = {
       }
     }
     data.transactionCode = prefix_transactionCode + String(nextSeq_transactionCode).padStart(4, "0");
-
-    const lastRecord_barcode = await prisma.tm_sales_transaction.findFirst({
-      orderBy: { barcode: "desc" },
-    });
-
-    let nextSeq_barcode = 1;
-    if (lastRecord_barcode) {
-      const lastCode = lastRecord_barcode.barcode;
-      const lastSeq = parseInt(lastCode);
-      if (!isNaN(lastSeq)) {
-        nextSeq_barcode = lastSeq + 1;
-      }
-    }
-    data.barcode = String(nextSeq_barcode).padStart(8, "0");
 
     return prisma.tm_sales_transaction.create({
       data: {

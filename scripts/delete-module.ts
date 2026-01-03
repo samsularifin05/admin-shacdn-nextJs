@@ -3,14 +3,16 @@ import * as path from "path";
 
 // Load Config
 const args = process.argv.slice(2);
-if (args.length === 0) {
+let fileName = args.find((a) => !a.startsWith("--")) || "";
+if (!fileName) {
   console.error("❌ Please provide the JSON config filename!");
-  console.log("Usage: npm run delete:module bank");
+  console.log("Usage: npm run delete:module bank [--skip-db-push]");
   process.exit(1);
 }
 
+const skipDbPush = args.includes("--skip-db-push");
+
 // Automatically prepend 'formJson/' and append '.json' if missing
-let fileName = args[0];
 if (!fileName.endsWith(".json")) fileName += ".json";
 const configPath = path.resolve(process.cwd(), "formJson", fileName);
 
@@ -62,7 +64,24 @@ if (pageDir) {
   removeDir(pageDir);
 }
 
+// Also remove seeder file!
+const seederPath = path.resolve(
+  process.cwd(),
+  "prisma/seeders",
+  `${resourceName}Seeder.ts`
+);
+if (fs.existsSync(seederPath)) {
+  fs.rmSync(seederPath);
+  console.log(`   Deleted Seeder: ${seederPath}`);
+
+  // Optional: remove import/call from seed.ts?
+  // Too risky to parse/regex seed.ts reliably for removal. Let user fix imports manually or just leave them (will error on compile if module missing).
+  // But wait, if seed.ts imports missing file, build fails.
+  // Ideally we should remove it from seed.ts.
+}
+
 console.log("\n✅ Module Deleted Successfully!");
+
 // Remove from schema.prisma
 const prismaSchemaPath = path.resolve(process.cwd(), "prisma/schema.prisma");
 if (fs.existsSync(prismaSchemaPath)) {
@@ -76,13 +95,19 @@ if (fs.existsSync(prismaSchemaPath)) {
     fs.writeFileSync(prismaSchemaPath, schemaContent);
     console.log(`\n🗑️  Removed model ${tableName} from prisma/schema.prisma`);
 
-    console.log("⚠️  Running 'npx prisma db push'...");
-    try {
-      require("child_process").execSync("npx prisma db push", {
-        stdio: "inherit",
-      });
-    } catch (e) {
-      console.error("❌ Failed to run prisma db push. Please run it manually.");
+    if (!skipDbPush) {
+      console.log("⚠️  Running 'npx prisma db push'...");
+      try {
+        require("child_process").execSync("npx prisma db push", {
+          stdio: "inherit",
+        });
+      } catch (e) {
+        console.error(
+          "❌ Failed to run prisma db push. Please run it manually."
+        );
+      }
+    } else {
+      console.log("⏭️  Skipping 'prisma db push'...");
     }
   } else {
     console.log(`\nℹ️  Model ${tableName} not found in schema.prisma.`);

@@ -25,19 +25,6 @@ model User {
   @@map("users")
 }
 
-model tm_banks {
-  id             Int      @id @default(autoincrement())
-  code           String
-  name           String
-  category       String
-  balance        Float
-  conversionRate Float
-  totalValue     Float
-  isActive       Boolean
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-}
-
 model tr_sales {
   id            Int      @id @default(autoincrement())
   kodeBarcode   String
@@ -61,45 +48,29 @@ model tr_sales {
   updatedAt     DateTime @updatedAt
 }
 
-model tm_kategori {
-  id            Int      @id @default(autoincrement())
-  kodeGroup     String
-  namaGroup     String
-  jenisGroup    String
-  harga         Float
-  hargaModal    Float
-  kodeWarnaNota String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  tmJenis   tm_jenis[]
-  tmBarangs tm_barang[]
-}
-
-model tm_jenis {
-  id           Int          @id @default(autoincrement())
-  kodeJenis    String
-  namaJenis    String
-  kodeGroup    Int?
-  kodeGroupRel tm_kategori? @relation(fields: [kodeGroup], references: [id])
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  tmBarangs    tm_barang[]
-
-  @@index([kodeGroup])
-}
-
 model tm_baki {
-  id           Int      @id @default(autoincrement())
+  id           Int         @id @default(autoincrement())
   kodeGudang   String
   kodeBaki     String
   namaBaki     String
   beratBaki    Float
   beratBandrol Float
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  tmBarangs    tm_barang[]
+}
 
-  tmBarangs tm_barang[]
+model tm_banks {
+  id             Int      @id @default(autoincrement())
+  code           String
+  name           String
+  category       String
+  balance        Float
+  conversionRate Float
+  totalValue     Float
+  isActive       Boolean
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model tm_barang {
@@ -133,10 +104,41 @@ model tm_barang {
   @@index([kodeBaki])
 }
 
+model tm_jenis {
+  id           Int          @id @default(autoincrement())
+  kodeJenis    String
+  namaJenis    String
+  kodeGroup    Int?
+  kodeGroupRel tm_kategori? @relation(fields: [kodeGroup], references: [id])
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  tmBarangs    tm_barang[]
+
+  @@index([kodeGroup])
+}
+
+model tm_kategori {
+  id            Int      @id @default(autoincrement())
+  kodeGroup     String
+  namaGroup     String
+  jenisGroup    String
+  harga         Float
+  hargaModal    Float
+  kodeWarnaNota String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tmBarangs tm_barang[]
+  tmJenis   tm_jenis[]
+}
+
 model tm_sales_transaction {
   id              Int      @id @default(autoincrement())
   transactionCode String
   barcode         String
+  namaBarang      String
+  berat           Float
+  harga           Float
   customerName    String
   totalAmount     Float
   createdAt       DateTime @default(now())

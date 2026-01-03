@@ -4,19 +4,45 @@
   "tableName": "tm_sales_transaction",
   "title": "Sales Transaction",
   "route": "/admin/sales-transaction",
-  "classForm": "grid grid-cols-1 md:grid-cols-1 gap-4",
+  "classForm": "grid grid-cols-1 md:grid-cols-2 gap-4",
   "fields": [
     {
       "name": "transactionCode",
       "label": "Transaction Code",
       "type": "text",
-      "autoCode": "CC-FJ-{YYYYMMDD}-{0000}"
+      "autoCode": "CC-FJ-{YYYYMMDD}-{0000}",
+      "readOnly": true
     },
     {
       "name": "barcode",
       "label": "Barcode",
       "type": "text",
-      "autoCode": "{00000000}"
+      "endpoint": "/api/barangs",
+      "autoFill": {
+        "namaBarang": "namaBarang",
+        "berat": "berat",
+        "harga": "kategoriRel?.harga"
+      }
+    },
+    {
+      "name": "namaBarang",
+      "label": "Nama Barang",
+      "type": "text",
+      "readOnly": true
+    },
+    {
+      "name": "berat",
+      "label": "Berat",
+      "type": "gram",
+      "readOnly": true,
+      "defaultValue": 0
+    },
+    {
+      "name": "harga",
+      "label": "Harga",
+      "type": "rupiah",
+      "readOnly": true,
+      "defaultValue": 0
     },
     {
       "name": "customerName",

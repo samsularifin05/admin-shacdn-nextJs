@@ -12,7 +12,10 @@ export async function seedSalesTransaction(prisma: PrismaClient) {
 
   const data = {
   "transactionCode": "CC-FJ-20260103-0001",
-  "barcode": "00000001",
+  "barcode": "Sample data",
+  "namaBarang": "Sample SalesTransaction",
+  "berat": 1.5,
+  "harga": 1000,
   "customerName": "Sample data",
   "totalAmount": 1000
 };

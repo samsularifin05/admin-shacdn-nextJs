@@ -20,11 +20,17 @@ export const SalesTransactionForm = ({ initialData, onSuccess }: Props) => {
     defaultValues: initialData ? {
       transactionCode: initialData.transactionCode ?? undefined,
       barcode: initialData.barcode ?? undefined,
+      namaBarang: initialData.namaBarang ?? undefined,
+      berat: initialData.berat ?? undefined,
+      harga: initialData.harga ?? undefined,
       customerName: initialData.customerName ?? undefined,
       totalAmount: initialData.totalAmount ?? undefined
     } : {
       transactionCode: "",
       barcode: "",
+      namaBarang: "",
+      berat: 0,
+      harga: 0,
       customerName: "",
       totalAmount: 0
     },
@@ -51,9 +57,46 @@ export const SalesTransactionForm = ({ initialData, onSuccess }: Props) => {
   return (
     <FormProvider {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-
+          <FormInput
+            name="barcode"
+            label="Barcode"
+            type="text"
+            placeholder="Enter barcode"
+            disabled={isLoading}
+            
+            className="uppercase"
+            lookupEndpoint="/api/barangs" onObjectChange={(data) => {
+            setValue("namaBarang", data?.namaBarang ?? ""); setValue("berat", data?.berat ?? 0); setValue("harga", data?.kategoriRel?.harga ?? 0);
+          }}
+          />
+          <FormInput
+            name="namaBarang"
+            label="Nama Barang"
+            type="text"
+            placeholder="Enter nama barang"
+            disabled={isLoading}
+            readOnly
+            className="bg-muted uppercase"
+            
+          />
+          <FormGram
+            name="berat"
+            label="Berat"
+            placeholder="0.0"
+            disabled={isLoading}
+            readOnly
+            className="bg-muted"
+          />
+          <FormCurrency
+            name="harga"
+            label="Harga"
+            placeholder="0"
+            disabled={isLoading}
+            readOnly
+            className="bg-muted"
+          />
           <FormInput
             name="customerName"
             label="Customer Name"
@@ -62,6 +105,7 @@ export const SalesTransactionForm = ({ initialData, onSuccess }: Props) => {
             disabled={isLoading}
             
             className="uppercase"
+            
           />
           <FormCurrency
             name="totalAmount"

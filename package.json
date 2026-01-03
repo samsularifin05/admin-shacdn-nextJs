@@ -16,7 +16,8 @@
     "db:seed": "npx prisma db seed",
     "generate:module": "npx tsx scripts/scaffold.ts",
     "generate:all": "npx tsx scripts/generate-all.ts",
-    "delete:module": "npx tsx scripts/delete-module.ts"
+    "delete:module": "npx tsx scripts/delete-module.ts",
+    "delete:all": "npx tsx scripts/delete-all.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

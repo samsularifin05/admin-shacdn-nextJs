@@ -16,6 +16,7 @@ interface FormAsyncSelectProps {
   disabled?: boolean;
   paramName?: string;
   paramValue?: string | number | null;
+  onObjectChange?: (data: any) => void;
 }
 
 // Helper to manage internal state for display vs form value for ID
@@ -30,6 +31,7 @@ export const FormAsyncSelect = ({
   disabled,
   paramName,
   paramValue,
+  onObjectChange,
 }: FormAsyncSelectProps) => {
   const {
     control,
@@ -164,6 +166,9 @@ export const FormAsyncSelect = ({
               onChange={(option: any) => {
                 setSelectedOption(option);
                 onChange(option ? option.value : null);
+                if (onObjectChange && option?.original) {
+                  onObjectChange(option.original);
+                }
               }}
               menuPortalTarget={
                 typeof document !== "undefined" ? document.body : null

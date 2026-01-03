@@ -39,6 +39,7 @@ interface Field {
     field: string;
     queryParam: string;
   };
+  autoFill?: Record<string, string>; // "targetField": "sourceProperty"
 }
 
 interface GeneratorConfig {
@@ -187,7 +188,11 @@ const generateSchema = () => {
       } else if (f.type === "select" && f.options) {
         zodType = `z.enum([${f.options.map((opt) => `"${opt}"`).join(",")}])`;
       } else if (f.type === "async-select") {
-        zodType = "z.coerce.number()";
+        if (f.relatedTable && (!f.valueField || f.valueField === "id")) {
+          zodType = "z.coerce.number()";
+        } else {
+          zodType = "z.string()";
+        }
       } else if (f.type === "email") {
         zodType = "z.string().email()";
       } else {
@@ -235,7 +240,11 @@ const generateSchema = () => {
       } else if (f.type === "select" && f.options) {
         tsType = f.options.map((opt) => `"${opt}"`).join(" | ");
       } else if (f.type === "async-select") {
-        tsType = "number";
+        if (f.relatedTable && (!f.valueField || f.valueField === "id")) {
+          tsType = "number";
+        } else {
+          tsType = "string";
+        }
       } else {
         tsType = "string";
       }
@@ -312,7 +321,10 @@ export const ${toCamelCase(moduleName)}Service = {
 const generateServer = () => {
   // Build include object for relations
   const asyncSelectFields = fields.filter(
-    (f) => f.type === "async-select" && f.relatedTable
+    (f) =>
+      f.type === "async-select" &&
+      f.relatedTable &&
+      (!f.valueField || f.valueField === "id")
   );
   const includeStr =
     asyncSelectFields.length > 0
@@ -613,6 +625,29 @@ const generateForm = () => {
           ? `paramName="${f.dependency.queryParam}" paramValue={watch("${f.dependency.field}")}`
           : "";
 
+        const autoFillProps = f.autoFill
+          ? `onObjectChange={(data) => {
+              ${Object.entries(f.autoFill)
+                .map(([target, source]) => {
+                  const targetField = fields.find((tf) => tf.name === target);
+                  let fallback = '""';
+                  if (targetField) {
+                    if (
+                      ["number", "currency", "rupiah", "gram"].includes(
+                        targetField.type
+                      )
+                    ) {
+                      fallback = "0";
+                    } else if (targetField.type === "boolean") {
+                      fallback = "false";
+                    }
+                  }
+                  return `setValue("${target}", data?.${source} ?? ${fallback});`;
+                })
+                .join(" ")}
+            }}`
+          : "";
+
         return `          <FormAsyncSelect
             name="${f.name}"
             label="${f.label}"
@@ -622,6 +657,7 @@ const generateForm = () => {
             valueField="${f.valueField || "id"}"
             disabled={isLoading}
             ${depProps}
+            ${autoFillProps}
           />`;
       }
 
@@ -630,6 +666,43 @@ const generateForm = () => {
             name="${f.name}"
             label="${f.label}"
             disabled={isLoading}
+          />`;
+      }
+
+      if (f.type === "number") {
+        const autoFillProps =
+          f.autoFill && f.endpoint
+            ? `lookupEndpoint="${f.endpoint}" onObjectChange={(data) => {
+              ${Object.entries(f.autoFill)
+                .map(([target, source]) => {
+                  const targetField = fields.find((tf) => tf.name === target);
+                  let fallback = '""';
+                  if (targetField) {
+                    if (
+                      ["number", "currency", "rupiah", "gram"].includes(
+                        targetField.type
+                      )
+                    ) {
+                      fallback = "0";
+                    } else if (targetField.type === "boolean") {
+                      fallback = "false";
+                    }
+                  }
+                  return `setValue("${target}", data?.${source} ?? ${fallback});`;
+                })
+                .join(" ")}
+            }}`
+            : "";
+
+        return `          <FormInput
+            name="${f.name}"
+            label="${f.label}"
+            type="number"
+            placeholder="0"
+            disabled={isLoading}
+            ${readOnlyProp ? "readOnly" : ""}
+            ${className}
+            ${autoFillProps}
           />`;
       }
 
@@ -655,20 +728,43 @@ const generateForm = () => {
           />`;
       }
 
+      const autoFillProps =
+        f.autoFill && f.endpoint
+          ? `lookupEndpoint="${f.endpoint}" onObjectChange={(data) => {
+            ${Object.entries(f.autoFill)
+              .map(([target, source]) => {
+                const targetField = fields.find((tf) => tf.name === target);
+                let fallback = '""';
+                if (targetField) {
+                  if (
+                    ["number", "currency", "rupiah", "gram"].includes(
+                      targetField.type
+                    )
+                  ) {
+                    fallback = "0";
+                  } else if (targetField.type === "boolean") {
+                    fallback = "false";
+                  }
+                }
+                return `setValue("${target}", data?.${source} ?? ${fallback});`;
+              })
+              .join(" ")}
+          }}`
+          : "";
+
       return `          <FormInput
             name="${f.name}"
             label="${f.label}"
-            type="${
-              f.type === "number"
-                ? "number"
-                : f.type === "email"
-                ? "email"
-                : "text"
+            type="${f.type === "email" ? "email" : "text"}"
+            placeholder="${
+              f.type === "email"
+                ? "Enter email"
+                : `Enter ${f.label.toLowerCase()}`
             }"
-            placeholder="Enter ${f.label.toLowerCase()}"
             disabled={isLoading}
             ${readOnlyProp ? "readOnly" : ""}
             ${className}
+            ${autoFillProps}
           />`;
     })
     .join("\n");
@@ -1187,7 +1283,11 @@ const generateSeeder = () => {
     } else if (f.type === "select" && f.options) {
       sampleData[f.name] = f.options[0];
     } else if (f.type === "async-select") {
-      sampleData[f.name] = 1; // Assuming ID 1 exists
+      if (f.valueField && f.valueField !== "id") {
+        sampleData[f.name] = "SAMPLE-CODE";
+      } else {
+        sampleData[f.name] = 1; // Assuming ID 1 exists
+      }
     } else if (f.type === "email") {
       sampleData[f.name] = "sample@example.com";
     }
@@ -1305,7 +1405,11 @@ const modelDefinition = `model ${tableName} {
   id        Int      @id @default(autoincrement())
 ${fields
   .map((f) => {
-    if (f.type === "async-select" && f.relatedTable) {
+    if (
+      f.type === "async-select" &&
+      f.relatedTable &&
+      (!f.valueField || f.valueField === "id")
+    ) {
       return `  ${f.name}      Int?
   ${f.name}Rel   ${f.relatedTable}? @relation(fields: [${f.name}], references: [id])`;
     }

@@ -27,41 +27,17 @@ export const navigation: NavSection[] = [
   {
     title: "Master Data",
     items: [
-      {
-        title: "Baki",
-        href: "/admin/baki",
-        icon: Package,
-      },
-      {
-        title: "Bank",
-        href: "/admin/banks",
-        icon: Package,
-      },
-      {
-        title: "Barang",
-        href: "/admin/barang",
-        icon: Package,
-      },
-      {
-        title: "Jenis",
-        href: "/admin/jenis",
-        icon: Package,
-      },
-      {
-        title: "Kategori",
-        href: "/admin/kategori",
-        icon: Package,
-      },
+      
+      
+      
+      
+      
     ],
   },
   {
     title: "Transactions",
     items: [
-      {
-        title: "Sales Transaction",
-        href: "/admin/sales-transaction",
-        icon: ShoppingBag,
-      },
+      
     ],
   },
 ];

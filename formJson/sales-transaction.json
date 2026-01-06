@@ -32,40 +32,44 @@
       "type": "text",
       "defaultValue": "CASH"
     },
+
     {
-      "name": "items",
-      "label": "Daftar Barang",
-      "type": "detail",
-      "detailFields": [
-        {
-          "name": "barangId",
-          "label": "Barang",
-          "type": "async-select",
-          "endpoint": "/api/barangs",
-          "labelField": "namaBarang",
-          "valueField": "id",
-          "relatedTable": "tm_barang",
-          "autoFill": {
-            "harga": "hargaJual"
-          }
-        },
-        {
-          "name": "harga",
-          "label": "Harga",
-          "type": "rupiah"
-        },
-        {
-          "name": "qty",
-          "label": "Qty",
-          "type": "number"
-        },
-        {
-          "name": "subtotal",
-          "label": "Subtotal",
-          "type": "rupiah",
-          "readOnly": true
-        }
-      ]
+      "name": "barcode",
+      "label": "Barcode",
+      "type": "text",
+      "autoFill": {
+        "namaBarang": "namaBarang",
+        "berat": "berat",
+        "harga": "hargaJual"
+      },
+      "endpoint": "/api/barangs",
+      "searchField": "barcode"
+    },
+
+    {
+      "name": "namaBarang",
+      "label": "Nama Barang",
+      "type": "text",
+      "readOnly": true
+    },
+    {
+      "name": "berat",
+      "label": "Berat (gram)",
+      "type": "gram",
+      "readOnly": true
+    },
+    {
+      "name": "harga",
+      "label": "Harga/gram",
+      "type": "rupiah"
+    },
+
+    {
+      "name": "subtotal",
+      "label": "Subtotal",
+      "type": "rupiah",
+      "readOnly": true,
+      "formula": "(berat * harga /100) + harga"
     },
     {
       "name": "totalAmount",

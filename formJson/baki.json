@@ -5,6 +5,7 @@
   "title": "Baki",
   "route": "/admin/baki",
   "fields": [
+    { "name": "kodeMarco", "label": "Kode Marco", "type": "text" },
     { "name": "kodeGudang", "label": "Kode Gudang", "type": "text" },
     {
       "name": "kodeBaki",

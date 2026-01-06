@@ -770,7 +770,7 @@ const generateForm = () => {
       const isFormula = !!f.formula;
       const readOnlyProp = f.readOnly || isFormula ? "readOnly" : undefined;
 
-      let inputClasses = [];
+      const inputClasses = [];
       if (readOnlyProp) inputClasses.push("bg-muted");
       if ((f.type === "text" || f.type === "string") && f.uppercase !== false) {
         inputClasses.push("uppercase");

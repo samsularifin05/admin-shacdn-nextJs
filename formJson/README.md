@@ -64,8 +64,16 @@ Every object within the array `fields` supports the following properties:
 | `select`              | Dropdown dengan pilihan statis (menggunakan properti `options`).  |
 | `async-select`        | Dropdown pencarian yang mengambil data dari `endpoint` (API).     |
 | `detail`              | Tipe khusus untuk tabel item/keranjang (Master-Detail).           |
+| `file`                | Input upload file otomatis. Jalur file simpan di database.        |
 
 ---
+
+## Properti Tambahan Tipe File (`file`)
+
+Jika menggunakan `type: "file"`, Anda dapat menambahkan properti berikut:
+
+- **`uploadDir`**: (Opsional, default: `"uploads"`) Nama folder di dalam `public/` tempat file akan disimpan.
+  Contoh: `"uploadDir": "documents"` akan menyimpan file di `public/documents/`.
 
 ## Fitur Lanjutan
 

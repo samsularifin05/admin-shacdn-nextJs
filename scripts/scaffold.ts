@@ -13,7 +13,8 @@ type FieldType =
   | "rupiah"
   | "async-select"
   | "gram"
-  | "detail"; // New type for cart/detail collections
+  | "detail"
+  | "file"; // New type for cart/detail collections
 
 interface DetailField {
   name: string;
@@ -55,6 +56,8 @@ interface Field {
   autoFill?: Record<string, string>;
   // For detail type
   detailFields?: DetailField[];
+  // For file type
+  uploadDir?: string;
 }
 
 interface GeneratorConfig {
@@ -912,6 +915,26 @@ const generateForm = () => {
           />`;
       }
 
+      if (f.type === "file") {
+        return `          <FormFile
+            name="${f.name}"
+            label="${f.label}"
+            uploadDir="${f.uploadDir || "uploads"}"
+            disabled={isLoading}
+          />`;
+      }
+
+      if (f.type === "text") {
+        return `          <FormTextarea
+            name="${f.name}"
+            label="${f.label}"
+            placeholder="Enter ${f.label.toLowerCase()}"
+            disabled={isLoading}
+            ${readOnlyProp ? "readOnly" : ""}
+            ${className}
+          />`;
+      }
+
       const autoFillProps =
         f.autoFill && f.endpoint
           ? `lookupEndpoint="${f.endpoint}" onObjectChange={(data) => {
@@ -960,7 +983,7 @@ import { ${toCamelCase(
     moduleName
   )}Schema, ${moduleName}FormData, ${moduleName} } from "../types/${resourceName}.schema";
 import { Button } from "@/components/ui/button";
-import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram, FormCart } from "@/components/form";
+import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram, FormCart, FormFile, FormTextarea } from "@/components/form";
 import { ${toCamelCase(
     moduleName
   )}Service } from "../services/${resourceName}.service";
@@ -1130,6 +1153,27 @@ const generateTable = () => {
                 const original = row.original as any;
                 const rel = original.${f.name}Rel;
                 return <div>{rel ? rel.${f.relatedDisplayField} : row.getValue("${f.name}")}</div>;
+              },`
+            : ""
+        }
+        ${
+          f.type === "file"
+            ? `cell: ({ row }) => {
+                const val = row.getValue("${f.name}") as string;
+                if (!val) return null;
+                const isImage = /\\.(jpg|jpeg|png|webp|gif|svg)$/i.test(val);
+                if (isImage) {
+                  return (
+                    <div className="flex items-center justify-center">
+                      <img 
+                        src={val} 
+                        alt="Preview" 
+                        className="h-10 w-10 object-cover rounded shadow-sm hover:scale-110 transition-transform" 
+                      />
+                    </div>
+                  );
+                }
+                return <div className="text-xs text-muted-foreground truncate max-w-[100px]">{val}</div>;
               },`
             : ""
         }
@@ -1707,6 +1751,8 @@ const generateSeeder = () => {
       value = { create: [detailSample] };
     } else if (f.type === "detail") {
       value = { create: [] };
+    } else if (f.type === "file") {
+      value = `/${f.uploadDir || "uploads"}/sample.pdf`;
     }
 
     if (value !== undefined) {

@@ -6,3 +6,4 @@ export { FormCurrency } from "./form-currency";
 export { FormAsyncSelect } from "./form-async-select";
 export * from "./form-gram";
 export { FormCart } from "./form-cart";
+export { FormFile } from "./form-file";

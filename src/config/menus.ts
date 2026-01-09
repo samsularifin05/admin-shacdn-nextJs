@@ -1,4 +1,4 @@
-import { LayoutDashboard, LucideIcon } from "lucide-react";
+import { LayoutDashboard, LucideIcon, Package } from "lucide-react";
 
 export interface NavItem {
   title: string;
@@ -22,6 +22,16 @@ export const navigation: NavSection[] = [
     title: "General",
     items: [
       { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    ],
+  },
+  {
+    title: "Master Data",
+    items: [
+      {
+        title: "Banner Promo",
+        href: "/admin/banner",
+        icon: Package,
+      },
     ],
   },
 ];

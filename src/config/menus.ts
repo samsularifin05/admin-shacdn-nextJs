@@ -27,11 +27,7 @@ export const navigation: NavSection[] = [
   {
     title: "Master Data",
     items: [
-      {
-        title: "Banner Promo",
-        href: "/admin/banner",
-        icon: Package,
-      },
+      
     ],
   },
 ];

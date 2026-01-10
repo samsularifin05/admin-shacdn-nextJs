@@ -238,6 +238,8 @@ const generateSchema = () => {
           })
           .join(", ");
         zodType = `z.array(z.object({ ${detailZodFields} })).default([])`;
+      } else if (f.type === "file") {
+        zodType = "z.any()";
       } else {
         zodType = "z.string()";
       }
@@ -345,6 +347,7 @@ ${relationFields}
 };
 
 const generateService = () => {
+  const hasFile = fields.some((f) => f.type === "file");
   return `import { ${moduleName}, ${moduleName}FormData } from "../types/${resourceName}.schema";
 import { apiClient } from "@/lib/api-client";
 
@@ -369,12 +372,40 @@ export const ${toCamelCase(moduleName)}Service = {
   },
 
   async create(data: ${moduleName}FormData): Promise<${moduleName}> {
-    const res = await apiClient.post(API_BASE, data);
+    ${
+      hasFile
+        ? `const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+           formData.append(key, JSON.stringify(value));
+        } else {
+           formData.append(key, value as any);
+        }
+      }
+    });
+    const res = await apiClient.post(API_BASE, formData);`
+        : `const res = await apiClient.post(API_BASE, data);`
+    }
     return res.json();
   },
 
   async update(id: number, data: ${moduleName}FormData): Promise<${moduleName}> {
-    const res = await apiClient.put(\`\${API_BASE}/\${id}\`, data);
+    ${
+      hasFile
+        ? `const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+           formData.append(key, JSON.stringify(value));
+        } else {
+           formData.append(key, value as any);
+        }
+      }
+    });
+    const res = await apiClient.put(\`\${API_BASE}/\${id}\`, formData);`
+        : `const res = await apiClient.put(\`\${API_BASE}/\${id}\`, data);`
+    }
     return res.json();
   },
 
@@ -394,6 +425,8 @@ const generateServer = () => {
       (!f.valueField || f.valueField === "id")
   );
   const detailFields = fields.filter((f) => f.type === "detail");
+  const fileFields = fields.filter((f) => f.type === "file");
+  const hasFile = fileFields.length > 0;
 
   const includeStr =
     asyncSelectFields.length > 0 || detailFields.length > 0
@@ -558,8 +591,47 @@ ${autoCodeFields
   // Try to use @/lib/prisma, fallback to manual fix if needed
   return `import { prisma } from "@/lib/prisma";
 import { ${moduleName}FormData } from "../types/${resourceName}.schema";
+${hasFile ? 'import * as fs from "fs";\nimport * as path from "path";' : ""}
 
 export const ${toCamelCase(moduleName)}Server = {
+  ${
+    hasFile
+      ? `async internalSaveFiles(files: any, data: any) {
+    const fileFields = ${JSON.stringify(
+      fileFields.map((f) => ({ name: f.name, uploadDir: f.uploadDir }))
+    )};
+    for (const f of fileFields) {
+      const file = files[f.name];
+      if (file) {
+        const formidableFile = Array.isArray(file) ? file[0] : file;
+        const uploadDirName = f.uploadDir || "uploads";
+        const targetDir = path.join(process.cwd(), "public", uploadDirName);
+        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+
+        const fileName = formidableFile.originalFilename || \`file-\${Date.now()}\`;
+        const targetPath = path.join(targetDir, fileName);
+        
+        // If file exists, it will be overwritten by renameSync
+        fs.renameSync(formidableFile.filepath, targetPath);
+        data[f.name] = \`/\${uploadDirName}/\${fileName}\`;
+      }
+    }
+  },
+
+  async internalDeleteFiles(item: any) {
+    const fileFields = ${JSON.stringify(fileFields.map((f) => f.name))};
+    for (const field of fileFields) {
+      const filePath = item[field];
+      if (filePath && typeof filePath === "string" && filePath.startsWith("/")) {
+        const fullPath = path.join(process.cwd(), "public", filePath);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
+      }
+    }
+  },`
+      : ""
+  }
   async getPaginated(page: number, limit: number, search?: string, filters?: Record<string, any>) {
     const skip = (page - 1) * limit;
     
@@ -622,8 +694,15 @@ export const ${toCamelCase(moduleName)}Server = {
     });
   },
 
-  async create(data: ${moduleName}FormData) {${autoCodeLogic}
+  async create(data: ${moduleName}FormData${
+    hasFile ? ", files?: any" : ""
+  }) {${autoCodeLogic}
     const createData: any = { ...data };
+    ${
+      hasFile
+        ? `if (files) await this.internalSaveFiles(files, createData);`
+        : ""
+    }
     ${fields
       .filter((f) => f.type === "detail")
       .map(
@@ -688,8 +767,26 @@ export const ${toCamelCase(moduleName)}Server = {
     }
   },
 
-  async update(id: number, data: ${moduleName}FormData) {
+  async update(id: number, data: ${moduleName}FormData${
+    hasFile ? ", files?: any" : ""
+  }) {
     const updateData: any = { ...data };
+    ${
+      hasFile
+        ? `if (files && Object.keys(files).length > 0) {
+      const oldItem = await this.getById(id);
+      if (oldItem) {
+        // Only delete old files that are being replaced
+        const filesToReplace: any = {};
+        Object.keys(files).forEach(key => {
+           if (oldItem[key]) filesToReplace[key] = oldItem[key];
+        });
+        await this.internalDeleteFiles(filesToReplace);
+      }
+      await this.internalSaveFiles(files, updateData);
+    }`
+        : ""
+    }
     ${fields
       .filter((f) => f.type === "detail")
       .map(
@@ -717,6 +814,12 @@ export const ${toCamelCase(moduleName)}Server = {
   },
 
   async delete(id: number) {
+    ${
+      hasFile
+        ? `const item = await this.getById(id);
+    if (item) await this.internalDeleteFiles(item);`
+        : ""
+    }
     return prisma.${toCamelCase(tableName)}.delete({
       where: { id },
     });
@@ -1423,10 +1526,24 @@ ${columns}
 };
 
 const generateApiIndex = () => {
+  const hasFile = fields.some((f) => f.type === "file");
+  const detailFields = fields.filter((f) => f.type === "detail");
+
   return `import type { NextApiRequest, NextApiResponse } from "next";
 import { ${toCamelCase(
     moduleName
   )}Server } from "@/modules/${resourceName}/server/${resourceName}.server";
+${hasFile ? 'import formidable from "formidable";' : ""}
+
+${
+  hasFile
+    ? `export const config = {
+  api: {
+    bodyParser: false,
+  },
+};`
+    : ""
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -1442,8 +1559,57 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).json(result);
 
       case "POST":
-        const newItem = await ${toCamelCase(moduleName)}Server.create(req.body);
-        return res.status(201).json(newItem);
+        ${
+          hasFile
+            ? `const form = formidable({});
+        const [fields, files] = await form.parse(req);
+        
+        // Convert fields to object
+        const data: any = {};
+        const detailFields = ${JSON.stringify(detailFields.map((f) => f.name))};
+        const numericFields = ${JSON.stringify(
+          fields
+            .filter(
+              (f) =>
+                f.type === "number" ||
+                f.type === "currency" ||
+                f.type === "rupiah" ||
+                f.type === "gram" ||
+                (f.type === "async-select" &&
+                  (!f.valueField || f.valueField === "id"))
+            )
+            .map((f) => f.name)
+        )};
+        const booleanFields = ${JSON.stringify(
+          fields.filter((f) => f.type === "boolean").map((f) => f.name)
+        )};
+        
+        Object.entries(fields).forEach(([key, value]) => {
+          const val = Array.isArray(value) ? value[0] : value;
+          if (detailFields.includes(key)) {
+             try {
+               data[key] = JSON.parse(val || "[]");
+             } catch (e) {
+               data[key] = [];
+             }
+          } else if (numericFields.includes(key)) {
+             data[key] = val ? Number(val) : undefined;
+          } else if (booleanFields.includes(key)) {
+             data[key] = val === "true" || val === true;
+          } else {
+             data[key] = val;
+          }
+        });
+
+        const newItem = await ${toCamelCase(
+          moduleName
+        )}Server.create(data, files);
+        return res.status(201).json(newItem);`
+            : `const newItem = await ${toCamelCase(
+                moduleName
+              )}Server.create(req.body);
+        return res.status(201).json(newItem);`
+        }
 
       default:
         res.setHeader("Allow", ["GET", "POST"]);
@@ -1458,10 +1624,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 };
 
 const generateApiDetail = () => {
+  const hasFile = fields.some((f) => f.type === "file");
+  const detailFields = fields.filter((f) => f.type === "detail");
+
   return `import type { NextApiRequest, NextApiResponse } from "next";
 import { ${toCamelCase(
     moduleName
   )}Server } from "@/modules/${resourceName}/server/${resourceName}.server";
+${hasFile ? 'import formidable from "formidable";' : ""}
+
+${
+  hasFile
+    ? `export const config = {
+  api: {
+    bodyParser: false,
+  },
+};`
+    : ""
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const id = Number(req.query.id);
@@ -1475,10 +1655,57 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).json(item);
 
       case "PUT":
+        ${
+          hasFile
+            ? `const form = formidable({});
+        const [fields, files] = await form.parse(req);
+        
+        // Convert fields to object
+        const data: any = {};
+        const detailFields = ${JSON.stringify(detailFields.map((f) => f.name))};
+        const numericFields = ${JSON.stringify(
+          fields
+            .filter(
+              (f) =>
+                f.type === "number" ||
+                f.type === "currency" ||
+                f.type === "rupiah" ||
+                f.type === "gram" ||
+                (f.type === "async-select" &&
+                  (!f.valueField || f.valueField === "id"))
+            )
+            .map((f) => f.name)
+        )};
+        const booleanFields = ${JSON.stringify(
+          fields.filter((f) => f.type === "boolean").map((f) => f.name)
+        )};
+        
+        Object.entries(fields).forEach(([key, value]) => {
+          const val = Array.isArray(value) ? value[0] : value;
+          if (detailFields.includes(key)) {
+             try {
+               data[key] = JSON.parse(val || "[]");
+             } catch (e) {
+               data[key] = [];
+             }
+          } else if (numericFields.includes(key)) {
+             data[key] = val ? Number(val) : undefined;
+          } else if (booleanFields.includes(key)) {
+             data[key] = val === "true" || val === true;
+          } else {
+             data[key] = val;
+          }
+        });
+
         const updated = await ${toCamelCase(
           moduleName
-        )}Server.update(id, req.body);
-        return res.status(200).json(updated);
+        )}Server.update(id, data, files);
+        return res.status(200).json(updated);`
+            : `const updated = await ${toCamelCase(
+                moduleName
+              )}Server.update(id, req.body);
+        return res.status(200).json(updated);`
+        }
 
       case "DELETE":
         await ${toCamelCase(moduleName)}Server.delete(id);

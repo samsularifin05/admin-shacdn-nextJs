@@ -10,9 +10,10 @@ const API_BASE_URL = "";
  */
 async function apiRequest(endpoint: string, options: RequestInit = {}) {
   // 1. Prepare Base Headers
-  const defaultHeaders: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
+  const defaultHeaders: Record<string, string> = {};
+  if (!(options.body instanceof FormData)) {
+    defaultHeaders["Content-Type"] = "application/json";
+  }
 
   // 2. Merge headers safely
   let inputHeaders: Record<string, string> = {};
@@ -84,9 +85,17 @@ export const apiClient = {
   get: (url: string, options?: RequestInit) =>
     apiRequest(url, { ...options, method: "GET" }),
   post: (url: string, data?: any, options?: RequestInit) =>
-    apiRequest(url, { ...options, method: "POST", body: JSON.stringify(data) }),
+    apiRequest(url, {
+      ...options,
+      method: "POST",
+      body: data instanceof FormData ? data : JSON.stringify(data),
+    }),
   put: (url: string, data?: any, options?: RequestInit) =>
-    apiRequest(url, { ...options, method: "PUT", body: JSON.stringify(data) }),
+    apiRequest(url, {
+      ...options,
+      method: "PUT",
+      body: data instanceof FormData ? data : JSON.stringify(data),
+    }),
   delete: (url: string, options?: RequestInit) =>
     apiRequest(url, { ...options, method: "DELETE" }),
 };

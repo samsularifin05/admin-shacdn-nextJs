@@ -86,7 +86,7 @@ const toPascalCase = (str: string) =>
 const toCamelCase = (str: string) =>
   str
     .replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) =>
-      index === 0 ? word.toLowerCase() : word.toUpperCase()
+      index === 0 ? word.toLowerCase() : word.toUpperCase(),
     )
     .replace(/\s+/g, "")
     .replace(/-/g, "");
@@ -112,7 +112,7 @@ if (!fs.existsSync(configPath)) {
 console.log(`🚀 Generating module from: formJson/${fileName}...`);
 
 const config = JSON.parse(
-  fs.readFileSync(configPath, "utf-8")
+  fs.readFileSync(configPath, "utf-8"),
 ) as GeneratorConfig;
 const { moduleName, resourceName, tableName, fields, classForm, title } =
   config;
@@ -132,21 +132,21 @@ if (fs.existsSync(formJsonDir)) {
   jsonFiles.forEach((file) => {
     try {
       const cfg = JSON.parse(
-        fs.readFileSync(path.join(formJsonDir, file), "utf-8")
+        fs.readFileSync(path.join(formJsonDir, file), "utf-8"),
       ) as GeneratorConfig;
       // Find the first text field that looks like a code (contains 'kode' or 'code')
       const codeField = cfg.fields.find(
         (f) =>
           f.type === "text" &&
           (f.name.toLowerCase().includes("kode") ||
-            f.name.toLowerCase().includes("code"))
+            f.name.toLowerCase().includes("code")),
       );
       // Find name field
       const nameField = cfg.fields.find(
         (f) =>
           f.type === "text" &&
           (f.name.toLowerCase().includes("nama") ||
-            f.name.toLowerCase().includes("name"))
+            f.name.toLowerCase().includes("name")),
       );
 
       resourceMap.set(cfg.resourceName, {
@@ -333,7 +333,7 @@ ${schemaFields}
 });
 
 export type ${moduleName}FormData = z.infer<typeof ${toCamelCase(
-    moduleName
+    moduleName,
   )}Schema>;
 
 export type ${moduleName} = {
@@ -422,7 +422,7 @@ const generateServer = () => {
     (f) =>
       f.type === "async-select" &&
       f.relatedTable &&
-      (!f.valueField || f.valueField === "id")
+      (!f.valueField || f.valueField === "id"),
   );
   const detailFields = fields.filter((f) => f.type === "detail");
   const fileFields = fields.filter((f) => f.type === "file");
@@ -522,8 +522,8 @@ ${autoCodeFields
 
         codeGenLogic += `    const prefix_${f.name} = \`${prefixTemplate}\`;
     const lastRecord_${f.name} = await prisma.${toCamelCase(
-          tableName
-        )}.findFirst({
+      tableName,
+    )}.findFirst({
       where: {
         ${f.name}: {
           startsWith: prefix_${f.name},
@@ -542,8 +542,8 @@ ${autoCodeFields
       }
     }
     data.${f.name} = prefix_${f.name} + String(nextSeq_${
-          f.name
-        }).padStart(${seqLength}, "0");`;
+      f.name
+    }).padStart(${seqLength}, "0");`;
       } else {
         // Static prefix without date
         codeGenLogic += `    const lastRecord_${
@@ -567,8 +567,8 @@ ${autoCodeFields
       }
     }
     data.${f.name} = "${staticPrefix}" + String(nextSeq_${
-          f.name
-        }).padStart(${seqLength}, "0");`;
+      f.name
+    }).padStart(${seqLength}, "0");`;
       }
     }
 
@@ -585,7 +585,7 @@ ${autoCodeFields
         f.name.toLowerCase().includes("nama") ||
         f.name.toLowerCase().includes("name") ||
         f.name.toLowerCase().includes("kode") ||
-        f.name.toLowerCase().includes("code")
+        f.name.toLowerCase().includes("code"),
     ) || fields[0];
 
   // Try to use @/lib/prisma, fallback to manual fix if needed
@@ -598,7 +598,7 @@ export const ${toCamelCase(moduleName)}Server = {
     hasFile
       ? `async internalSaveFiles(files: any, data: any) {
     const fileFields = ${JSON.stringify(
-      fileFields.map((f) => ({ name: f.name, uploadDir: f.uploadDir }))
+      fileFields.map((f) => ({ name: f.name, uploadDir: f.uploadDir })),
     )};
     for (const f of fileFields) {
       const file = files[f.name];
@@ -673,24 +673,26 @@ export const ${toCamelCase(moduleName)}Server = {
 
   async getById(id: number) {
     return prisma.${toCamelCase(tableName)}.findUnique({
-      where: { id },
-      include: {
-        ${asyncSelectFields
-          .map((f) => `${f.name}Rel: true`)
-          .join(",\n        ")}
-        ${fields
-          .filter((f) => f.type === "detail")
-          .map((f) => {
-            const detailRelations = f.detailFields
-              ?.filter((df) => df.type === "async-select" && df.relatedTable)
-              .map((df) => `${df.name}Rel: true`)
-              .join(", ");
-            return detailRelations
-              ? `${f.name}: { include: { ${detailRelations} } }`
-              : `${f.name}: true`;
-          })
-          .join(",\n        ")}
-      },
+      where: { id },${
+        asyncSelectFields.length > 0 || detailFields.length > 0
+          ? `\n      include: {\n        ${[
+              ...asyncSelectFields.map((f) => `${f.name}Rel: true`),
+              ...fields
+                .filter((f) => f.type === "detail")
+                .map((f) => {
+                  const detailRelations = f.detailFields
+                    ?.filter(
+                      (df) => df.type === "async-select" && df.relatedTable,
+                    )
+                    .map((df) => `${df.name}Rel: true`)
+                    .join(", ");
+                  return detailRelations
+                    ? `${f.name}: { include: { ${detailRelations} } }`
+                    : `${f.name}: true`;
+                }),
+            ].join(",\n        ")}\n      },`
+          : ""
+      }
     });
   },
 
@@ -711,7 +713,7 @@ export const ${toCamelCase(moduleName)}Server = {
       createData.${f.name} = {
         create: data.${f.name}
       };
-    }`
+    }`,
       )
       .join("\n")}
 
@@ -720,18 +722,12 @@ export const ${toCamelCase(moduleName)}Server = {
         ? `
     return prisma.$transaction(async (tx) => {
       const result = await tx.${toCamelCase(tableName)}.create({
-        data: createData,
-        include: { 
-          ${fields
-            .filter((f) => f.type === "detail")
-            .map((f) => `${f.name}: true`)
-            .join(", ")} 
-        }
+        data: createData,${detailFields.length > 0 ? `\n        include: { \n          ${detailFields.map((f) => `${f.name}: true`).join(", ")} \n        }` : ""}
       });
 
       // Stock Logic: ${config.stockLogic.type} ${config.stockLogic.targetTable}
       const detailField = ${JSON.stringify(
-        fields.find((f) => f.type === "detail")?.name || ""
+        fields.find((f) => f.type === "detail")?.name || "",
       )};
       if (detailField && result[detailField]) {
         for (const item of (result[detailField] as any[])) {
@@ -755,14 +751,7 @@ export const ${toCamelCase(moduleName)}Server = {
     });`
         : `
     return prisma.${toCamelCase(tableName)}.create({
-      data: createData,
-      include: {
-        ${asyncSelectFields.map((f) => `${f.name}Rel: true`).join(",\n")}
-        ${fields
-          .filter((f) => f.type === "detail")
-          .map((f) => `${f.name}: true`)
-          .join(",\n")}
-      },
+      data: createData,${asyncSelectFields.length > 0 || detailFields.length > 0 ? `\n      include: {\n        ${[...asyncSelectFields.map((f) => `${f.name}Rel: true`), ...detailFields.map((f) => `${f.name}: true`)].join(",\n        ")}\n      },` : ""}
     });`
     }
   },
@@ -778,8 +767,9 @@ export const ${toCamelCase(moduleName)}Server = {
       if (oldItem) {
         // Only delete old files that are being replaced
         const filesToReplace: any = {};
-        Object.keys(files).forEach(key => {
-           if (oldItem[key]) filesToReplace[key] = oldItem[key];
+        const oldItemRecord = oldItem as Record<string, any>;
+        Object.keys(files).forEach((key) => {
+          if (oldItemRecord[key]) filesToReplace[key] = oldItemRecord[key];
         });
         await this.internalDeleteFiles(filesToReplace);
       }
@@ -796,20 +786,13 @@ export const ${toCamelCase(moduleName)}Server = {
         deleteMany: {},
         create: data.${f.name}
       };
-    }`
+    }`,
       )
       .join("\n")}
 
     return prisma.${toCamelCase(tableName)}.update({
       where: { id },
-      data: updateData,
-      include: {
-        ${asyncSelectFields.map((f) => `${f.name}Rel: true`).join(",\n")}
-        ${fields
-          .filter((f) => f.type === "detail")
-          .map((f) => `${f.name}: true`)
-          .join(",\n")}
-      },
+      data: updateData,${asyncSelectFields.length > 0 || detailFields.length > 0 ? `\n      include: {\n        ${[...asyncSelectFields.map((f) => `${f.name}Rel: true`), ...detailFields.map((f) => `${f.name}: true`)].join(",\n        ")}\n      },` : ""}
     });
   },
 
@@ -859,7 +842,7 @@ const generateForm = () => {
         .join(";\n      const ")};
       const result = ${c.formula};
       setValue("${c.target}", result);
-    } catch (e) {}`
+    } catch (e) {}`,
       )
       .join("\n")}
   }, [${calculations
@@ -911,7 +894,7 @@ const generateForm = () => {
                   if (targetField) {
                     if (
                       ["number", "currency", "rupiah", "gram"].includes(
-                        targetField.type
+                        targetField.type,
                       )
                     ) {
                       fallback = "0";
@@ -970,7 +953,7 @@ const generateForm = () => {
                   if (targetField) {
                     if (
                       ["number", "currency", "rupiah", "gram"].includes(
-                        targetField.type
+                        targetField.type,
                       )
                     ) {
                       fallback = "0";
@@ -1048,7 +1031,7 @@ const generateForm = () => {
                 if (targetField) {
                   if (
                     ["number", "currency", "rupiah", "gram"].includes(
-                      targetField.type
+                      targetField.type,
                     )
                   ) {
                     fallback = "0";
@@ -1083,12 +1066,12 @@ const generateForm = () => {
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ${toCamelCase(
-    moduleName
+    moduleName,
   )}Schema, ${moduleName}FormData, ${moduleName} } from "../types/${resourceName}.schema";
 import { Button } from "@/components/ui/button";
 import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram, FormCart, FormFile, FormTextarea } from "@/components/form";
 import { ${toCamelCase(
-    moduleName
+    moduleName,
   )}Service } from "../services/${resourceName}.service";
 import { useModalStore } from "@/stores/modal-store";
 import { Loader2${config.printable ? ", Printer" : ""} } from "lucide-react";
@@ -1155,7 +1138,7 @@ export const ${moduleName}Form = ({ initialData, onSuccess }: Props) => {
       let result;
       if (initialData) {
         result = await ${toCamelCase(
-          moduleName
+          moduleName,
         )}Service.update(initialData.id, data);
         toast.success("${title} updated successfully");
       } else {
@@ -1320,7 +1303,7 @@ import { ${moduleName}Detail } from "./${resourceName}-detail";
 import { ${moduleName}Delete } from "./${resourceName}-delete";
 import { ServerDataTable, ServerDataTableRef } from "@/components/ui/server-data-table";
 import { ${toCamelCase(
-    moduleName
+    moduleName,
   )}Service } from "../services/${resourceName}.service";
 
 export const ${moduleName}Table = () => {
@@ -1388,8 +1371,8 @@ export const ${moduleName}Table = () => {
               title: "Delete ${title}",
               size: "lg",
               content: <${moduleName}Delete ${toCamelCase(
-    moduleName
-  )}={row} onSuccess={refreshTable} />,
+                moduleName,
+              )}={row} onSuccess={refreshTable} />,
             });
           }
           break;
@@ -1476,7 +1459,7 @@ ${columns}
                 ${detailField.detailFields
                   ?.map(
                     (df) =>
-                      `<th className="px-4 py-2 text-left font-medium text-muted-foreground">${df.label}</th>`
+                      `<th className="px-4 py-2 text-left font-medium text-muted-foreground">${df.label}</th>`,
                   )
                   .join("\n                ")}
               </tr>
@@ -1531,7 +1514,7 @@ const generateApiIndex = () => {
 
   return `import type { NextApiRequest, NextApiResponse } from "next";
 import { ${toCamelCase(
-    moduleName
+    moduleName,
   )}Server } from "@/modules/${resourceName}/server/${resourceName}.server";
 ${hasFile ? 'import formidable from "formidable";' : ""}
 
@@ -1554,7 +1537,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const limit = Number(_limit) || 10;
         const search = (_search as string) || undefined;
         const result = await ${toCamelCase(
-          moduleName
+          moduleName,
         )}Server.getPaginated(page, limit, search, filters);
         return res.status(200).json(result);
 
@@ -1576,12 +1559,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 f.type === "rupiah" ||
                 f.type === "gram" ||
                 (f.type === "async-select" &&
-                  (!f.valueField || f.valueField === "id"))
+                  (!f.valueField || f.valueField === "id")),
             )
-            .map((f) => f.name)
+            .map((f) => f.name),
         )};
         const booleanFields = ${JSON.stringify(
-          fields.filter((f) => f.type === "boolean").map((f) => f.name)
+          fields.filter((f) => f.type === "boolean").map((f) => f.name),
         )};
         
         Object.entries(fields).forEach(([key, value]) => {
@@ -1602,11 +1585,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
 
         const newItem = await ${toCamelCase(
-          moduleName
+          moduleName,
         )}Server.create(data, files);
         return res.status(201).json(newItem);`
             : `const newItem = await ${toCamelCase(
-                moduleName
+                moduleName,
               )}Server.create(req.body);
         return res.status(201).json(newItem);`
         }
@@ -1629,7 +1612,7 @@ const generateApiDetail = () => {
 
   return `import type { NextApiRequest, NextApiResponse } from "next";
 import { ${toCamelCase(
-    moduleName
+    moduleName,
   )}Server } from "@/modules/${resourceName}/server/${resourceName}.server";
 ${hasFile ? 'import formidable from "formidable";' : ""}
 
@@ -1672,12 +1655,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 f.type === "rupiah" ||
                 f.type === "gram" ||
                 (f.type === "async-select" &&
-                  (!f.valueField || f.valueField === "id"))
+                  (!f.valueField || f.valueField === "id")),
             )
-            .map((f) => f.name)
+            .map((f) => f.name),
         )};
         const booleanFields = ${JSON.stringify(
-          fields.filter((f) => f.type === "boolean").map((f) => f.name)
+          fields.filter((f) => f.type === "boolean").map((f) => f.name),
         )};
         
         Object.entries(fields).forEach(([key, value]) => {
@@ -1698,11 +1681,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
 
         const updated = await ${toCamelCase(
-          moduleName
+          moduleName,
         )}Server.update(id, data, files);
         return res.status(200).json(updated);`
             : `const updated = await ${toCamelCase(
-                moduleName
+                moduleName,
               )}Server.update(id, req.body);
         return res.status(200).json(updated);`
         }
@@ -1776,7 +1759,7 @@ interface ${moduleName}DetailProps {
 }
 
 export const ${moduleName}Detail = ({ ${toCamelCase(
-    moduleName
+    moduleName,
   )}: row }: ${moduleName}DetailProps) => {
   return (
     <div className="space-y-4 py-2">
@@ -1810,7 +1793,7 @@ import { useModalStore } from "@/stores/modal-store";
 import { toast } from "sonner";
 import { ${moduleName} } from "../types/${resourceName}.schema";
 import { ${toCamelCase(
-    moduleName
+    moduleName,
   )}Service } from "../services/${resourceName}.service";
 
 interface ${moduleName}DeleteProps {
@@ -1819,7 +1802,7 @@ interface ${moduleName}DeleteProps {
 }
 
 export function ${moduleName}Delete({ ${toCamelCase(
-    moduleName
+    moduleName,
   )}: row, onSuccess }: ${moduleName}DeleteProps) {
   const { onClose } = useModalStore();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -1938,8 +1921,8 @@ const generateSeeder = () => {
         const varName = `first${toPascalCase(f.name)}`;
         relFetchers.push(
           `  const ${varName} = await prisma.${toCamelCase(
-            f.relatedTable
-          )}.findFirst();`
+            f.relatedTable,
+          )}.findFirst();`,
         );
         placeholders[f.name] = `${varName}?.id || 1`;
         value = `__PLACEHOLDER_${f.name}__`;
@@ -1955,12 +1938,12 @@ const generateSeeder = () => {
       f.detailFields.forEach((df) => {
         if (df.type === "async-select" && df.relatedTable) {
           const varName = `detail${toPascalCase(f.name)}${toPascalCase(
-            df.name
+            df.name,
           )}`;
           relFetchers.push(
             `  const ${varName} = await prisma.${toCamelCase(
-              df.relatedTable
-            )}.findFirst();`
+              df.relatedTable,
+            )}.findFirst();`,
           );
           detailSample[df.name] = `__PLACEHOLDER_DETAIL_${f.name}_${df.name}__`;
           placeholders[`DETAIL_${f.name}_${df.name}`] = `${varName}?.id || 1`;
@@ -2025,31 +2008,31 @@ const write = (p: string, content: string) => {
 
 write(
   path.join(moduleDir, `types/${resourceName}.schema.ts`),
-  generateSchema()
+  generateSchema(),
 );
 write(
   path.join(moduleDir, `services/${resourceName}.service.ts`),
-  generateService()
+  generateService(),
 );
 write(
   path.join(moduleDir, `server/${resourceName}.server.ts`),
-  generateServer()
+  generateServer(),
 );
 write(
   path.join(moduleDir, `components/${resourceName}-form.tsx`),
-  generateForm()
+  generateForm(),
 );
 write(
   path.join(moduleDir, `components/${resourceName}-table.tsx`),
-  generateTable()
+  generateTable(),
 );
 write(
   path.join(moduleDir, `components/${resourceName}-detail.tsx`),
-  generateDetail()
+  generateDetail(),
 );
 write(
   path.join(moduleDir, `components/${resourceName}-delete.tsx`),
-  generateDelete()
+  generateDelete(),
 );
 write(path.join(apiDir, "index.ts"), generateApiIndex());
 write(path.join(apiDir, "[id].ts"), generateApiDetail());
@@ -2080,7 +2063,7 @@ if (fs.existsSync(mainSeedPath)) {
       (match, body) => {
         // Find the return or the end of the body
         return `async function main() {${body}  await ${seederFuncName}(prisma);\n}`;
-      }
+      },
     );
     fs.writeFileSync(mainSeedPath, mainSeedContent);
     console.log(`✅ Updated prisma/seed.ts with ${seederFuncName}`);
@@ -2119,8 +2102,8 @@ const detailTablesDef = fields
           df.type === "gram"
             ? "Float"
             : df.type === "async-select"
-            ? "Int"
-            : "String";
+              ? "Int"
+              : "String";
         return `  ${df.name}      ${prismaType}   ${
           df.readOnly ? "@default(0)" : ""
         }`;
@@ -2161,8 +2144,8 @@ ${fields
       f.type === "gram"
         ? "Float"
         : f.type === "boolean"
-        ? "Boolean"
-        : "String";
+          ? "Boolean"
+          : "String";
     return `  ${f.name}      ${prismaType}   ${
       f.required === false ? "?" : ""
     }`;
@@ -2215,7 +2198,7 @@ try {
     "npx prisma format && npx prisma db push && npx prisma generate",
     {
       stdio: "inherit",
-    }
+    },
   );
 } catch (e) {
   console.error("❌ Failed to run prisma commands. Please run them manually.");
@@ -2246,7 +2229,7 @@ if (fs.existsSync(menusPath)) {
     // Find the group/section by title
     const groupRegex = new RegExp(
       `(title: "${groupName}",[\\s\\S]*?items: \\[)([\\s\\S]*?)(\\])`,
-      "g"
+      "g",
     );
 
     if (groupRegex.test(menusContent)) {
@@ -2255,9 +2238,18 @@ if (fs.existsSync(menusPath)) {
         groupRegex,
         (match, prefix, items, suffix) => {
           const trimmedItems = items.trim();
-          const separator = trimmedItems.endsWith(",") ? "\n" : ",\n";
-          return `${prefix}${items}${separator}${newItem}\n      ${suffix}`;
-        }
+          // Check if items is empty or only contains comma
+          const isEmpty = !trimmedItems || trimmedItems === "," || trimmedItems === "";
+          
+          if (isEmpty) {
+            // If empty, just add the new item without leading comma
+            return `${prefix}\n${newItem}\n      ${suffix}`;
+          } else {
+            // If has content, add separator
+            const separator = trimmedItems.endsWith(",") ? "\n" : ",\n";
+            return `${prefix}${items}${separator}${newItem}\n      ${suffix}`;
+          }
+        },
       );
     } else {
       // Create new group and append to navigation array before the last ];
@@ -2286,7 +2278,7 @@ ${newItem}
         (match, imports) => {
           const trimmed = imports.trim();
           return `import {\n  ${trimmed},\n  ${iconName}\n} from "lucide-react"`;
-        }
+        },
       );
     }
 
@@ -2300,12 +2292,12 @@ console.log("\n✅ Module Generated Successfully!");
 // Add warning about restarting dev server
 console.log("\n" + "=".repeat(70));
 console.log(
-  "⚠️  PENTING: Restart dev server Anda untuk load Prisma models baru!"
+  "⚠️  PENTING: Restart dev server Anda untuk load Prisma models baru!",
 );
 console.log(
-  "   Matikan server dengan Ctrl+C, lalu jalankan 'npm run dev' lagi."
+  "   Matikan server dengan Ctrl+C, lalu jalankan 'npm run dev' lagi.",
 );
 console.log(
-  "   Error 'Cannot read properties of undefined' akan muncul jika tidak restart."
+  "   Error 'Cannot read properties of undefined' akan muncul jika tidak restart.",
 );
 console.log("=".repeat(70) + "\n");

@@ -2,7 +2,8 @@ import {
   LayoutDashboard,
   LucideIcon,
   Package,
-  ShoppingBag,
+  Settings,
+  Wrench,
 } from "lucide-react";
 
 export interface NavItem {
@@ -30,6 +31,13 @@ export const navigation: NavSection[] = [
     ],
   },
   {
+    title: "CMS Builder",
+    items: [
+      { title: "Module Builder", href: "/admin/cms-builder", icon: Wrench },
+      { title: "Page Builder", href: "/admin/page-builder", icon: Package },
+    ],
+  },
+  {
     title: "Master Data",
     items: [
       
@@ -37,8 +45,12 @@ export const navigation: NavSection[] = [
   },
   {
     title: "Transactions",
+    items: [],
+  },
+  {
+    title: "Settings",
     items: [
-      
-      ],
+      { title: "General Settings", href: "/admin/settings", icon: Settings },
+    ],
   },
 ];

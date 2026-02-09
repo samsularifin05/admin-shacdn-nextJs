@@ -7,3 +7,4 @@ export { FormAsyncSelect } from "./form-async-select";
 export * from "./form-gram";
 export { FormCart } from "./form-cart";
 export { FormFile } from "./form-file";
+export { FormFormula } from "./form-formula";

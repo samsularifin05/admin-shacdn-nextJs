@@ -1,0 +1,42 @@
+-- Insert Barang module to CMS
+INSERT INTO cms_modules (
+  name,
+  "resourceName",
+  "tableName",
+  title,
+  description,
+  "moduleType",
+  route,
+  "classForm",
+  printable,
+  published,
+  "publishedAt",
+  metadata,
+  "sortOrder",
+  "createdAt",
+  "updatedAt"
+) VALUES (
+  'Barang',
+  'barangs',
+  'tm_barang',
+  'Barang',
+  'Master Data Barang',
+  'master',
+  '/admin/barangs',
+  'grid grid-cols-1 md:grid-cols-2 gap-4',
+  false,
+  true,
+  NOW(),
+  '{}'::jsonb,
+  0,
+  NOW(),
+  NOW()
+)
+ON CONFLICT ("resourceName") DO UPDATE 
+SET
+  name = EXCLUDED.name,
+  "tableName" = EXCLUDED."tableName",
+  title = EXCLUDED.title,
+  published = EXCLUDED.published,
+  "publishedAt" = EXCLUDED."publishedAt",
+  "updatedAt" = NOW();

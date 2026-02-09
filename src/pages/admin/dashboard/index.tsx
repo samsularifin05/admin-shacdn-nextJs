@@ -76,7 +76,7 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
-              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              <div className="h-75 flex items-center justify-center text-muted-foreground">
                 Chart placeholder - Add your preferred chart library
               </div>
             </CardContent>

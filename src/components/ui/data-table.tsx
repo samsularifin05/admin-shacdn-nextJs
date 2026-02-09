@@ -99,7 +99,7 @@ export function DataTable<TData, TValue>({
     {
       pageIndex: 0,
       pageSize: 10,
-    }
+    },
   );
 
   const pagination = externalPagination || internalPagination;
@@ -172,7 +172,7 @@ export function DataTable<TData, TValue>({
       {/* Table with horizontal scroll on mobile */}
       <div className="rounded-md border overflow-hidden">
         <div className="overflow-x-auto">
-          <Table className="min-w-[600px]">
+          <Table className="min-w-150">
             <caption className="sr-only">
               Data table with sorting and pagination
             </caption>
@@ -186,15 +186,13 @@ export function DataTable<TData, TValue>({
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                       </TableHead>
                     );
                   })}
                   {hasActions && (
-                    <TableHead className="text-center w-[80px]">
-                      Actions
-                    </TableHead>
+                    <TableHead className="text-center w-20">Actions</TableHead>
                   )}
                 </TableRow>
               ))}
@@ -224,7 +222,7 @@ export function DataTable<TData, TValue>({
                         <TableCell key={cell.id}>
                           {flexRender(
                             cell.column.columnDef.cell,
-                            cell.getContext()
+                            cell.getContext(),
                           )}
                         </TableCell>
                       ))}
@@ -241,16 +239,13 @@ export function DataTable<TData, TValue>({
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              align="end"
-                              className="w-[160px]"
-                            >
+                            <DropdownMenuContent align="end" className="w-40">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
                               {actions
                                 .filter(
                                   (a) =>
                                     (a.group === "action" || !a.isAdd) &&
-                                    a.show !== false
+                                    a.show !== false,
                                 )
                                 .map((action, idx) => {
                                   if (action.isSeparator) {
@@ -266,7 +261,7 @@ export function DataTable<TData, TValue>({
                                       disabled={
                                         typeof action.disabled === "function"
                                           ? action.disabled(
-                                              row.original as TData
+                                              row.original as TData,
                                             )
                                           : action.disabled
                                       }
@@ -339,7 +334,7 @@ export function DataTableColumnHeader({
     <div
       className={cn(
         "flex items-center gap-2 cursor-pointer select-none hover:text-foreground",
-        className
+        className,
       )}
       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
     >

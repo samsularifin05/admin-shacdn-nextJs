@@ -25,4 +25,136 @@ model User {
   @@map("users")
 }
 
+// CMS Builder Models
+model CmsModule {
+  id           Int       @id @default(autoincrement())
+  name         String    @unique // e.g., "Barang", "Kategori"
+  resourceName String    @unique // e.g., "barangs", "kategoris"
+  tableName    String    @unique // e.g., "tm_barang"
+  title        String // Display title
+  description  String?
+  icon         String? // Lucide icon name
+  moduleType   String    @default("master") // master, transaction, report
+  route        String? // e.g., "/admin/barang"
+  classForm    String? // CSS classes for form layout
+  printable    Boolean   @default(false)
+  published    Boolean   @default(false)
+  publishedAt  DateTime?
+  metadata     Json? // Additional config (stockLogic, etc.)
+  sortOrder    Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  fields        CmsField[]
+  pages         CmsPage[]
+  relationships CmsRelationship[] @relation("SourceModule")
+  relatedBy     CmsRelationship[] @relation("TargetModule")
+
+  @@map("cms_modules")
+}
+
+model CmsField {
+  id                  Int      @id @default(autoincrement())
+  moduleId            Int
+  name                String // Field name in database
+  label               String // Display label
+  type                String // text, number, select, async-select, etc.
+  required            Boolean  @default(false)
+  readOnly            Boolean  @default(false)
+  readOnlyOnEdit      Boolean  @default(false)
+  defaultValue        String?
+  placeholder         String?
+  helpText            String?
+  validation          Json? // min, max, pattern, etc.
+  options             Json? // For select fields
+  endpoint            String? // For async-select
+  labelField          String? // For async-select
+  valueField          String? // For async-select
+  relatedTable        String? // For relationships
+  relatedDisplayField String?
+  autoCode            String? // Auto-generate code pattern
+  autoFill            Json? // Auto-fill mapping
+  dependency          Json? // Field dependencies
+  formula             String? // Calculation formula
+  uploadDir           String? // For file uploads
+  detailFields        Json? // For detail/cart fields
+  sortOrder           Int      @default(0)
+  showInList          Boolean  @default(true)
+  showInForm          Boolean  @default(true)
+  showInDetail        Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  module CmsModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@map("cms_fields")
+}
+
+model CmsRelationship {
+  id               Int      @id @default(autoincrement())
+  sourceModuleId   Int // The module that has the reference
+  targetModuleId   Int // The module being referenced
+  relationshipType String // one-to-one, one-to-many, many-to-many
+  sourceField      String // Field name in source module
+  targetField      String   @default("id") // Field in target module (usually id)
+  cascadeDelete    Boolean  @default(false)
+  required         Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  sourceModule CmsModule @relation("SourceModule", fields: [sourceModuleId], references: [id], onDelete: Cascade)
+  targetModule CmsModule @relation("TargetModule", fields: [targetModuleId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceModuleId, sourceField])
+  @@map("cms_relationships")
+}
+
+model CmsPage {
+  id          Int       @id @default(autoincrement())
+  moduleId    Int?
+  title       String
+  slug        String    @unique // URL-friendly name
+  type        String // list, form, detail, custom, dashboard
+  layout      String    @default("default") // default, grid, split, etc.
+  content     Json? // Page-specific configuration
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  module     CmsModule?         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  components CmsPageComponent[]
+
+  @@map("cms_pages")
+}
+
+model CmsPageComponent {
+  id        Int      @id @default(autoincrement())
+  pageId    Int
+  type      String // table, form, chart, card, custom
+  config    Json // Component-specific configuration
+  position  Json // x, y, width, height for grid layout
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  page CmsPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@map("cms_page_components")
+}
+
+model CmsFormBuilder {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  title       String
+  description String?
+  schema      Json // Complete form schema
+  status      String   @default("draft") // draft, published
+  version     Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("cms_form_builders")
+}
 

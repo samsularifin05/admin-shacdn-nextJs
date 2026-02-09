@@ -174,7 +174,11 @@ if (fs.existsSync(formJsonDir)) {
 fields.forEach((field) => {
   if (field.type === "async-select" && field.endpoint) {
     // Extract resource name from endpoint: /api/kategoris → kategoris
-    const match = field.endpoint.match(/\/api\/([^/?]+)/);
+    const endpoint =
+      typeof field.endpoint === "string"
+        ? field.endpoint
+        : String(field.endpoint || "");
+    const match = endpoint.match(/\/api\/([^/?]+)/);
     if (match) {
       const relatedResource = match[1];
       const relatedInfo = resourceMap.get(relatedResource);
@@ -468,7 +472,15 @@ const generateServer = () => {
           .join(", ")}
 ${autoCodeFields
   .map((f) => {
-    const pattern = f.autoCode!;
+    // Ensure pattern is a string
+    const pattern =
+      typeof f.autoCode === "string" ? f.autoCode : String(f.autoCode || "");
+
+    if (!pattern) {
+      console.warn(`Warning: autoCode pattern is empty for field ${f.name}`);
+      return "";
+    }
+
     // Match sequence pattern like {0000} or {0001}
     const seqMatch = pattern.match(/\{0*[01]?\}/);
     const seqPattern = seqMatch ? seqMatch[0] : "{0000}";
@@ -833,12 +845,13 @@ const generateForm = () => {
   const calculations = fields
     .filter((f) => f.formula)
     .map((f) => {
-      const vars = fields
-        .map((k) => k.name)
-        .filter((k) => f.formula!.includes(k));
+      // Ensure formula is a string
+      const formula =
+        typeof f.formula === "string" ? f.formula : String(f.formula || "");
+      const vars = fields.map((k) => k.name).filter((k) => formula.includes(k));
       return {
         target: f.name,
-        formula: f.formula,
+        formula: formula,
         dependencies: vars,
       };
     });
@@ -2053,27 +2066,35 @@ const generateSeeder = () => {
         value = f.defaultValue;
       }
     } else if (f.autoCode) {
-      let code = f.autoCode;
-      const today = new Date();
-      const year = String(today.getFullYear());
-      const month = String(today.getMonth() + 1).padStart(2, "0");
-      const day = String(today.getDate()).padStart(2, "0");
+      // Ensure code is a string
+      let code =
+        typeof f.autoCode === "string" ? f.autoCode : String(f.autoCode || "");
 
-      const seqMatch = code.match(/\{0*[01]?\}/);
-      const seqPattern = seqMatch ? seqMatch[0] : "{0000}";
-      const seqLength = seqPattern.length - 2;
-      const sampleSeq = "1".padStart(seqLength, "0");
+      if (!code) {
+        console.warn(`Warning: autoCode pattern is empty for field ${f.name}`);
+        value = "";
+      } else {
+        const today = new Date();
+        const year = String(today.getFullYear());
+        const month = String(today.getMonth() + 1).padStart(2, "0");
+        const day = String(today.getDate()).padStart(2, "0");
 
-      code = code
-        .replace(seqPattern, sampleSeq)
-        .replace("{YYYY}", year)
-        .replace("{YY}", year.slice(-2))
-        .replace("{MM}", month)
-        .replace("{DD}", day)
-        .replace("{YYYYMMDD}", `${year}${month}${day}`)
-        .replace("{YYMMDD}", `${year.slice(-2)}${month}${day}`);
+        const seqMatch = code.match(/\{0*[01]?\}/);
+        const seqPattern = seqMatch ? seqMatch[0] : "{0000}";
+        const seqLength = seqPattern.length - 2;
+        const sampleSeq = "1".padStart(seqLength, "0");
 
-      value = code;
+        code = code
+          .replace(seqPattern, sampleSeq)
+          .replace("{YYYY}", year)
+          .replace("{YY}", year.slice(-2))
+          .replace("{MM}", month)
+          .replace("{DD}", day)
+          .replace("{YYYYMMDD}", `${year}${month}${day}`)
+          .replace("{YYMMDD}", `${year.slice(-2)}${month}${day}`);
+
+        value = code;
+      }
     } else if (f.type === "textarea" || f.type === "text") {
       const lowerName = f.name.toLowerCase();
       if (lowerName.includes("nama") || lowerName.includes("name"))

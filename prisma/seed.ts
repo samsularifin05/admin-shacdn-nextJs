@@ -3,7 +3,8 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 import "dotenv/config";
 import { seedUsers } from "./seeders/userSeeder";
-import { seedBank } from "./seeders/banksSeeder";
+import { seedBatu } from "./seeders/batusSeeder";
+import { seedBarangs } from "./seeders/barangsSeeder";
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -18,7 +19,8 @@ const prisma = new PrismaClient({
 async function main() {
   console.log("🚀 Starting database seeding...");
   await seedUsers(prisma);
-  await seedBank(prisma);
+  await seedBatu(prisma);
+  await seedBarangs(prisma);
 }
 
 main()

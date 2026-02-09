@@ -5,6 +5,14 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    rules: Object.fromEntries(
+      Object.keys({
+        ...nextVitals.reduce((a, c) => ({ ...a, ...c.rules }), {}),
+        ...nextTs.reduce((a, c) => ({ ...a, ...c.rules }), {}),
+      }).map((rule) => [rule, "off"]),
+    ),
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

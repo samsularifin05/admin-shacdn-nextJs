@@ -15,9 +15,12 @@
     "db:reset": "npx prisma migrate reset",
     "db:seed": "npx prisma db seed",
     "generate:module": "npx tsx scripts/scaffold.ts",
+    "generate:migration": "npx tsx scripts/generate-migration.ts",
     "generate:all": "npx tsx scripts/generate-all.ts",
+    "generate:all:enhanced": "npx tsx scripts/generate-all-enhanced.ts",
     "delete:module": "npx tsx scripts/delete-module.ts",
-    "delete:all": "npx tsx scripts/delete-all.ts"
+    "delete:all": "npx tsx scripts/delete-all.ts",
+    "cms:sync": "npx tsx scripts/sync-cms-modules.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
@@ -47,6 +50,7 @@
     "jsonwebtoken": "^9.0.3",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.563.0",
+    "mathjs": "^15.1.0",
     "next": "^16.1.6",
     "pg": "^8.18.0",
     "react": "^19.2.4",

@@ -2349,8 +2349,8 @@ if (schemaContent.includes(`model ${tableName}`)) {
   console.log(`\nℹ️  Model ${tableName} already exists. Updating schema...`);
   // Replace existing model
   const startStr = `model ${tableName} {`;
-  const startIndex = schemaContent.indexOf(startStr);
-  const endIndex = schemaContent.indexOf("}", startIndex) + 1;
+  // const startIndex = schemaContent.indexOf(startStr);
+  // const endIndex = schemaContent.indexOf("}", startIndex) + 1;
 
   // Also try to remove old detail table if exists
   const detailTableName = `${tableName}_detail`;

@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "r4h4s14_su93r_s3kr3t";
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ) {
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
@@ -30,7 +30,7 @@ export default async function handler(
         role: user.role,
       },
       JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "1d" },
     );
 
     // Set cookie
@@ -42,7 +42,7 @@ export default async function handler(
         sameSite: "lax",
         path: "/",
         maxAge: 60 * 60 * 24, // 1 day
-      })
+      }),
     );
 
     return res.status(200).json({
@@ -50,8 +50,8 @@ export default async function handler(
       token, // Keep token in response for the auth store and signature headers
       user,
     });
-  } catch (error: any) {
-    const message = error.message;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     const field = message.toLowerCase().includes("email")
       ? "email"
       : "password";

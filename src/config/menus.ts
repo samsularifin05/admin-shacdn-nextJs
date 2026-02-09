@@ -33,16 +33,6 @@ export const navigation: NavSection[] = [
     title: "Master Data",
     items: [
       
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
       ],
   },
   {

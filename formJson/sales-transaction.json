@@ -23,7 +23,7 @@
     {
       "name": "transactionDate",
       "label": "Tanggal",
-      "type": "text",
+      "type": "date",
       "defaultValue": "today"
     },
     {

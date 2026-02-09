@@ -9,7 +9,7 @@
     {
       "name": "name",
       "label": "Nama Banner",
-      "type": "string",
+      "type": "text",
       "required": true
     },
     {
@@ -22,7 +22,7 @@
     {
       "name": "link",
       "label": "Link Tujuan (URL)",
-      "type": "string",
+      "type": "text",
       "required": false,
       "uppercase": false
     },

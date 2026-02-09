@@ -32,6 +32,18 @@ files.forEach((file, index) => {
   }
 });
 
+// Run final ESLint auto-fix on all generated files and config
+console.log("\n🎨 Running final ESLint auto-fix...");
+try {
+  execSync(
+    "npx eslint src/modules/**/*.{ts,tsx} src/pages/api/**/*.ts src/pages/admin/**/*.tsx src/config/menus.ts --fix",
+    { stdio: "inherit" },
+  );
+  console.log("✅ ESLint auto-fix completed!");
+} catch (e) {
+  console.log("⚠️  ESLint auto-fix encountered some issues (non-critical).");
+}
+
 console.log(
-  `\n✅ All modules processed! Don't forget to restart your dev server.`
+  `\n✅ All modules processed! Don't forget to restart your dev server.`,
 );

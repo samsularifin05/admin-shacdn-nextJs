@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import { execSync } from "child_process";
 
 // Types
 type FieldType =
@@ -7,6 +8,8 @@ type FieldType =
   | "textarea"
   | "number"
   | "boolean"
+  | "date"
+  | "color"
   | "select"
   | "email"
   | "currency"
@@ -47,7 +50,7 @@ interface Field {
   relatedTable?: string;
   relatedDisplayField?: string;
   autoCode?: string;
-  defaultValue?: any;
+  defaultValue?: string | number | boolean | "today";
   formula?: string;
   readOnly?: boolean;
   readOnlyOnEdit?: boolean;
@@ -209,6 +212,7 @@ const generateSchema = () => {
     .map((f) => {
       const isOptional = f.required === false || f.required === undefined;
       let zodType = "";
+      let transformSuffix = "";
       if (
         f.type === "number" ||
         f.type === "currency" ||
@@ -216,6 +220,8 @@ const generateSchema = () => {
         f.type === "gram"
       ) {
         zodType = "z.coerce.number()";
+      } else if (f.type === "date" || f.type === "color") {
+        zodType = "z.string()";
       } else if (f.type === "boolean") {
         zodType = "z.boolean()";
       } else if (f.type === "select" && f.options) {
@@ -251,13 +257,7 @@ const generateSchema = () => {
         zodType = "z.string()";
       }
 
-      if (isOptional) {
-        if (f.type === "select" || f.type === "async-select") {
-          zodType += ".optional().nullable()";
-        } else {
-          zodType += ".optional()";
-        }
-      } else {
+      if (!isOptional) {
         // Only add .min(1) for string-based types
         if (
           f.type === "textarea" ||
@@ -273,15 +273,18 @@ const generateSchema = () => {
       // Add text transformation (uppercase default)
       if (f.type === "textarea" || f.type === "text" || f.type === "email") {
         const isUppercase = f.uppercase !== false; // Default true
-        if (isUppercase) {
-          // Use safe transform handling nullable/optional
-          zodType += ".transform(v => v?.toUpperCase())";
-        } else {
-          zodType += ".transform(v => v?.toLowerCase())";
-        }
+        transformSuffix = isUppercase
+          ? ".transform(v => v.toUpperCase())"
+          : ".transform(v => v.toLowerCase())";
       }
 
-      return `  ${f.name}: ${zodType},`;
+      const optionalSuffix = isOptional
+        ? f.type === "select" || f.type === "async-select"
+          ? ".optional().nullable()"
+          : ".optional()"
+        : "";
+
+      return `  ${f.name}: ${zodType}${transformSuffix}${optionalSuffix},`;
     })
     .join("\n");
 
@@ -296,6 +299,8 @@ const generateSchema = () => {
         f.type === "gram"
       ) {
         tsType = "number";
+      } else if (f.type === "date" || f.type === "color") {
+        tsType = "string";
       } else if (f.type === "boolean") {
         tsType = "boolean";
       } else if (f.type === "select" && f.options) {
@@ -309,7 +314,7 @@ const generateSchema = () => {
       } else if (f.type === "detail" && f.detailFields) {
         const detailTsFields = f.detailFields
           .map((df) => {
-            let dfTs =
+            const dfTs: string =
               df.type === "number" ||
               df.type === "currency" ||
               df.type === "rupiah" ||
@@ -338,6 +343,10 @@ const generateSchema = () => {
 export const ${toCamelCase(moduleName)}Schema = z.object({
 ${schemaFields}
 });
+
+export type ${moduleName}FormInput = z.input<typeof ${toCamelCase(
+    moduleName,
+  )}Schema>;
 
 export type ${moduleName}FormData = z.infer<typeof ${toCamelCase(
     moduleName,
@@ -476,7 +485,7 @@ ${autoCodeFields
     const isPureSequential = pattern === seqPattern;
 
     // For patterns with prefix, extract it (without date placeholders for now)
-    let staticPrefix = pattern.replace(seqPattern, "");
+    const staticPrefix = pattern.replace(seqPattern, "");
 
     // Check if prefix contains date placeholders
     const hasPrefixWithDate =
@@ -597,13 +606,14 @@ ${autoCodeFields
 
   // Try to use @/lib/prisma, fallback to manual fix if needed
   return `import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { ${moduleName}FormData } from "../types/${resourceName}.schema";
 ${hasFile ? 'import * as fs from "fs";\nimport * as path from "path";' : ""}
 
 export const ${toCamelCase(moduleName)}Server = {
   ${
     hasFile
-      ? `async internalSaveFiles(files: any, data: any) {
+      ? `async internalSaveFiles(files: Record<string, unknown>, data: Record<string, unknown>) {
     const fileFields = ${JSON.stringify(
       fileFields.map((f) => ({ name: f.name, uploadDir: f.uploadDir })),
     )};
@@ -625,7 +635,7 @@ export const ${toCamelCase(moduleName)}Server = {
     }
   },
 
-  async internalDeleteFiles(item: any) {
+  async internalDeleteFiles(item: Record<string, unknown>) {
     const fileFields = ${JSON.stringify(fileFields.map((f) => f.name))};
     for (const field of fileFields) {
       const filePath = item[field];
@@ -639,10 +649,10 @@ export const ${toCamelCase(moduleName)}Server = {
   },`
       : ""
   }
-  async getPaginated(page: number, limit: number, search?: string, filters?: Record<string, any>) {
+  async getPaginated(page: number, limit: number, search?: string, filters?: Record<string, unknown>) {
     const skip = (page - 1) * limit;
     
-    const where: any = {};
+    const where: Prisma.${tableName}WhereInput = {};
     if (search) {
       where.OR = [
         { ${searchField.name}: { contains: search, mode: "insensitive" } },
@@ -704,9 +714,9 @@ export const ${toCamelCase(moduleName)}Server = {
   },
 
   async create(data: ${moduleName}FormData${
-    hasFile ? ", files?: any" : ""
+    hasFile ? ", files?: Record<string, unknown>" : ""
   }) {${autoCodeLogic}
-    const createData: any = { ...data };
+    const createData: Prisma.${tableName}CreateInput = { ...data } as Prisma.${tableName}CreateInput;
     ${
       hasFile
         ? `if (files) await this.internalSaveFiles(files, createData);`
@@ -737,17 +747,18 @@ export const ${toCamelCase(moduleName)}Server = {
         fields.find((f) => f.type === "detail")?.name || "",
       )};
       if (detailField && result[detailField]) {
-        for (const item of (result[detailField] as any[])) {
+        const detailItems = result[detailField] as Array<Record<string, unknown>>;
+        for (const item of detailItems) {
           if (item.${config.stockLogic.identifierField}) {
             await tx.${toCamelCase(config.stockLogic.targetTable)}.update({
-              where: { id: item.${config.stockLogic.identifierField} },
+              where: { id: item.${config.stockLogic.identifierField} as number },
               data: {
                 ${config.stockLogic.stockField}: {
                   ${
                     config.stockLogic.type === "reduce"
                       ? "decrement"
                       : "increment"
-                  }: item.${config.stockLogic.quantityField}
+                  }: item.${config.stockLogic.quantityField} as number
                 }
               }
             });
@@ -764,17 +775,17 @@ export const ${toCamelCase(moduleName)}Server = {
   },
 
   async update(id: number, data: ${moduleName}FormData${
-    hasFile ? ", files?: any" : ""
+    hasFile ? ", files?: Record<string, unknown>" : ""
   }) {
-    const updateData: any = { ...data };
+    const updateData: Prisma.${tableName}UpdateInput = { ...data } as Prisma.${tableName}UpdateInput;
     ${
       hasFile
         ? `if (files && Object.keys(files).length > 0) {
       const oldItem = await this.getById(id);
       if (oldItem) {
         // Only delete old files that are being replaced
-        const filesToReplace: any = {};
-        const oldItemRecord = oldItem as Record<string, any>;
+        const filesToReplace: Record<string, unknown> = {};
+        const oldItemRecord = oldItem as Record<string, unknown>;
         Object.keys(files).forEach((key) => {
           if (oldItemRecord[key]) filesToReplace[key] = oldItemRecord[key];
         });
@@ -832,31 +843,125 @@ const generateForm = () => {
       };
     });
 
-  const calculationHook =
-    calculations.length > 0
-      ? `
+  const usesCalculation = calculations.length > 0;
+  const usesPrint = config.printable === true;
+  const watchFields = new Set<string>();
+  calculations.forEach((c) =>
+    c.dependencies.forEach((d) => watchFields.add(d)),
+  );
+  fields
+    .filter((f) => f.type === "async-select" && f.dependency?.field)
+    .forEach((f) => watchFields.add(f.dependency!.field));
+  const watchFieldList = Array.from(watchFields);
+  const usesWatchFields = watchFieldList.length > 0;
+  const needsSetValue =
+    usesCalculation ||
+    fields.some((f) => f.autoFill && (f.endpoint || f.type === "async-select"));
+
+  const usedFormComponents = new Set<string>();
+  fields.forEach((f) => {
+    if (f.autoCode) return;
+    if (f.type === "select" && f.options) {
+      usedFormComponents.add("FormSelect");
+      return;
+    }
+    if (f.type === "async-select") {
+      usedFormComponents.add("FormAsyncSelect");
+      return;
+    }
+    if (f.type === "detail") {
+      usedFormComponents.add("FormCart");
+      return;
+    }
+    if (f.type === "boolean") {
+      usedFormComponents.add("FormCheckbox");
+      return;
+    }
+    if (f.type === "gram") {
+      usedFormComponents.add("FormGram");
+      return;
+    }
+    if (f.type === "currency" || f.type === "rupiah") {
+      usedFormComponents.add("FormCurrency");
+      return;
+    }
+    if (f.type === "file") {
+      usedFormComponents.add("FormFile");
+      return;
+    }
+    if (f.type === "textarea") {
+      usedFormComponents.add("FormTextarea");
+      return;
+    }
+    usedFormComponents.add("FormInput");
+  });
+
+  const formImportOrder = [
+    "FormInput",
+    "FormSelect",
+    "FormCheckbox",
+    "FormCurrency",
+    "FormAsyncSelect",
+    "FormGram",
+    "FormCart",
+    "FormFile",
+    "FormTextarea",
+  ];
+  const formImports = formImportOrder.filter((name) =>
+    usedFormComponents.has(name),
+  );
+  const formImportLine =
+    formImports.length > 0
+      ? `import { ${formImports.join(", ")} } from "@/components/form";`
+      : "";
+
+  const reactImports: string[] = [];
+  if (usesCalculation) reactImports.push("useEffect");
+  if (usesPrint) reactImports.push("useState");
+  const reactImportLine =
+    reactImports.length > 0
+      ? `import { ${reactImports.join(", ")} } from "react";`
+      : "";
+
+  const hookFormImports = ["useForm", "FormProvider"];
+  if (usesWatchFields) hookFormImports.push("useWatch");
+  const hookFormImportLine = `import { ${hookFormImports.join(", ")} } from "react-hook-form";`;
+
+  const formDestructureParts = [];
+  if (needsSetValue) formDestructureParts.push("setValue");
+  formDestructureParts.push("handleSubmit");
+  formDestructureParts.push("formState: { isSubmitting: isLoading }");
+  const formDestructure = formDestructureParts.join(", ");
+
+  const watchDeclarations = usesWatchFields
+    ? watchFieldList
+        .map(
+          (name) =>
+            `  const ${name}Value = useWatch({ control: form.control, name: "${name}" });`,
+        )
+        .join("\n")
+    : "";
+
+  const calculationHook = usesCalculation
+    ? `
   // Auto-Calculation
-  const values = watch();
-  
   useEffect(() => {
     ${calculations
       .map(
         (c) => `
-    try {
-      // Safe evaluation context
-      const ${c.dependencies
-        .map((d) => `${d} = Number(values.${d} || 0)`)
-        .join(";\n      const ")};
-      const result = ${c.formula};
-      setValue("${c.target}", result);
-    } catch (e) {}`,
+    const ${c.dependencies
+      .map((d) => `${d} = Number(${d}Value ?? 0)`)
+      .join(";\n    const ")};
+    const result = ${c.formula};
+    const safeResult = Number.isFinite(result) ? result : 0;
+    setValue("${c.target}", safeResult);`,
       )
       .join("\n")}
   }, [${calculations
-    .flatMap((c) => c.dependencies.map((d) => `values.${d}`))
+    .flatMap((c) => c.dependencies.map((d) => `${d}Value`))
     .join(", ")}, setValue]);
 `
-      : "";
+    : "";
 
   const formFields = fields
     .map((f) => {
@@ -864,19 +969,36 @@ const generateForm = () => {
       if (f.autoCode) return "";
 
       const isFormula = !!f.formula;
-      const readOnlyProp = f.readOnly || isFormula ? "readOnly" : undefined;
+      const isReadOnlyAlways = !!f.readOnly || isFormula;
+      const isReadOnlyOnEdit = !!f.readOnlyOnEdit;
+      const readOnlyProp = isReadOnlyAlways
+        ? "readOnly"
+        : isReadOnlyOnEdit
+          ? "readOnly={!!initialData}"
+          : undefined;
+      const disabledProp = isReadOnlyOnEdit
+        ? "disabled={isLoading || !!initialData}"
+        : "disabled={isLoading}";
 
-      const inputClasses = [];
-      if (readOnlyProp) inputClasses.push("bg-muted");
+      const baseClasses = [];
+      if (isReadOnlyAlways) baseClasses.push("bg-muted");
       if (
         (f.type === "text" || f.type === "textarea") &&
         f.uppercase !== false
       ) {
-        inputClasses.push("uppercase");
+        baseClasses.push("uppercase");
       }
 
-      const className =
-        inputClasses.length > 0 ? `className="${inputClasses.join(" ")}"` : "";
+      let className = "";
+      if (isReadOnlyOnEdit && !isReadOnlyAlways) {
+        if (baseClasses.length > 0) {
+          className = `className={\`${baseClasses.join(" ")}\${initialData ? " bg-muted" : ""}\`}`;
+        } else {
+          className = 'className={initialData ? "bg-muted" : ""}';
+        }
+      } else if (baseClasses.length > 0) {
+        className = `className="${baseClasses.join(" ")}"`;
+      }
 
       if (f.type === "select" && f.options) {
         return `          <FormSelect
@@ -886,13 +1008,13 @@ const generateForm = () => {
             options={[${f.options
               .map((opt) => `"${opt}"`)
               .join(", ")}].map(opt => ({ label: opt, value: opt }))}
-            disabled={isLoading}
+            ${disabledProp}
           />`;
       }
 
       if (f.type === "async-select") {
         const depProps = f.dependency
-          ? `paramName="${f.dependency.queryParam}" paramValue={watch("${f.dependency.field}")}`
+          ? `paramName="${f.dependency.queryParam}" paramValue={${f.dependency.field}Value}`
           : "";
 
         const autoFillProps = f.autoFill
@@ -925,7 +1047,7 @@ const generateForm = () => {
             endpoint="${f.endpoint}"
             labelField="${f.labelField || "name"}"
             valueField="${f.valueField || "id"}"
-            disabled={isLoading}
+            ${disabledProp}
             ${depProps}
             ${autoFillProps}
           />`;
@@ -948,7 +1070,7 @@ const generateForm = () => {
         return `          <FormCheckbox
             name="${f.name}"
             label="${f.label}"
-            disabled={isLoading}
+            ${disabledProp}
           />`;
       }
 
@@ -982,8 +1104,8 @@ const generateForm = () => {
             label="${f.label}"
             type="number"
             placeholder="0"
-            disabled={isLoading}
-            ${readOnlyProp ? "readOnly" : ""}
+            ${disabledProp}
+            ${readOnlyProp ?? ""}
             ${className}
             ${autoFillProps}
           />`;
@@ -994,8 +1116,8 @@ const generateForm = () => {
             name="${f.name}"
             label="${f.label}"
             placeholder="0.0"
-            disabled={isLoading}
-            ${readOnlyProp ? "readOnly" : ""}
+            ${disabledProp}
+            ${readOnlyProp ?? ""}
             ${className}
           />`;
       }
@@ -1005,8 +1127,8 @@ const generateForm = () => {
             name="${f.name}"
             label="${f.label}"
             placeholder="0"
-            disabled={isLoading}
-            ${readOnlyProp ? "readOnly" : ""}
+            ${disabledProp}
+            ${readOnlyProp ?? ""}
             ${className}
           />`;
       }
@@ -1016,7 +1138,30 @@ const generateForm = () => {
             name="${f.name}"
             label="${f.label}"
             uploadDir="${f.uploadDir || "uploads"}"
-            disabled={isLoading}
+            ${disabledProp}
+          />`;
+      }
+
+      if (f.type === "date") {
+        return `          <FormInput
+            name="${f.name}"
+            label="${f.label}"
+            type="date"
+            placeholder="YYYY-MM-DD"
+            ${disabledProp}
+            ${readOnlyProp ?? ""}
+            ${className}
+          />`;
+      }
+
+      if (f.type === "color") {
+        return `          <FormInput
+            name="${f.name}"
+            label="${f.label}"
+            type="color"
+            ${disabledProp}
+            ${readOnlyProp ?? ""}
+            ${className}
           />`;
       }
 
@@ -1025,8 +1170,8 @@ const generateForm = () => {
             name="${f.name}"
             label="${f.label}"
             placeholder="Enter ${f.label.toLowerCase()}"
-            disabled={isLoading}
-            ${readOnlyProp ? "readOnly" : ""}
+            ${disabledProp}
+            ${readOnlyProp ?? ""}
             ${className}
           />`;
       }
@@ -1064,22 +1209,22 @@ const generateForm = () => {
                 ? "Enter email"
                 : `Enter ${f.label.toLowerCase()}`
             }"
-            disabled={isLoading}
-            ${readOnlyProp ? "readOnly" : ""}
+            ${disabledProp}
+            ${readOnlyProp ?? ""}
             ${className}
             ${autoFillProps}
           />`;
     })
     .join("\n");
 
-  return `import { useEffect, useState } from "react";
-import { useForm, FormProvider } from "react-hook-form";
+  return `${reactImportLine}
+${hookFormImportLine}
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ${toCamelCase(
     moduleName,
-  )}Schema, ${moduleName}FormData, ${moduleName} } from "../types/${resourceName}.schema";
+  )}Schema, ${moduleName}FormInput, ${moduleName}FormData, ${moduleName} } from "../types/${resourceName}.schema";
 import { Button } from "@/components/ui/button";
-import { FormInput, FormSelect, FormCheckbox, FormCurrency, FormAsyncSelect, FormGram, FormCart, FormFile, FormTextarea } from "@/components/form";
+${formImportLine}
 import { ${toCamelCase(
     moduleName,
   )}Service } from "../services/${resourceName}.service";
@@ -1094,8 +1239,8 @@ interface Props {
 
 export const ${moduleName}Form = ({ initialData, onSuccess }: Props) => {
   const { onClose } = useModalStore();
-  const form = useForm<${moduleName}FormData>({
-    resolver: zodResolver(${toCamelCase(moduleName)}Schema) as any,
+  const form = useForm<${moduleName}FormInput, undefined, ${moduleName}FormData>({
+    resolver: zodResolver(${toCamelCase(moduleName)}Schema),
     defaultValues: initialData ? {
       ${fields
         .map((f) => {
@@ -1115,6 +1260,8 @@ export const ${moduleName}Form = ({ initialData, onSuccess }: Props) => {
               defaultValue = '"' + new Date().toISOString().split("T")[0] + '"';
           } else if (f.type === "boolean") {
             defaultValue = "false";
+          } else if (f.type === "color") {
+            defaultValue = '"#000000"';
           } else if (
             ["number", "currency", "rupiah", "gram"].includes(f.type) ||
             (f.type === "async-select" &&
@@ -1133,7 +1280,9 @@ export const ${moduleName}Form = ({ initialData, onSuccess }: Props) => {
     },
   });
 
-  const { watch, setValue, handleSubmit, formState: { isSubmitting: isLoading } } = form;
+  const { ${formDestructure} } = form;
+
+${watchDeclarations}
 
   ${
     config.printable
@@ -1224,6 +1373,15 @@ ${formFields}
 const generateTable = () => {
   const detailField = fields.find((f) => f.type === "detail");
   const hasDetail = !!detailField;
+  const usesCurrency = fields.some(
+    (f) => f.type === "currency" || f.type === "rupiah",
+  );
+  const iconImports = ["Pencil", "Trash2", "Plus", "Eye"];
+  if (config.printable) iconImports.push("Printer");
+  if (hasDetail) iconImports.push("ChevronRight", "ChevronDown");
+  const formatImportLine = usesCurrency
+    ? 'import { formatRupiah } from "@/lib/utils";'
+    : "";
 
   const columns = fields
     .filter((f) => f.type !== "detail") // Don't show detail arrays in main columns
@@ -1269,7 +1427,7 @@ const generateTable = () => {
                     </div>
                   );
                 }
-                return <div className="text-xs text-muted-foreground truncate max-w-[100px]">{val}</div>;
+                return <div className="text-xs text-muted-foreground truncate max-w-25">{val}</div>;
               },`
             : ""
         }
@@ -1300,21 +1458,16 @@ const generateTable = () => {
 
   return `import { ColumnDef } from "@tanstack/react-table";
 import { useMemo, useCallback, useRef } from "react";
-import { Pencil, Trash2, Plus, Eye${
-    config.printable ? ", Printer" : ""
-  }, ChevronRight, ChevronDown } from "lucide-react";
+import { ${iconImports.join(", ")} } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table";
 import { type ButtonConfig } from "@/components/ui/data-table-toolbar";
-import { formatRupiah } from "@/lib/utils";
+${formatImportLine}
 import { ${moduleName} } from "../types/${resourceName}.schema";
 import { useModalStore } from "@/stores/modal-store";
 import { ${moduleName}Form } from "./${resourceName}-form";
 import { ${moduleName}Detail } from "./${resourceName}-detail";
 import { ${moduleName}Delete } from "./${resourceName}-delete";
 import { ServerDataTable, ServerDataTableRef } from "@/components/ui/server-data-table";
-import { ${toCamelCase(
-    moduleName,
-  )}Service } from "../services/${resourceName}.service";
 
 export const ${moduleName}Table = () => {
   const { onOpen } = useModalStore();
@@ -1521,11 +1674,15 @@ ${columns}
 const generateApiIndex = () => {
   const hasFile = fields.some((f) => f.type === "file");
   const detailFields = fields.filter((f) => f.type === "detail");
+  const formDataImportLine = hasFile
+    ? `import { ${moduleName}FormData } from "@/modules/${resourceName}/types/${resourceName}.schema";`
+    : "";
 
   return `import type { NextApiRequest, NextApiResponse } from "next";
 import { ${toCamelCase(
     moduleName,
   )}Server } from "@/modules/${resourceName}/server/${resourceName}.server";
+${formDataImportLine}
 ${hasFile ? 'import formidable from "formidable";' : ""}
 
 ${
@@ -1558,9 +1715,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const [fields, files] = await form.parse(req);
         
         // Convert fields to object
-        const data: any = {};
-        const detailFields = ${JSON.stringify(detailFields.map((f) => f.name))};
-        const numericFields = ${JSON.stringify(
+        const data: Record<string, unknown> = {};
+        const detailFields: string[] = ${JSON.stringify(detailFields.map((f) => f.name))};
+        const numericFields: string[] = ${JSON.stringify(
           fields
             .filter(
               (f) =>
@@ -1573,7 +1730,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             )
             .map((f) => f.name),
         )};
-        const booleanFields = ${JSON.stringify(
+        const booleanFields: string[] = ${JSON.stringify(
           fields.filter((f) => f.type === "boolean").map((f) => f.name),
         )};
         
@@ -1588,7 +1745,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           } else if (numericFields.includes(key)) {
              data[key] = val ? Number(val) : undefined;
           } else if (booleanFields.includes(key)) {
-             data[key] = val === "true" || val === true;
+             data[key] = val === "true";
           } else {
              data[key] = val;
           }
@@ -1596,7 +1753,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const newItem = await ${toCamelCase(
           moduleName,
-        )}Server.create(data, files);
+        )}Server.create(data as ${moduleName}FormData, files);
         return res.status(201).json(newItem);`
             : `const newItem = await ${toCamelCase(
                 moduleName,
@@ -1619,11 +1776,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 const generateApiDetail = () => {
   const hasFile = fields.some((f) => f.type === "file");
   const detailFields = fields.filter((f) => f.type === "detail");
+  const formDataImportLine = hasFile
+    ? `import { ${moduleName}FormData } from "@/modules/${resourceName}/types/${resourceName}.schema";`
+    : "";
 
   return `import type { NextApiRequest, NextApiResponse } from "next";
 import { ${toCamelCase(
     moduleName,
   )}Server } from "@/modules/${resourceName}/server/${resourceName}.server";
+${formDataImportLine}
 ${hasFile ? 'import formidable from "formidable";' : ""}
 
 ${
@@ -1654,9 +1815,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const [fields, files] = await form.parse(req);
         
         // Convert fields to object
-        const data: any = {};
-        const detailFields = ${JSON.stringify(detailFields.map((f) => f.name))};
-        const numericFields = ${JSON.stringify(
+        const data: Record<string, unknown> = {};
+        const detailFields: string[] = ${JSON.stringify(detailFields.map((f) => f.name))};
+        const numericFields: string[] = ${JSON.stringify(
           fields
             .filter(
               (f) =>
@@ -1669,7 +1830,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             )
             .map((f) => f.name),
         )};
-        const booleanFields = ${JSON.stringify(
+        const booleanFields: string[] = ${JSON.stringify(
           fields.filter((f) => f.type === "boolean").map((f) => f.name),
         )};
         
@@ -1684,7 +1845,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           } else if (numericFields.includes(key)) {
              data[key] = val ? Number(val) : undefined;
           } else if (booleanFields.includes(key)) {
-             data[key] = val === "true" || val === true;
+             data[key] = val === "true";
           } else {
              data[key] = val;
           }
@@ -1692,7 +1853,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const updated = await ${toCamelCase(
           moduleName,
-        )}Server.update(id, data, files);
+        )}Server.update(id, data as ${moduleName}FormData, files);
         return res.status(200).json(updated);`
             : `const updated = await ${toCamelCase(
                 moduleName,
@@ -1854,7 +2015,7 @@ export function ${moduleName}Delete({ ${toCamelCase(
           variant="destructive"
           onClick={handleDelete}
           disabled={isDeleting}
-          className="min-w-[100px]"
+          className="min-w-25"
         >
           {isDeleting ? (
             <>
@@ -1874,12 +2035,16 @@ export function ${moduleName}Delete({ ${toCamelCase(
 
 // 11. Seeder Generator
 const generateSeeder = () => {
-  const sampleData: Record<string, any> = {};
+  const sampleData: Record<
+    string,
+    string | number | boolean | Record<string, unknown>
+  > = {};
   const relFetchers: string[] = [];
   const placeholders: Record<string, string> = {};
 
   fields.forEach((f) => {
-    let value: any = undefined;
+    let value: string | number | boolean | Record<string, unknown> | undefined =
+      undefined;
 
     if (f.defaultValue !== undefined && f.type !== "detail") {
       if (f.defaultValue === "today") {
@@ -1910,9 +2075,13 @@ const generateSeeder = () => {
 
       value = code;
     } else if (f.type === "textarea" || f.type === "text") {
-      if (f.name.toLowerCase().includes("nama")) value = `Sample ${moduleName}`;
-      else if (f.name.toLowerCase().includes("kode"))
-        value = `${moduleName.toUpperCase()}-01`;
+      const lowerName = f.name.toLowerCase();
+      if (lowerName.includes("nama") || lowerName.includes("name"))
+        value = `Sample ${moduleName}`;
+      else if (lowerName.includes("kode") || lowerName.includes("code"))
+        value = `${moduleName.toUpperCase()}-001`;
+      else if (lowerName.includes("link") || lowerName.includes("url"))
+        value = "https://example.com";
       else value = "Sample data";
     } else if (
       f.type === "number" ||
@@ -1921,6 +2090,10 @@ const generateSeeder = () => {
       f.type === "gram"
     ) {
       value = f.type === "gram" ? 1.5 : 1000;
+    } else if (f.type === "date") {
+      value = new Date().toISOString().split("T")[0];
+    } else if (f.type === "color") {
+      value = "#000000";
     } else if (f.type === "boolean") {
       value = true;
     } else if (f.type === "select" && f.options) {
@@ -1944,7 +2117,7 @@ const generateSeeder = () => {
     } else if (f.type === "email") {
       value = "sample@example.com";
     } else if (f.type === "detail" && f.detailFields) {
-      const detailSample: any = {};
+      const detailSample: Record<string, unknown> = {};
       f.detailFields.forEach((df) => {
         if (df.type === "async-select" && df.relatedTable) {
           const varName = `detail${toPascalCase(f.name)}${toPascalCase(
@@ -1985,7 +2158,7 @@ const generateSeeder = () => {
     dataStr = dataStr.replace(`"__PLACEHOLDER_${fieldName}__"`, replacer);
   });
 
-  return `import { PrismaClient } from "@prisma/client";
+  return `import { PrismaClient, Prisma } from "@prisma/client";
 
 export async function seed${toPascalCase(moduleName)}(prisma: PrismaClient) {
   // Check if data already exists
@@ -1999,7 +2172,7 @@ export async function seed${toPascalCase(moduleName)}(prisma: PrismaClient) {
 
 ${relFetchers.join("\n")}
 
-  const data: any = ${dataStr};
+  const data: Prisma.${tableName}CreateInput = ${dataStr};
 
   await prisma.${toCamelCase(tableName)}.create({
     data,
@@ -2204,12 +2377,9 @@ if (schemaContent.includes(`model ${tableName}`)) {
 fs.writeFileSync(prismaSchemaPath, schemaContent);
 console.log("⚠️  Running 'npx prisma format && npx prisma db push'...");
 try {
-  require("child_process").execSync(
-    "npx prisma format && npx prisma db push && npx prisma generate",
-    {
-      stdio: "inherit",
-    },
-  );
+  execSync("npx prisma format && npx prisma db push && npx prisma generate", {
+    stdio: "inherit",
+  });
 } catch (e) {
   console.error("❌ Failed to run prisma commands. Please run them manually.");
 }
@@ -2299,6 +2469,29 @@ ${newItem}
 }
 
 console.log("\n✅ Module Generated Successfully!");
+
+// Auto-format generated files with ESLint
+console.log("\n🎨 Running ESLint auto-fix on generated files...");
+try {
+  const filesToLint = [
+    `src/modules/${resourceName}/**/*.{ts,tsx}`,
+    `src/pages/api/${resourceName}/**/*.ts`,
+  ];
+
+  if (config.route) {
+    const route = config.route.startsWith("/")
+      ? config.route.slice(1)
+      : config.route;
+    filesToLint.push(`src/pages/${route}/**/*.tsx`);
+  }
+
+  execSync(`npx eslint ${filesToLint.join(" ")} --fix`, {
+    stdio: "inherit",
+  });
+  console.log("✅ ESLint auto-fix completed!");
+} catch (e) {
+  console.log("⚠️  ESLint auto-fix encountered some issues (non-critical).");
+}
 
 // Add warning about restarting dev server
 console.log("\n" + "=".repeat(70));

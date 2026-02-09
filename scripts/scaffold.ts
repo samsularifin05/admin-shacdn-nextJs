@@ -3,8 +3,8 @@ import * as path from "path";
 
 // Types
 type FieldType =
-  | "string"
   | "text"
+  | "textarea"
   | "number"
   | "boolean"
   | "select"
@@ -19,7 +19,14 @@ type FieldType =
 interface DetailField {
   name: string;
   label: string;
-  type: "string" | "number" | "currency" | "rupiah" | "async-select" | "gram";
+  type:
+    | "text"
+    | "textarea"
+    | "number"
+    | "currency"
+    | "rupiah"
+    | "async-select"
+    | "gram";
   endpoint?: string;
   labelField?: string;
   valueField?: string;
@@ -253,7 +260,7 @@ const generateSchema = () => {
       } else {
         // Only add .min(1) for string-based types
         if (
-          f.type === "string" ||
+          f.type === "textarea" ||
           f.type === "text" ||
           f.type === "email" ||
           (f.type === "async-select" &&
@@ -264,7 +271,7 @@ const generateSchema = () => {
       }
 
       // Add text transformation (uppercase default)
-      if (f.type === "string" || f.type === "text" || f.type === "email") {
+      if (f.type === "textarea" || f.type === "text" || f.type === "email") {
         const isUppercase = f.uppercase !== false; // Default true
         if (isUppercase) {
           // Use safe transform handling nullable/optional
@@ -861,7 +868,10 @@ const generateForm = () => {
 
       const inputClasses = [];
       if (readOnlyProp) inputClasses.push("bg-muted");
-      if ((f.type === "text" || f.type === "string") && f.uppercase !== false) {
+      if (
+        (f.type === "text" || f.type === "textarea") &&
+        f.uppercase !== false
+      ) {
         inputClasses.push("uppercase");
       }
 
@@ -1010,7 +1020,7 @@ const generateForm = () => {
           />`;
       }
 
-      if (f.type === "text") {
+      if (f.type === "textarea") {
         return `          <FormTextarea
             name="${f.name}"
             label="${f.label}"
@@ -1783,7 +1793,7 @@ const generateDelete = () => {
   // Find a suitable display field (prefer 'name', then first string field)
   const displayField =
     fields.find((f) => f.name === "name") ||
-    fields.find((f) => f.type === "string") ||
+    fields.find((f) => f.type === "textarea") ||
     fields[0];
 
   return `import { useState } from "react";
@@ -1899,7 +1909,7 @@ const generateSeeder = () => {
         .replace("{YYMMDD}", `${year.slice(-2)}${month}${day}`);
 
       value = code;
-    } else if (f.type === "string" || f.type === "text") {
+    } else if (f.type === "textarea" || f.type === "text") {
       if (f.name.toLowerCase().includes("nama")) value = `Sample ${moduleName}`;
       else if (f.name.toLowerCase().includes("kode"))
         value = `${moduleName.toUpperCase()}-01`;
@@ -2239,8 +2249,9 @@ if (fs.existsSync(menusPath)) {
         (match, prefix, items, suffix) => {
           const trimmedItems = items.trim();
           // Check if items is empty or only contains comma
-          const isEmpty = !trimmedItems || trimmedItems === "," || trimmedItems === "";
-          
+          const isEmpty =
+            !trimmedItems || trimmedItems === "," || trimmedItems === "";
+
           if (isEmpty) {
             // If empty, just add the new item without leading comma
             return `${prefix}\n${newItem}\n      ${suffix}`;

@@ -1,0 +1,29 @@
+{
+  "moduleName": "Barang",
+  "resourceName": "barangs",
+  "tableName": "tm_barang",
+  "title": "Barang",
+  "route": "/admin/barang",
+  "classForm": "grid grid-cols-1 md:grid-cols-2 gap-4",
+  "printable": false,
+  "fields": [
+    {
+      "name": "kode_barcode",
+      "label": "Kode Barcode",
+      "type": "text",
+      "required": false,
+      "readOnly": false,
+      "readOnlyOnEdit": false,
+      "defaultValue": null
+    },
+    {
+      "name": "nama_barang",
+      "label": "Nama Barang",
+      "type": "text",
+      "required": true,
+      "readOnly": false,
+      "readOnlyOnEdit": false,
+      "defaultValue": null
+    }
+  ]
+}

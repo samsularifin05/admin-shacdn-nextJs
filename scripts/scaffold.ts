@@ -521,7 +521,7 @@ ${autoCodeFields
       // No prefix - pure sequential number
       codeGenLogic += `    const lastRecord_${
         f.name
-      } = await prisma.${toCamelCase(tableName)}.findFirst({
+      } = await prisma.${toCamelCase(moduleName)}.findFirst({
       orderBy: { ${f.name}: "desc" },
     });
 
@@ -576,7 +576,7 @@ ${autoCodeFields
         // Static prefix without date
         codeGenLogic += `    const lastRecord_${
           f.name
-        } = await prisma.${toCamelCase(tableName)}.findFirst({
+        } = await prisma.${toCamelCase(moduleName)}.findFirst({
       where: {
         ${f.name}: {
           startsWith: "${staticPrefix}",
@@ -664,7 +664,7 @@ export const ${toCamelCase(moduleName)}Server = {
   async getPaginated(page: number, limit: number, search?: string, filters?: Record<string, unknown>) {
     const skip = (page - 1) * limit;
     
-    const where: Prisma.${tableName}WhereInput = {};
+    const where: Prisma.${moduleName}WhereInput = {};
     if (search) {
       where.OR = [
         { ${searchField.name}: { contains: search, mode: "insensitive" } },
@@ -680,13 +680,13 @@ export const ${toCamelCase(moduleName)}Server = {
     }
 
     const [data, total] = await Promise.all([
-      prisma.${toCamelCase(tableName)}.findMany({
+      prisma.${toCamelCase(moduleName)}.findMany({
         skip,
         take: limit,
         where,${includeStr}
         orderBy: { createdAt: "desc" },
       }),
-      prisma.${toCamelCase(tableName)}.count({ where }),
+      prisma.${toCamelCase(moduleName)}.count({ where }),
     ]);
 
     return {
@@ -701,7 +701,7 @@ export const ${toCamelCase(moduleName)}Server = {
   },
 
   async getById(id: number) {
-    return prisma.${toCamelCase(tableName)}.findUnique({
+    return prisma.${toCamelCase(moduleName)}.findUnique({
       where: { id },${
         asyncSelectFields.length > 0 || detailFields.length > 0
           ? `\n      include: {\n        ${[
@@ -728,7 +728,7 @@ export const ${toCamelCase(moduleName)}Server = {
   async create(data: ${moduleName}FormData${
     hasFile ? ", files?: Record<string, unknown>" : ""
   }) {${autoCodeLogic}
-    const createData: Prisma.${tableName}CreateInput = { ...data } as Prisma.${tableName}CreateInput;
+    const createData: Prisma.${moduleName}CreateInput = { ...data } as Prisma.${moduleName}CreateInput;
     ${
       hasFile
         ? `if (files) await this.internalSaveFiles(files, createData);`
@@ -750,7 +750,7 @@ export const ${toCamelCase(moduleName)}Server = {
       config.stockLogic
         ? `
     return prisma.$transaction(async (tx) => {
-      const result = await tx.${toCamelCase(tableName)}.create({
+      const result = await tx.${toCamelCase(moduleName)}.create({
         data: createData,${detailFields.length > 0 ? `\n        include: { \n          ${detailFields.map((f) => `${f.name}: true`).join(", ")} \n        }` : ""}
       });
 
@@ -780,7 +780,7 @@ export const ${toCamelCase(moduleName)}Server = {
       return result;
     });`
         : `
-    return prisma.${toCamelCase(tableName)}.create({
+    return prisma.${toCamelCase(moduleName)}.create({
       data: createData,${asyncSelectFields.length > 0 || detailFields.length > 0 ? `\n      include: {\n        ${[...asyncSelectFields.map((f) => `${f.name}Rel: true`), ...detailFields.map((f) => `${f.name}: true`)].join(",\n        ")}\n      },` : ""}
     });`
     }
@@ -789,7 +789,7 @@ export const ${toCamelCase(moduleName)}Server = {
   async update(id: number, data: ${moduleName}FormData${
     hasFile ? ", files?: Record<string, unknown>" : ""
   }) {
-    const updateData: Prisma.${tableName}UpdateInput = { ...data } as Prisma.${tableName}UpdateInput;
+    const updateData: Prisma.${moduleName}UpdateInput = { ...data } as Prisma.${moduleName}UpdateInput;
     ${
       hasFile
         ? `if (files && Object.keys(files).length > 0) {
@@ -820,7 +820,7 @@ export const ${toCamelCase(moduleName)}Server = {
       )
       .join("\n")}
 
-    return prisma.${toCamelCase(tableName)}.update({
+    return prisma.${toCamelCase(moduleName)}.update({
       where: { id },
       data: updateData,${asyncSelectFields.length > 0 || detailFields.length > 0 ? `\n      include: {\n        ${[...asyncSelectFields.map((f) => `${f.name}Rel: true`), ...detailFields.map((f) => `${f.name}: true`)].join(",\n        ")}\n      },` : ""}
     });
@@ -833,7 +833,7 @@ export const ${toCamelCase(moduleName)}Server = {
     if (item) await this.internalDeleteFiles(item);`
         : ""
     }
-    return prisma.${toCamelCase(tableName)}.delete({
+    return prisma.${toCamelCase(moduleName)}.delete({
       where: { id },
     });
   },
@@ -2183,7 +2183,7 @@ const generateSeeder = () => {
 
 export async function seed${toPascalCase(moduleName)}(prisma: PrismaClient) {
   // Check if data already exists
-  const count = await prisma.${toCamelCase(tableName)}.count();
+  const count = await prisma.${toCamelCase(moduleName)}.count();
   if (count > 0) {
     console.log("⏭️ ${moduleName} already seeded. Skipping...");
     return;
@@ -2193,9 +2193,9 @@ export async function seed${toPascalCase(moduleName)}(prisma: PrismaClient) {
 
 ${relFetchers.join("\n")}
 
-  const data: Prisma.${tableName}CreateInput = ${dataStr};
+  const data: Prisma.${moduleName}CreateInput = ${dataStr};
 
-  await prisma.${toCamelCase(tableName)}.create({
+  await prisma.${toCamelCase(moduleName)}.create({
     data,
   });
 
@@ -2317,7 +2317,7 @@ const detailTablesDef = fields
     return `model ${detailTableName} {
   id        Int      @id @default(autoincrement())
   parentId  Int
-  parent    ${tableName} @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  parent    ${moduleName} @relation(fields: [parentId], references: [id], onDelete: Cascade)
 ${detailFieldsList}
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2326,7 +2326,7 @@ ${detailFieldsList}
   })
   .join("\n");
 
-const modelDefinition = `model ${tableName} {
+const modelDefinition = `model ${moduleName} {
   id        Int      @id @default(autoincrement())
 ${fields
   .map((f) => {
@@ -2361,15 +2361,17 @@ ${fields
   .filter((f) => f.type === "async-select")
   .map((f) => `  @@index([${f.name}])`)
   .join("\n")}
+
+  @@map("${tableName}")
 }
 
 ${detailTablesDef}
 `;
 
-if (schemaContent.includes(`model ${tableName}`)) {
-  console.log(`\nℹ️  Model ${tableName} already exists. Updating schema...`);
+if (schemaContent.includes(`model ${moduleName}`)) {
+  console.log(`\nℹ️  Model ${moduleName} already exists. Updating schema...`);
   // Replace existing model
-  const startStr = `model ${tableName} {`;
+  const startStr = `model ${moduleName} {`;
   // const startIndex = schemaContent.indexOf(startStr);
   // const endIndex = schemaContent.indexOf("}", startIndex) + 1;
 
@@ -2392,7 +2394,7 @@ if (schemaContent.includes(`model ${tableName}`)) {
     schemaContent.slice(newEndIndex);
 } else {
   schemaContent += `\n${modelDefinition}`;
-  console.log(`\n✅ Added model ${tableName} to prisma/schema.prisma`);
+  console.log(`\n✅ Added model ${moduleName} to prisma/schema.prisma`);
 }
 
 fs.writeFileSync(prismaSchemaPath, schemaContent);

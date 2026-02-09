@@ -187,11 +187,18 @@ export class ModuleService {
     // Get module info before deleting
     const module = await prisma.cmsModule.findUnique({
       where: { id },
-      select: { resourceName: true, name: true },
+      select: { resourceName: true, name: true, published: true },
     });
 
     if (!module) {
       throw new Error("Module not found");
+    }
+
+    // Check if module is published
+    if (module.published) {
+      throw new Error(
+        "Cannot delete published module. Please unpublish first.",
+      );
     }
 
     // Export module to formJson first (needed by delete script)

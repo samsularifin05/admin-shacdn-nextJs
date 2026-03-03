@@ -1,6 +1,5 @@
 import { User } from "../types/user.schema";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 
 interface UserDetailProps {
   user: User;
@@ -37,7 +36,7 @@ export const UserDetail = ({ user }: UserDetailProps) => {
       <div className="rounded-lg border bg-muted/30 p-4">
         <p className="text-xs text-muted-foreground leading-relaxed">
           User profile details are managed by the administrator. Any changes to
-          the user's role or status will be reflected across the system
+          the user s role or status will be reflected across the system
           immediately.
         </p>
       </div>

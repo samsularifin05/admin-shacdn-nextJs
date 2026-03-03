@@ -1,5 +1,7 @@
 import {
+  Column,
   ColumnDef,
+  ExpandedState,
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
@@ -10,6 +12,7 @@ import {
   OnChangeFn,
   ColumnFiltersState,
   getFilteredRowModel,
+  Row,
   VisibilityState,
   getFacetedRowModel,
   getFacetedUniqueValues,
@@ -36,7 +39,6 @@ import {
 import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar, type ButtonConfig } from "./data-table-toolbar";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "./button";
 
 interface DataTableProps<TData, TValue> {
@@ -60,8 +62,8 @@ interface DataTableProps<TData, TValue> {
   enableSorting?: boolean;
   enableColumnVisibility?: boolean;
   // Expansion
-  renderSubComponent?: (props: { row: any }) => React.ReactNode;
-  getRowCanExpand?: (row: any) => boolean;
+  renderSubComponent?: (props: { row: Row<TData> }) => React.ReactNode;
+  getRowCanExpand?: (row: Row<TData>) => boolean;
 
   // Styling
   className?: string;
@@ -92,7 +94,7 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
-  const [expanded, setExpanded] = useState<any>({});
+  const [expanded, setExpanded] = useState<ExpandedState>({});
 
   // Only use internal state if external is not provided
   const [internalPagination, setInternalPagination] = useState<PaginationState>(
@@ -105,7 +107,7 @@ export function DataTable<TData, TValue>({
   const pagination = externalPagination || internalPagination;
   const handlePaginationChange = onPaginationChange || setInternalPagination;
 
-  const handleGlobalFilterChange: OnChangeFn<any> = (updaterOrValue) => {
+  const handleGlobalFilterChange: OnChangeFn<string> = (updaterOrValue) => {
     const value =
       typeof updaterOrValue === "function"
         ? updaterOrValue(globalFilter)
@@ -155,7 +157,7 @@ export function DataTable<TData, TValue>({
     },
   });
 
-  const hasExpansion = !!renderSubComponent;
+  // const hasExpansion = !!renderSubComponent;
   const hasActions = actions.some((a) => !a.isAdd && a.show !== false);
 
   return (
@@ -185,9 +187,9 @@ export function DataTable<TData, TValue>({
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                       </TableHead>
                     );
                   })}
@@ -266,8 +268,8 @@ export function DataTable<TData, TValue>({
                                       disabled={
                                         typeof action.disabled === "function"
                                           ? action.disabled(
-                                              row.original as TData
-                                            )
+                                            row.original as TData
+                                          )
                                           : action.disabled
                                       }
                                     >
@@ -322,12 +324,12 @@ export function DataTable<TData, TValue>({
   );
 }
 
-export function DataTableColumnHeader({
+export function DataTableColumnHeader<TData, TValue>({
   column,
   title,
   className,
 }: {
-  column: any;
+  column: Column<TData, TValue>;
   title: string;
   className?: string;
 }) {

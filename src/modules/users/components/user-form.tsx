@@ -99,6 +99,70 @@ export function UserForm({ initialData, onSuccess }: UserFormProps) {
             disabled={isSubmitting}
           />
         </div>
+        <div className="grid grid-cols-2 gap-4">
+          <FormSelect
+            name="role"
+            label="Role"
+            placeholder="Select role"
+            options={roleOptions}
+            disabled={isSubmitting}
+          />
+          <FormSelect
+            name="status"
+            label="Status"
+            placeholder="Select status"
+            options={statusOptions}
+            disabled={isSubmitting}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <FormSelect
+            name="role"
+            label="Role"
+            placeholder="Select role"
+            options={roleOptions}
+            disabled={isSubmitting}
+          />
+          <FormSelect
+            name="status"
+            label="Status"
+            placeholder="Select status"
+            options={statusOptions}
+            disabled={isSubmitting}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <FormSelect
+            name="role"
+            label="Role"
+            placeholder="Select role"
+            options={roleOptions}
+            disabled={isSubmitting}
+          />
+          <FormSelect
+            name="status"
+            label="Status"
+            placeholder="Select status"
+            options={statusOptions}
+            disabled={isSubmitting}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <FormSelect
+            name="role"
+            label="Role"
+            placeholder="Select role"
+            options={roleOptions}
+            disabled={isSubmitting}
+          />
+          <FormSelect
+            name="status"
+            label="Status"
+            placeholder="Select status"
+            options={statusOptions}
+            disabled={isSubmitting}
+          />
+        </div>
 
         <div className="flex justify-end gap-3 pt-4">
           <Button

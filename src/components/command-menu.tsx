@@ -71,6 +71,7 @@ export function CommandMenu() {
     <>
       {/* Trigger Button */}
       <button
+        type="button"
         onClick={() => setOpen(true)}
         className="relative w-full max-w-sm flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
       >

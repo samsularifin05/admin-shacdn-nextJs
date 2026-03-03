@@ -2,20 +2,32 @@ import { prisma } from "@/lib/prisma";
 import { User, UserFormData } from "../types/user.schema";
 import { sanitizeObject, sanitizeString } from "@/lib/security";
 import bcrypt from "bcrypt";
+import { Prisma, User as PrismaUser } from "@prisma/client";
 
 /**
- * Helper to serialize Prisma objects for Next.js SSR (JSON compatible)
+ * Normalize DB status value to application status union type
  */
-const serializeUser = (data: any): User => {
-  if (!data) return data;
-  const serialized = JSON.parse(JSON.stringify(data));
-  // Remove password from serialized output for security
-  if (Array.isArray(serialized)) {
-    serialized.forEach((u: any) => delete u.password);
-  } else {
-    delete serialized.password;
-  }
-  return serialized as User;
+const normalizeStatus = (status: string): User["status"] => {
+  return status === "Inactive" ? "Inactive" : "Active";
+};
+
+/**
+ * Map Prisma user entity into API-safe User shape
+ */
+const toUser = (data: PrismaUser): User => {
+  return {
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    role: data.role,
+    status: normalizeStatus(data.status),
+    createdAt: data.createdAt.toISOString(),
+    updatedAt: data.updatedAt.toISOString(),
+  };
+};
+
+const toUsers = (data: PrismaUser[]): User[] => {
+  return data.map(toUser);
 };
 
 export const userServerLogic = {
@@ -35,11 +47,11 @@ export const userServerLogic = {
 
       const where = safeSearch
         ? {
-            OR: [
-              { name: { contains: safeSearch, mode: "insensitive" as const } },
-              { email: { contains: safeSearch, mode: "insensitive" as const } },
-            ],
-          }
+          OR: [
+            { name: { contains: safeSearch, mode: "insensitive" as const } },
+            { email: { contains: safeSearch, mode: "insensitive" as const } },
+          ],
+        }
         : {};
 
       const [users, total] = await Promise.all([
@@ -53,7 +65,7 @@ export const userServerLogic = {
       ]);
 
       return {
-        users: serializeUser(users) as unknown as User[],
+        users: toUsers(users),
         meta: {
           total,
           page,
@@ -78,7 +90,7 @@ export const userServerLogic = {
       const users = await prisma.user.findMany({
         orderBy: { createdAt: "desc" },
       });
-      return serializeUser(users) as unknown as User[];
+      return toUsers(users);
     } catch (error) {
       console.error("Prisma Error (getAllUsers):", error);
       return [];
@@ -93,7 +105,7 @@ export const userServerLogic = {
       const user = await prisma.user.findUnique({
         where: { id },
       });
-      return serializeUser(user);
+      return user ? toUser(user) : null;
     } catch (error) {
       console.error("Prisma Error (getUserById):", error);
       return null;
@@ -118,7 +130,7 @@ export const userServerLogic = {
         status: safeData.status,
       },
     });
-    return serializeUser(user);
+    return toUser(user);
   },
 
   /**
@@ -128,7 +140,7 @@ export const userServerLogic = {
     // SECURITY: Sanitize all input data to prevent XSS
     const safeData = sanitizeObject(data);
 
-    const updateData: any = {
+    const updateData: Prisma.UserUpdateInput = {
       name: safeData.name,
       email: safeData.email,
       role: safeData.role,
@@ -144,7 +156,7 @@ export const userServerLogic = {
       where: { id },
       data: updateData,
     });
-    return serializeUser(user);
+    return toUser(user);
   },
 
   /**
@@ -176,6 +188,6 @@ export const userServerLogic = {
       throw new Error("Incorrect password");
     }
 
-    return serializeUser(user);
+    return toUser(user);
   },
 };

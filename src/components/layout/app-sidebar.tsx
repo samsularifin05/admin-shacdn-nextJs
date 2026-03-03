@@ -4,7 +4,7 @@ import { useSidebarStore } from "@/stores/sidebar-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronRight, X, LogOut } from "lucide-react";
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect, createContext, useContext, useRef } from "react";
 import { navigation, NavItem } from "@/config/menus";
 
 // Context to manage accordion behavior
@@ -15,7 +15,7 @@ interface MenuContextType {
 
 const MenuContext = createContext<MenuContextType>({
   openMenus: [],
-  toggleMenu: () => {},
+  toggleMenu: () => { },
 });
 
 // Recursive MenuItem Component
@@ -180,6 +180,7 @@ export function AppSidebar() {
   const { user, logout } = useAuthStore();
   const [expandedSections, setExpandedSections] = useState<string[]>(["Pages"]);
   const [openMenus, setOpenMenus] = useState<string[]>([]);
+  const pendingOpenMenusRef = useRef<string[] | null>(null);
 
   const toggleSection = (title: string) => {
     setExpandedSections((prev) =>
@@ -278,8 +279,8 @@ export function AppSidebar() {
           parentIds.length > 0
             ? `${parentIds.join("-")}-${i}`
             : `section-${navigation.findIndex((s) =>
-                s.items.includes(item)
-              )}-${i}`;
+              s.items.includes(item)
+            )}-${i}`;
 
         if (item.href === router.pathname || item.href === router.asPath) {
           // Found the current route, return parent chain
@@ -314,8 +315,17 @@ export function AppSidebar() {
       }
     });
 
-    // Only update if the parent chain is different from current openMenus
-    // This prevents unnecessary closing/reopening when navigating within the same submenu
+    // Store the pending update to be applied in a separate effect
+    pendingOpenMenusRef.current = parentChain;
+  }, [router.pathname, router.asPath, router.isReady, closeMobile]);
+
+  // Apply pending menu updates separately to avoid cascading renders
+  useEffect(() => {
+    if (pendingOpenMenusRef.current === null) return;
+
+    const parentChain = pendingOpenMenusRef.current;
+    pendingOpenMenusRef.current = null;
+
     setOpenMenus((prevOpenMenus) => {
       // Check if parent chain is exactly the same (same items, same order)
       const isSameChain =
@@ -352,7 +362,7 @@ export function AppSidebar() {
       const merged = Array.from(new Set([...prevOpenMenus, ...parentChain]));
       return merged;
     });
-  }, [router.pathname, router.asPath, router.isReady, closeMobile]);
+  }, []);
 
   // Close mobile sidebar on escape key
   useEffect(() => {
@@ -393,12 +403,17 @@ export function AppSidebar() {
         {/* Sidebar Content */}
         <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className="flex h-16 items-center justify-between border-b px-6">
+          <div
+            className={cn(
+              "flex h-16 items-center justify-between border-b px-6",
+              isCollapsed && "lg:justify-center lg:px-2"
+            )}
+          >
             <Link
               href="/admin/dashboard"
               scroll={false}
               prefetch={false}
-              className="flex items-center gap-2"
+              className={cn("flex items-center gap-2", isCollapsed && "lg:justify-center gap-0")}
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <span className="text-lg font-bold">S</span>
@@ -453,17 +468,17 @@ export function AppSidebar() {
                     )}
                     {(!section.collapsible ||
                       expandedSections.includes(section.title)) && (
-                      <div className="space-y-1">
-                        {section.items.map((item, index) => (
-                          <MenuItem
-                            key={item.href || `${item.title}-${index}`}
-                            item={item}
-                            isCollapsed={isCollapsed}
-                            itemId={`section-${sectionIndex}-${index}`}
-                          />
-                        ))}
-                      </div>
-                    )}
+                        <div className="space-y-1">
+                          {section.items.map((item, index) => (
+                            <MenuItem
+                              key={item.href || `${item.title}-${index}`}
+                              item={item}
+                              isCollapsed={isCollapsed}
+                              itemId={`section-${sectionIndex}-${index}`}
+                            />
+                          ))}
+                        </div>
+                      )}
                   </div>
                 ))}
               </div>

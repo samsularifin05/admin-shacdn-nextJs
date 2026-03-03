@@ -5,23 +5,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useModalStore } from "@/stores/modal-store";
-import { useEffect, useState } from "react";
+import {
+  type ModalPosition,
+  type ModalSize,
+  useModalStore,
+} from "@/stores/modal-store";
 import { cn } from "@/lib/utils";
 
 export function ModalProvider() {
-  const { isOpen, onClose, type, data } = useModalStore();
-  const [isMounted, setIsMounted] = useState(false);
+  const { isOpen, onClose, data } = useModalStore();
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    return null;
-  }
-
-  const modalSizes = {
+  const modalSizes: Record<ModalSize, string> = {
     sm: "sm:max-w-sm",
     md: "sm:max-w-md",
     lg: "sm:max-w-lg",
@@ -33,24 +27,25 @@ export function ModalProvider() {
     full: "sm:max-w-[95vw]",
   };
 
-  const modalPositions = {
-    center: "top-[50%] translate-y-[-50%]",
-    top: "top-[10%] translate-y-0",
+  const modalPositions: Record<ModalPosition, string> = {
+    center: "",
+    top: "",
   };
 
-  const sizeClass = modalSizes[data.size as keyof typeof modalSizes] || "";
-  const positionKey = (data.position as keyof typeof modalPositions) || "top";
+  const sizeClass = modalSizes[data.size ?? "md"];
+  const positionKey = data.position ?? "top";
   const positionClass = modalPositions[positionKey];
 
   const selectedClassName = cn(
-    sizeClass || data.className || "sm:max-w-[425px]",
-    "left-[50%] translate-x-[-50%]",
+    "sm:max-w-[425px]",
+    sizeClass,
+    data.className,
     positionClass
   );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={selectedClassName}>
+      <DialogContent className={selectedClassName} overlayScrollable>
         <DialogHeader>
           <DialogTitle>{data.title || "Modal Title"}</DialogTitle>
           {data.description && (
@@ -59,7 +54,7 @@ export function ModalProvider() {
         </DialogHeader>
 
         {/* Modal body based on type or passed custom content */}
-        <div className="py-4 text-sm max-h-[60vh] overflow-y-auto">
+        <div className="py-4 text-sm">
           {typeof data.content === "function"
             ? data.content(data)
             : data.content || "Modal Content"}

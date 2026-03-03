@@ -28,7 +28,7 @@ export const UserTable = () => {
         case "create":
           onOpen("form", {
             title: "Add New User",
-            size: "md",
+            size: "xl",
             content: <UserForm onSuccess={refreshTable} />,
           });
           break;
@@ -36,7 +36,7 @@ export const UserTable = () => {
           if (user) {
             onOpen("view", {
               title: "User Details",
-              size: "lg",
+              size: "full",
               position: "top",
               content: <UserDetail user={user} />,
             });

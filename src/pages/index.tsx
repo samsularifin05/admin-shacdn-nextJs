@@ -207,7 +207,14 @@ export default function LandingPage() {
                       key={i}
                       className="h-10 w-10 overflow-hidden rounded-full border-2 border-background bg-muted"
                     >
-                      <img src={`https://i.pravatar.cc/150?u=${i}`} alt="user" />
+                      <Image
+                        loading="lazy"
+                        src={`https://i.pravatar.cc/150?u=${i}`}
+                        alt="user"
+                        width={40}
+                        height={40}
+                        className="h-full w-full object-cover"
+                      />
                     </div>
                   ))}
                 </div>
@@ -219,13 +226,14 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="relative mx-auto w-full max-w-[600px] lg:max-w-none">
+            <div className="relative mx-auto w-full max-w-150 lg:max-w-none">
               <div className="relative rounded-3xl border bg-card p-2 shadow-2xl transition-transform hover:-translate-y-2 duration-500">
                 <Image
                   src="/hero-illustration.png"
                   alt="Dashboard Preview"
                   width={800}
                   height={600}
+                  loading="lazy"
                   className="rounded-2xl shadow-inner"
                 />
                 <div className="absolute -bottom-6 -left-6 hidden animate-bounce rounded-2xl border bg-background p-4 shadow-xl md:block">
